@@ -1,0 +1,46 @@
+    
+    /* Role-based styling for chat messages */
+    .role-label {
+        font-size: 0.75em;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .role-customer {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+    }
+    
+    .role-company {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+        border: 1px solid #e1bee7;
+    }
+    
+    /* Enhanced message styling */
+    .message-header {
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 4px;
+        margin-bottom: 6px;
+    }
+    
+    .sender-name {
+        font-size: 0.9em;
+        color: #333;
+    }
+    
+    /* Optional: Different colors for different company roles */
+    .role-company[data-role="user"] {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+        border-color: #c8e6c9;
+    }
+    
+    .role-company[data-role="base_user"] {
+        background-color: #fff3e0;
+        color: #f57c00;
+        border-color: #ffcc02;
+    }
