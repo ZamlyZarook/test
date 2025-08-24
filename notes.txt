@@ -1,0 +1,18 @@
+GIT update : 
+git add .
+git commit -m "UI Enhancement: Modern table designs and dashboard improvements"
+git push origin main
+git remote -v
+git remote set-url origin https://github.com/rishadmm/gift_app.git
+
+
+
+Docker commands:
+To build the docker : docker build -t giftcard:latest .
+To Run the docker : docker run -p 8083:8083  giftcard:latest .
+
+Publish to docker hub
+docker tag giftcard:latest rishadmm/giftcard:latest
+docker push rishadmm/giftcard:latest
+docker pull rishadmm/giftcard:latest
+    docker run -d -p 8083:8083 rishadmm/awss3:latest .
