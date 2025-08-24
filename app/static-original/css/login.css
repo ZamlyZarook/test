@@ -1,0 +1,134 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100vw;
+    background: linear-gradient(135deg, #ffffff 50%, #8A4FFF 50%);
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.login-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.login-card h1 {
+    color: #333;
+    font-size: 32px;
+    margin-bottom: 30px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    background: #f0f2f7;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 79, 255, 0.3);
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: #8A4FFF;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #7340d7;
+}
+
+.signup-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.signup-link a {
+    color: #8A4FFF;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+
+/* Error messages styling */
+.alert {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.alert-danger {
+    background-color: #ffe5e5;
+    color: #ff3333;
+    border: 1px solid #ffcccc;
+}
+
+.alert-success {
+    background-color: #e5ffe5;
+    color: #33cc33;
+    border: 1px solid #ccffcc;
+}
+
+/* Make sure the form takes up appropriate space */
+form {
+    width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .login-card {
+        margin: 10px;
+        padding: 20px;
+    }
+
+    .login-card h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+}

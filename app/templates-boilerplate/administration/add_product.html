@@ -1,0 +1,191 @@
+{% extends "partials/base.html" %}
+{% block title %}Add Product{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Add Product</h4>
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('administration.product_configuration') }}">Product Configuration</a></li>
+                                    <li class="breadcrumb-item active">Add Product</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                <i class="ri-alert-line me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title mb-0"><i class="ri-shopping-bag-line me-2"></i>Add New Product</h4>
+                            </div>
+                            <div class="card-body">
+                                <form action="{{ url_for('administration.add_product') }}" method="POST" class="needs-validation">
+                                    {{ form.csrf_token }}
+                                    
+                                    <!-- Basic Information Card -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Product Information</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Product Code <span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="ri-barcode-line"></i></span>
+                                                        {{ form.product_code(class="form-control", placeholder="Enter product code") }}
+                                                    </div>
+                                                    {% if form.product_code.errors %}
+                                                        <div class="text-danger small mt-1">
+                                                            {% for error in form.product_code.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="ri-shopping-bag-line"></i></span>
+                                                        {{ form.product_name(class="form-control", placeholder="Enter product name") }}
+                                                    </div>
+                                                    {% if form.product_name.errors %}
+                                                        <div class="text-danger small mt-1">
+                                                            {% for error in form.product_name.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Assignment Information Card -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Assignment Information</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Company <span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="ri-building-line"></i></span>
+                                                        {{ form.companyID(class="form-select") }}
+                                                    </div>
+                                                    {% if form.companyID.errors %}
+                                                        <div class="text-danger small mt-1">
+                                                            {% for error in form.companyID.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Product In-charge user <span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="ri-user-line"></i></span>
+                                                        {{ form.incharge_id(class="form-select") }}
+                                                    </div>
+                                                    {% if form.incharge_id.errors %}
+                                                        <div class="text-danger small mt-1">
+                                                            {% for error in form.incharge_id.errors %}
+                                                                {{ error }}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <button type="button" class="btn btn-light" onclick="window.location.href='{{ url_for('administration.product_configuration') }}'">
+                                                    <i class="ri-close-line align-bottom me-1"></i> Cancel
+                                                </button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="ri-save-line align-bottom me-1"></i> Save Product
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const companySelect = document.querySelector('select[name="companyID"]');
+            const userSelect = document.querySelector('select[name="incharge_id"]');
+            
+            companySelect.addEventListener('change', function() {
+                const companyId = this.value;
+                console.log('Selected company ID:', companyId);
+                
+                // Clear current options
+                userSelect.innerHTML = '<option value="">Select User In-charge</option>';
+                
+                if (!companyId) return;
+                
+                // Use the correct URL path with Administration prefix
+                const url = `/Administration/get_company_users/${companyId}`;
+                console.log('Fetching from URL:', url);
+                
+                fetch(url)
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(users => {
+                        console.log('Received users:', users);
+                        users.forEach(user => {
+                            const option = new Option(user.name, user.id);
+                            userSelect.add(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        userSelect.innerHTML = '<option value="">Error loading users</option>';
+                    });
+            });
+        });
+    </script>
+{% endblock content %}

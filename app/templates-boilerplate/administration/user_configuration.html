@@ -1,0 +1,318 @@
+{% extends "partials/base.html" %}
+{% block title %}User configuration{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">User Configuration</h4>
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="javascript: void(0);">Administration</a></li>
+                                    <li class="breadcrumb-item active">User Configuration</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header border-0">
+                                <div class="row g-4 align-items-center">
+                                    <div class="col-sm-auto">
+                                        <div class="d-flex gap-2">
+                                            <div class="search-box">
+                                                <input type="text" 
+                                                       class="form-control search" 
+                                                       id="searchInput"
+                                                       placeholder="Search users..."
+                                                       value="{{ search_query }}">
+                                                <i class="ri-search-line search-icon"></i>
+                                            </div>
+                                            <button type="button" class="btn btn-primary position-relative" data-bs-toggle="modal" data-bs-target="#filterModal">
+                                                <i class="ri-filter-3-line align-bottom"></i>
+                                                <span id="filterCount" class="d-none position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                    0
+                                                </span>
+                                            </button>
+                                            <a href="{{ url_for('administration.user_configuration') }}" 
+                                               class="btn btn-light {% if not search_query and not selected_company and not selected_role %}d-none{% endif %}"
+                                               id="resetButton">
+                                                <i class="ri-refresh-line align-bottom"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm">
+                                        <div class="d-flex justify-content-sm-end">
+                                            <form action="{{ url_for('administration.fetch_users_from_erp') }}" method="post" class="d-inline">
+                                                <input type="hidden" name="csrf_token">
+                                                <button type="submit" class="btn btn-primary me-2">
+                                                    <i class="fas fa-cloud-download-alt"></i> Fetch from ERP
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-success" 
+                                                    onclick="window.location.href='{{ url_for('administration.add_user_page') }}'">
+                                                <i class="ri-add-line align-bottom me-1"></i> Add User
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table align-middle table-nowrap mb-0" id="userTable">
+                                        <!-- Table contents remain the same -->
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="sort" data-sort="name">Name</th>
+                                                <th class="sort" data-sort="company_code">Company Code</th>
+                                                <th class="sort" data-sort="username">Username</th>
+                                                <th class="sort" data-sort="email">Email</th>
+                                                <th class="sort" data-sort="role">Role</th>
+                                                <th class="sort" data-sort="company">Company</th>
+                                                <th class="sort" data-sort="status">Status</th>
+                                                <th class="sort" data-sort="action">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Your existing table body content -->
+                                            {% for user in user_pagination.items %}
+                                            <tr>
+                                                <td class="name text-wrap">
+                                                    <div class="d-flex gap-2 align-items-center">
+                                                        <div class="flex-shrink-0">
+                                                            {% if user.profile_picture_base64 %}
+                                                                <img src="data:image/jpeg;base64,{{ user.profile_picture_base64 }}" alt="Profile Picture" class="avatar-xs rounded-circle">
+                                                            {% else %}
+                                                                <img src="/static/images/users/user-dummy-img.jpg" alt=""
+                                                                class="avatar-xs rounded-circle" />
+                                                            {% endif %}
+                                                
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            {{ user.name }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="company_code text-wrap">{{ user.company.company_code }}</td>
+                                                <td class="username">{{ user.username }}</td>
+                                                <td class="email text-wrap">{{ user.email }}</td>
+                                                <td class="role">{{ user.role.role_name }}</td>
+                                                <td class="company text-wrap">{{ user.company.company_name }}</td>
+                                                <td class="status">
+                                                    {% if user.isactiveYN %}
+                                                    <span class="badge bg-success">Active</span>
+                                                    {% else %}
+                                                    <span class="badge bg-danger" title="{{ user.deactivation_reason }}">Inactive</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="button" 
+                                                                class="btn btn-success btn-icon waves-effect waves-light"
+                                                                onclick="window.location.href='{{ url_for('administration.edit_user', user_id=user.id) }}'">
+                                                            <i class="ri-pencil-line"></i>
+                                                        </button>
+                                                        <div class="remove">
+                                                            <button type="button" class="btn btn-danger btn-icon waves-effect waves-light">
+                                                                <i class="ri-delete-bin-5-line"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="7" class="text-center">No users found</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Pagination remains the same -->
+                            <div class="card-footer">
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination justify-content-end mb-0">
+                                        {% if page > 1 %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('administration.user_configuration', page=page-1, search=search_query, company=selected_company, role=selected_role) }}">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% for i in range(1, (total_pages + 1)) %}
+                                        <li class="page-item {% if i == page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('administration.user_configuration', page=i, search=search_query, company=selected_company, role=selected_role) }}">{{ i }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        {% if page < total_pages %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('administration.user_configuration', page=page+1, search=search_query, company=selected_company, role=selected_role) }}">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Modal -->
+        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="filterModalLabel">Filter Users</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="filterForm" method="GET">
+                        <div class="modal-body">
+                            <!-- Hidden search input to maintain search value -->
+                            <input type="hidden" name="search" id="hiddenSearchInput" value="{{ search_query }}">
+                            
+                            <div class="mb-3">
+                                <label for="companyFilter" class="form-label">Company</label>
+                                <select class="form-select" name="company" id="companyFilter">
+                                    <option value="">All Companies</option>
+                                    {% for company in companies %}
+                                    <option value="{{ company.id }}" {% if selected_company == company.id %}selected{% endif %}>
+                                        {{ company.company_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="roleFilter" class="form-label">Role</label>
+                                <select class="form-select" name="role" id="roleFilter">
+                                    <option value="">All Roles</option>
+                                    {% for role in roles %}
+                                    <option value="{{ role.id }}" {% if selected_role == role.id %}selected{% endif %}>
+                                        {{ role.role_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+
+<script>
+    // Update hidden search input when searching
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        document.getElementById('hiddenSearchInput').value = e.target.value;
+    });
+
+    // Handle search on enter key
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('filterForm').submit();
+        }
+    });
+
+    // Initialize modal
+    var filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
+
+    // Optional: Show active filters count on the filter button
+    function updateFilterCount() {
+        const activeFilters = [
+            document.getElementById('companyFilter').value,
+            document.getElementById('roleFilter').value
+        ].filter(Boolean).length;
+        
+        if (activeFilters > 0) {
+            document.querySelector('[data-bs-toggle="modal"]').innerHTML = 
+                `<i class="ri-filter-3-line align-bottom"></i> <span class="badge bg-danger">${activeFilters}</span>`;
+        }
+    }
+
+    function updateFilterIndicators() {
+        const activeFilters = [
+            '{{ search_query }}',
+            '{{ selected_company }}',
+            '{{ selected_role }}'
+        ].filter(Boolean).length;
+        
+        const filterCountBadge = document.getElementById('filterCount');
+        const resetButton = document.getElementById('resetButton');
+        
+        if (activeFilters > 0) {
+            filterCountBadge.classList.remove('d-none');
+            filterCountBadge.textContent = activeFilters;
+            resetButton.classList.remove('d-none');
+        } else {
+            filterCountBadge.classList.add('d-none');
+            resetButton.classList.add('d-none');
+        }
+    }
+    // Update filter count on page load
+    document.addEventListener('DOMContentLoaded', updateFilterCount);
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the form element
+    const fetchUsersForm = document.getElementById('fetch-users-form');
+    
+    // Add submit event listener
+    fetchUsersForm.addEventListener('submit', function(event) {
+        // Prevent the default form submission
+        event.preventDefault();
+        
+        // Show loading SweetAlert
+        Swal.fire({
+            title: 'Fetching Users',
+            html: 'Please wait while we fetch users from ERP...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Submit the form after showing the alert
+        setTimeout(() => {
+            this.submit();
+        }, 100);
+    });
+});
+</script>
+{% endblock content %}

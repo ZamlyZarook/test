@@ -1,0 +1,304 @@
+{% extends "partials/base.html" %}
+{% block title %}Edit Profile{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+
+        <div class="page-content">
+            <div class="container-fluid">
+
+                <div class="position-relative mx-n4 mt-n4">
+                    <div class="profile-wid-bg profile-setting-img">
+                        <img src="assets/images/profile-bg.jpg" class="profile-wid-img" alt="">
+                        <div class="overlay-content">
+                            <div class="text-end p-3">
+                                <div class="p-0 ms-auto rounded-circle profile-photo-edit">
+                                    <input id="profile-foreground-img-file-input" type="file" class="profile-foreground-img-file-input">
+                                    <label for="profile-foreground-img-file-input" class="profile-photo-edit btn btn-light">
+                                        <i class="ri-image-edit-line align-bottom me-1"></i> Change Cover
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xxl-3">
+                        <div class="card mt-n5">
+                            <div class="card-body p-4">
+                                <div class="text-center">
+                                    <div class="profile-user position-relative d-inline-block mx-auto  mb-4">
+                                        <form id="profile-picture-form" method="POST" enctype="multipart/form-data">
+                                            <!-- Profile Picture Display -->
+                                            <img id="user-profile-img" src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') if not current_user.profile_picture else 'data:image/jpeg;base64,' + current_user.profile_picture_base64 }}" class="rounded-circle avatar-xl img-thumbnail user-profile-image material-shadow" alt="user-profile-image">
+                                        
+                                            <!-- File Upload -->
+                                            <div class="avatar-xs p-0 rounded-circle profile-photo-edit">
+                                                <input id="profile-img-file-input" type="file" name="profile_picture" class="profile-img-file-input" onchange="uploadProfilePicture()">
+                                                <label for="profile-img-file-input" class="profile-photo-edit avatar-xs">
+                                                    <span class="avatar-title rounded-circle bg-light text-body material-shadow">
+                                                        <i class="ri-camera-fill"></i>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <h5 class="fs-16 mb-1">{{ current_user.name }}</h5>
+                                    <p class="text-muted mb-0">{{ current_user.role.role_name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!--end card-->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-5">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-0">Complete Your Profile</h5>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <a href="javascript:void(0);" class="badge bg-light text-primary fs-12"><i class="ri-edit-box-line align-bottom me-1"></i> Edit</a>
+                                    </div>
+                                </div>
+                                <div class="progress animated-progress custom-progress progress-label">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="label">30%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--end col-->
+                    <div class="col-xxl-9">
+                        <div class="card mt-xxl-n5">
+                            <div class="card-header">
+                                <ul class="nav nav-tabs-custom rounded card-header-tabs border-bottom-0" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#personalDetails" role="tab">
+                                            <i class="fas fa-home"></i> Personal Details
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#changePassword" role="tab">
+                                            <i class="far fa-user"></i> Change Password
+                                        </a>
+                                    </li>
+                                    
+                                </ul>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="personalDetails" role="tabpanel">
+                                        <form method="POST" action="{{ url_for('user.update_user_details') }}">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <div class="mb-3">
+                                                        <label for="firstnameInput" class="form-label">Full Name</label>
+                                                        <input
+                                                            type="text"
+                                                            class="form-control"
+                                                            id="firstnameInput"
+                                                            name="full_name"
+                                                            placeholder="Enter your full name"
+                                                            value="{{ user.name }}"
+                                                            required
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                                <div class="col-lg-6">
+                                                    <div class="mb-3">
+                                                        <label for="lastnameInput" class="form-label">Username</label>
+                                                        <input
+                                                            type="text"
+                                                            class="form-control"
+                                                            id="lastnameInput"
+                                                            name="username"
+                                                            placeholder="Enter your username"
+                                                            value="{{ user.username }}"
+                                                            required
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                                <div class="col-lg-6">
+                                                    <div class="mb-3">
+                                                        <label for="emailInput" class="form-label">Email Address</label>
+                                                        <input
+                                                            type="email"
+                                                            class="form-control"
+                                                            id="emailInput"
+                                                            name="email"
+                                                            placeholder="Enter your email"
+                                                            value="{{ user.email }}"
+                                                            required
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                                <div class="col-lg-12">
+                                                    <div class="hstack gap-2 justify-content-end">
+                                                        <button type="submit" class="btn btn-primary">Update</button>
+                                                        <a href="{{ url_for('user.profile') }}" class="btn btn-soft-success">Cancel</a>
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                            </div>
+                                            <!--end row-->
+                                        </form>
+                                    </div>
+                                    <!--end tab-pane-->
+                                    <div class="tab-pane" id="changePassword" role="tabpanel">
+                                        <form action="{{ url_for('auth.change_password') }}" method="POST">
+                                            <div class="row g-2">
+                                                <div class="col-lg-4">
+                                                    <div>
+                                                        <label class="form-label" for="current_password">Current Password</label>
+                                                        <div class="position-relative auth-pass-inputgroup">
+                                                            <input type="password" class="form-control pe-5 password-input"
+                                                                onpaste="return false" placeholder="Enter current password"
+                                                                name="current_password" id="current_password"
+                                                                aria-describedby="passwordInput"
+                                                                required>
+                                                            <button
+                                                                class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
+                                                                type="button" id="password-addon"><i
+                                                                    class="ri-eye-fill align-middle"></i></button>
+                                                            <div class="invalid-feedback">
+                                                                Please enter current password
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                                <div class="col-lg-4">
+                                                    <div>
+                                                        <label class="form-label" for="new_password">New Password</label>
+                                                        <div class="position-relative auth-pass-inputgroup">
+                                                            <input type="password" class="form-control pe-5 password-input"
+                                                                onpaste="return false" placeholder="Enter New password"
+                                                                name="new_password" id="new_password"
+                                                                aria-describedby="passwordInput"
+                                                                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required>
+                                                            <button
+                                                                class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
+                                                                type="button" id="password-addon"><i
+                                                                    class="ri-eye-fill align-middle"></i></button>
+                                                            <div class="invalid-feedback">
+                                                                Please enter new password
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                                <div class="col-lg-4">
+                                                    <div>
+                                                        <label class="form-label" for="new_password">Confirm New Password</label>
+                                                        <div class="position-relative auth-pass-inputgroup">
+                                                            <input type="password" class="form-control pe-5 password-input"
+                                                                onpaste="return false" placeholder="Enter New password"
+                                                                name="confirm_new_password" id="new_password"
+                                                                aria-describedby="passwordInput"
+                                                                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required>
+                                                            <button
+                                                                class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
+                                                                type="button" id="password-addon"><i
+                                                                    class="ri-eye-fill align-middle"></i></button>
+                                                            <div class="invalid-feedback">
+                                                                Please enter new password
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+
+                                                <div id="password-contain" class="p-3 bg-light mb-2 rounded">
+                                                    <h5 class="fs-13">Password must contain:</h5>
+                                                    <p id="pass-length" class="invalid fs-12 mb-2">Minimum <b>8 characters</b>
+                                                    </p>
+                                                    <p id="pass-lower" class="invalid fs-12 mb-2">At <b>lowercase</b> letter
+                                                        (a-z)</p>
+                                                    <p id="pass-upper" class="invalid fs-12 mb-2">At least <b>uppercase</b>
+                                                        letter (A-Z)</p>
+                                                    <p id="pass-number" class="invalid fs-12 mb-0">A least <b>number</b> (0-9)
+                                                    </p>
+                                                </div>
+
+                                       
+                                                <!--end col-->
+                                                <div class="col-lg-12">
+                                                    <div class="text-end">
+                                                        <button type="submit" class="btn btn-success">Change Password</button>
+                                                    </div>
+                                                </div>
+                                                <!--end col-->
+                                            </div>
+                                            <!--end row-->
+                                        </form>
+                                     
+                                    </div>
+                                    <!--end tab-pane-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end col-->
+                </div>
+                <!--end row-->
+
+            </div>
+            <!-- container-fluid -->
+        </div><!-- End Page-content -->
+
+        <!-- JavaScript for AJAX upload -->
+        <script>
+            function uploadProfilePicture() {
+                // Get the file input and selected file
+                var fileInput = document.getElementById('profile-img-file-input');
+                var file = fileInput.files[0];
+        
+                // Create a FormData object to hold the file data
+                var formData = new FormData();
+                formData.append('profile_picture', file);
+        
+                // Make an AJAX request to upload the file
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '{{ url_for("user.update_profile") }}', true);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        // On successful upload, redirect the page to reload and show updated profile
+                        window.location.href = '{{ url_for("user.edit_profile") }}'; // Redirect to the edit profile page
+                    } else {
+                        alert('Upload failed!');
+                    }
+                };
+                xhr.send(formData);
+            }
+        </script>
+
+            <!-- JAVASCRIPT -->
+    <script src="assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/libs/simplebar/simplebar.min.js"></script>
+    <script src="assets/libs/node-waves/waves.min.js"></script>
+    <script src="assets/libs/feather-icons/feather.min.js"></script>
+    <script src="assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
+    <script src="assets/js/plugins.js"></script>
+
+    <!-- particles js -->
+    <script src="assets/libs/particles.js/particles.js"></script>
+    <!-- particles app js -->
+    <script src="assets/js/pages/particles.app.js"></script>
+    <!-- validation init -->
+    <script src="assets/js/pages/form-validation.init.js"></script>
+    <!-- password create init -->
+    <script src="assets/js/pages/passowrd-create.init.js"></script>
+        
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+{% endblock content %}

@@ -1,0 +1,835 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Analytics Dashboard{% endblock title %}
+{% block extra_css %}
+        <!-- plugin css -->
+        <link href="{{url_for('static' ,filename='libs/jsvectormap/dist/css/jsvectormap.min.css')}}" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% endblock extra_css %}
+{% block content %}
+            <!-- ============================================================== -->
+            <!-- Start right Content here -->
+            <!-- ============================================================== -->
+            <div class="main-content">
+
+                <div class="page-content">
+                    <div class="container-fluid">
+
+                        <!-- start page title -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                <h4 class="mb-sm-0">Analytics</h4>
+
+                                <div class="page-title-right">
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Dashboards</a></li>
+                                        <li class="breadcrumb-item active">Analytics</li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end page title -->
+                    <div class="row d-flex align-items-end mb-3" id="company-selector-container" style="display: none;">
+                        <div class="col-md-4">
+                            <label for="companySelector">Choose Company:</label>
+                            <select id="companySelector" class="form-select">
+                                <!-- Companies will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fromDate">From Date:</label>
+                            <input type="date" id="fromDate" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="toDate">To Date:</label>
+                            <input type="date" id="toDate" class="form-control">
+                        </div>
+                        <div class="col-md-2 align-self-end">
+                            <button class="btn btn-primary" onclick="applyDateFilter()">Apply Filter</button>
+                        </div>
+                    </div>
+
+                        
+                    <nav class="navbar">
+                        <ul id="headerNav">
+                            <!-- Headers will be injected here dynamically -->
+                        </ul>
+                    </nav>
+                    
+                    <div class="container mt-3">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#analysis-tab">
+                                    Analysis
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#responses-tab">
+                                    Responses
+                                </button>
+                            </li>
+                        </ul>
+                    
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade show active" id="analysis-tab">
+                                <h2 id="submissionCount">Total Submissions: 0</h2>
+
+                                <div class="row">
+                                    <!-- First Chart -->
+                                    <div class="col-md-5">
+                                            <div id="chartWrapper2">
+                                                <!-- Donut chart will be rendered here -->
+                                            </div>
+                                    </div>
+
+                                    <!-- Second Chart -->
+                                    <div class="col-md-7">
+                                        <div class="card">
+                                            <div id="column_stacked"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="chartWrapper" class="row">
+                                    <!-- Pie charts will be appended here dynamically -->
+                                </div>
+                                
+                            </div>
+                    
+                            <div class="tab-pane fade" id="responses-tab">
+                                <div class="d-flex justify-content-end mb-3">
+                                    <button id="downloadCSV" class="btn btn-success">
+                                        <i class="fas fa-download me-2"></i>Download CSV
+                                    </button>
+                                </div>
+                                <div class="card" style="max-height: 550px; overflow-y: auto;">
+                                    <div class="card-body" >
+            
+
+                                        <div style="table-responsive">
+
+                                            <table class="table table-nowrap table-striped-columns mb-0">
+                                                <thead id="responseTableHead" class="table-light" style="position: sticky; top: 0; z-index: 10; background-color: #f8f9fa; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+                                                    <!-- Dynamic headers will be added here -->
+                                                </thead>
+                                                <tbody id="responseTableBody">
+                                                    <!-- Dynamic response rows will be added here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                </div>
+                <!-- container-fluid -->
+            </div>
+            <!-- End Page-content -->
+
+            {% block footer %}
+            {% include "partials/footer.html" %}
+            {% endblock footer %}
+            </div>
+            <!-- end main content-->
+            <style>
+                /* General layout for the container */
+                .chart-wrapper {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-between;
+                    gap: 20px;
+                }
+            
+                /* Styling for the chart container */
+                .chart-container {
+                    width: 400px; /* Fixed width for the chart container */
+                    height: 450px; /* Adjusted height to make space for the question and chart */
+                    margin-bottom: 20px; /* Space between rows of charts */
+                    text-align: center;
+                }
+            
+                /* Styling for the canvas */
+                canvas {
+                    width: 100% !important;
+                    height: 400px !important; /* Fixed height for the pie chart */
+                }
+            
+                /* Styling for the question heading */
+                .chart-container h4 {
+                    font-size: 18px; /* Increase the font size of the question */
+                    margin-bottom: 10px; /* Add some space below the question */
+                    font-weight: bold;
+                }
+            
+                .navbar {
+                    background: linear-gradient(to right, #f8fafc, #f1f5f9);
+                    padding: 1rem;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    border-bottom: 1px solid #e2e8f0;
+                }
+
+                .navbar ul {
+                    list-style-type: none;
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 2rem;
+                    height: 2rem;
+                }
+
+                .navbar ul li {
+                    display: inline;
+                }
+
+                .navbar ul li a {
+                    color: #475569;
+                    text-decoration: none;
+                    font-weight: 500;
+                    font-size: 0.875rem;
+                    padding: 0.5rem 0.75rem;
+                    border-radius: 0.375rem;
+                    transition: all 0.2s ease-in-out;
+                }
+
+                .navbar ul li a:hover {
+                    background-color: #e2e8f0;
+                    color: #1e293b;
+                }
+
+                .navbar ul li a.active {
+                    background-color: #3b82f6;
+                    color: white;
+                    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+                }
+
+                @media (max-width: 768px) {
+                    .navbar ul {
+                        flex-direction: column;
+                        height: auto;
+                        gap: 1rem;
+                        padding: 1rem 0;
+                    }
+                    
+                    .navbar ul li {
+                        width: 100%;
+                        text-align: center;
+                    }
+                    
+                    .navbar ul li a {
+                        display: block;
+                        padding: 0.75rem 1rem;
+                    }
+                }
+                                        </style>
+            
+            
+            
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                <script>
+
+                    document.addEventListener('DOMContentLoaded', async function() {
+                        const navElement = document.getElementById('headerNav');
+                        try {
+                            const response = await fetch('/dashboard/get_headers');
+                            const headers = await response.json();
+                            headers.forEach(header => {
+                                const li = document.createElement('li');
+                                li.classList.add('nav-item');
+                                const link = document.createElement('a');
+                                link.href = '#';
+                                link.classList.add('nav-link');
+                                link.textContent = header;
+                                if (window.location.pathname.includes(header.toLowerCase())) {
+                                    link.classList.add('active');
+                                }
+                                link.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    document.querySelectorAll('#headerNav .nav-link').forEach(a => a.classList.remove('active'));
+                                    link.classList.add('active');
+                                    fetchAllData(header);
+                                });
+                                li.appendChild(link);
+                                navElement.appendChild(li);
+                            });
+                            if (!navElement.querySelector('a.active') && headers.length > 0) {
+                                navElement.querySelector('a').classList.add('active');
+                                fetchAllData(headers[0]);
+                            }
+
+                            // Add event listener for CSV download
+                            const downloadButton = document.getElementById('downloadCSV');
+                            if (downloadButton) {
+                                downloadButton.addEventListener('click', downloadCSV);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching headers:', error);
+                        }
+                    });
+
+                    async function fetchCompanies() {
+                        try {
+                            const response = await fetch('/dashboard/get_user_companies');
+                            const companies = await response.json();
+                            
+                            const selectorContainer = document.getElementById('company-selector-container');
+                            const companySelector = document.getElementById('companySelector');
+                            companySelector.innerHTML = '';
+                            
+                            // Only show the selector if there are multiple companies
+                            if (companies.length > 0) {
+                                companies.forEach(company => {
+                                    const option = document.createElement('option');
+                                    option.value = company.id;
+                                    option.textContent = company.name;
+                                    
+                                    // Set the primary company as selected
+                                    if (company.is_primary) {
+                                        option.selected = true;
+                                    }
+                                    
+                                    companySelector.appendChild(option);
+                                });
+                                
+                                // Show the company selector container
+                                selectorContainer.style.display = 'block';
+                                
+                                // Add event listener for company change
+                                companySelector.addEventListener('change', function() {
+                                    const selectedCompanyId = this.value;
+                                    changeCompany(selectedCompanyId);
+                                });
+                            }
+                            
+                            // Store selected company ID in a global variable
+                            window.currentCompanyId = companySelector.value || companies[0]?.id;
+                            
+                        } catch (error) {
+                            console.error('Error fetching companies:', error);
+                        }
+                    }
+                    
+                    // Function to handle company change
+                    function changeCompany(companyId) {
+                        window.currentCompanyId = companyId;
+                        
+                        // Clear existing headers and data
+                        const navElement = document.getElementById('headerNav');
+                        navElement.innerHTML = '';
+                        
+                        // Reset charts
+                        document.getElementById("chartWrapper").innerHTML = '';
+                        document.getElementById("chartWrapper2").innerHTML = '';
+                        
+                        // Reset submission count
+                        document.getElementById("submissionCount").innerText = "Total Submissions: 0";
+                        
+                        // Clear response table
+                        document.getElementById("responseTableHead").innerHTML = '';
+                        document.getElementById("responseTableBody").innerHTML = '';
+                        
+                        // Fetch headers for the selected company
+                        fetchHeadersForCompany(companyId);
+                    }
+                    
+                    // Modified function to fetch headers for a specific company
+                    async function fetchHeadersForCompany(companyId) {
+                        const navElement = document.getElementById('headerNav');
+                        try {
+                            const response = await fetch(`/dashboard/get_headers?company_id=${companyId}`);
+                            const headers = await response.json();
+                            
+                            if (headers.length === 0) {
+                                navElement.innerHTML = '<li class="nav-item"><span class="nav-link">No headers available</span></li>';
+                                return;
+                            }
+                            
+                            headers.forEach(header => {
+                                const li = document.createElement('li');
+                                li.classList.add('nav-item');
+                                const link = document.createElement('a');
+                                link.href = '#';
+                                link.classList.add('nav-link');
+                                link.textContent = header;
+                                link.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    document.querySelectorAll('#headerNav .nav-link').forEach(a => a.classList.remove('active'));
+                                    link.classList.add('active');
+                                    fetchAllData(header);
+                                });
+                                li.appendChild(link);
+                                navElement.appendChild(li);
+                            });
+                            
+                            if (headers.length > 0) {
+                                navElement.querySelector('a').classList.add('active');
+                                fetchAllData(headers[0]);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching headers:', error);
+                            navElement.innerHTML = '<li class="nav-item"><span class="nav-link text-danger">Error loading headers</span></li>';
+                        }
+                    }
+                    
+                    
+                    function getFilterParams() {
+                        const fromDate = document.getElementById('fromDate').value;
+                        const toDate = document.getElementById('toDate').value;
+                        const params = new URLSearchParams();
+                        if (fromDate) params.append('from', fromDate);
+                        if (toDate) params.append('to', toDate);
+                        if (window.currentCompanyId) {
+                            params.append('company_id', window.currentCompanyId);
+                        }
+                        return params;
+                    }
+
+                    async function fetchAllData(header) {
+                        try {
+                            const params = getFilterParams();
+                            await Promise.all([
+                                fetchChartData(header, params),
+                                fetchDonutChart(header, params),
+                                fetchBehaviourSummary(header, params),
+                                fetchResponses(header, params)
+                            ]);
+                        } catch (error) {
+                            console.error('Error fetching all data:', error);
+                        }
+                    }
+
+                    async function fetchChartData(header, params) {
+                        try {
+                            const response = await fetch(`/dashboard/get_chart_data/${header}?${params.toString()}`);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            const data = await response.json();
+
+                            document.getElementById("submissionCount").innerText = `Total Submissions: ${data.total_submissions || 0}`;
+                            const chartWrapper = document.getElementById("chartWrapper");
+                            chartWrapper.innerHTML = '';
+
+                            if (!data.pie_chart_data || data.pie_chart_data.length === 0) {
+                                const noDataDiv = document.createElement('div');
+                                noDataDiv.classList.add('col-12', 'text-center', 'py-5');
+                                noDataDiv.innerHTML = '<h4 class="text-muted">No chart data available for the selected criteria</h4>';
+                                chartWrapper.appendChild(noDataDiv);
+                                return;
+                            }
+
+                            data.pie_chart_data.forEach((chartData, index) => {
+                                const colDiv = document.createElement('div');
+                                colDiv.classList.add('col-md-6', 'col-lg-4');
+                                const cardDiv = document.createElement('div');
+                                cardDiv.classList.add('card');
+                                const cardHeader = document.createElement('div');
+                                cardHeader.classList.add('card-header');
+                                cardHeader.innerHTML = `<h4 class="card-title mb-0">${chartData.question || 'Question not available'}</h4>`;
+                                const cardBody = document.createElement('div');
+                                cardBody.classList.add('card-body', 'd-flex', 'flex-column', 'align-items-center');
+                                const chartContainer = document.createElement('div');
+                                chartContainer.id = `apexChart${index}`;
+                                chartContainer.classList.add('apex-charts');
+                                chartContainer.style.width = '100%';
+                                chartContainer.style.maxWidth = '350px';
+                                chartContainer.style.height = '350px';
+                                cardBody.appendChild(chartContainer);
+                                cardDiv.appendChild(cardHeader);
+                                cardDiv.appendChild(cardBody);
+                                colDiv.appendChild(cardDiv);
+                                chartWrapper.appendChild(colDiv);
+
+                                const options = {
+                                    series: chartData.data,
+                                    chart: {
+                                        type: 'pie',
+                                        height: 350,
+                                    },
+                                    labels: chartData.labels,
+                                    colors: ['#7b6fe6', '#1cc5ae', '#fa7b63', '#f9c766', '#4a89f5', '#26c2cd', '#fc86bb', '#5565a5', '#9a9da9', '#e14d3d', '#f9a6a1', '#e8b544', '#d1d7e0', '#f4e1c1', '#b29c8a', '#2c3e6d', '#3a6f47', '#9e2a2f'],
+                                    legend: {
+                                        position: 'bottom'
+                                    },
+                                    responsive: [{
+                                        breakpoint: 600,
+                                        options: {
+                                            chart: {
+                                                width: '100%'
+                                            },
+                                            legend: {
+                                                position: 'bottom'
+                                            }
+                                        }
+                                    }]
+                                };
+
+                                new ApexCharts(document.querySelector(`#apexChart${index}`), options).render();
+                            });
+                        } catch (error) {
+                            console.error('Error fetching chart data:', error);
+                            const chartWrapper = document.getElementById("chartWrapper");
+                            chartWrapper.innerHTML = '<div class="col-12 text-center py-5"><h4 class="text-muted">No chart data available!</h4></div>';
+                        }
+                    }
+
+                    async function fetchDonutChart(header, params) {
+                        try {
+                            const response = await fetch(`/dashboard/get_user_types/${header}?${params.toString()}`);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            const userTypeData = await response.json();
+
+                            const chartWrapper = document.getElementById("chartWrapper2");
+                            chartWrapper.innerHTML = '';
+
+                            if (!userTypeData.user_type_counts || Object.keys(userTypeData.user_type_counts).length === 0) {
+                                const noDataDiv = document.createElement('div');
+                                noDataDiv.classList.add('col-12', 'text-center', 'py-5');
+                                noDataDiv.innerHTML = '<h4 class="text-muted">No participation data available for the selected criteria</h4>';
+                                chartWrapper.appendChild(noDataDiv);
+                                return;
+                            }
+
+                            const donutCardDiv = document.createElement('div');
+                            donutCardDiv.classList.add('card');
+                            const donutCardHeader = document.createElement('div');
+                            donutCardHeader.classList.add('card-header');
+                            donutCardHeader.innerHTML = `<h4 class="card-title mb-0">Participation Status</h4>`;
+                            const donutCardBody = document.createElement('div');
+                            donutCardBody.classList.add('card-body', 'd-flex', 'flex-column', 'align-items-center');
+                            const donutChartDiv = document.createElement('div');
+                            donutChartDiv.id = 'simple_dount_chart';
+                            donutChartDiv.classList.add('apex-charts');
+                            donutChartDiv.style.width = '100%';
+                            donutChartDiv.style.maxWidth = '350px';
+                            donutChartDiv.style.height = '350px';
+                            donutCardBody.appendChild(donutChartDiv);
+                            donutCardDiv.appendChild(donutCardHeader);
+                            donutCardDiv.appendChild(donutCardBody);
+                            chartWrapper.appendChild(donutCardDiv);
+
+                            const donutOptions = {
+                                series: Object.values(userTypeData.user_type_counts),
+                                chart: {
+                                    type: 'donut',
+                                    height: 350
+                                },
+                                labels: Object.keys(userTypeData.user_type_counts),
+                                colors: ['#1cc5ae', '#fa7b63', '#7b6fe6', '#f9c766', '#4a89f5'],
+                                legend: {
+                                    position: 'bottom'
+                                },
+                                responsive: [{
+                                    breakpoint: 600,
+                                    options: {
+                                        chart: {
+                                            width: '100%'
+                                        },
+                                        legend: {
+                                            position: 'bottom'
+                                        }
+                                    }
+                                }]
+                            };
+
+                            new ApexCharts(document.querySelector('#simple_dount_chart'), donutOptions).render();
+                        } catch (error) {
+                            console.error('Error fetching donut chart data:', error);
+                            const chartWrapper = document.getElementById("chartWrapper2");
+                            chartWrapper.innerHTML = '<div class="col-12 text-center py-5"><h4 class="text-muted">No participants data available</h4></div>';
+                        }
+                    }
+
+                    let behaviourChartInstance = null;
+
+                    async function fetchBehaviourSummary(header, params) {
+                        try {
+                            const response = await fetch(`/dashboard/get_behaviour_summary/${header}?${params.toString()}`);
+                            if (!response.ok) {
+                                throw new Error(`Error fetching data: ${response.status} ${response.statusText}`);
+                            }
+
+                            const data = await response.json();
+                            const chartContainer = document.querySelector('.col-md-7');
+                            
+                            // Ensure card structure exists
+                            if (!document.querySelector('#column_stacked')) {
+                                chartContainer.innerHTML = `
+                                    <div class="card">
+                                        <div id="column_stacked"></div>
+                                    </div>
+                                `;
+                            }
+
+                            // Get the chart container div
+                            const chartContent = document.querySelector('#column_stacked');
+                            
+                            // Clear any existing content
+                            chartContent.innerHTML = '';
+
+                            if (!data[header] || Object.keys(data[header]).length === 0) {
+                                if (behaviourChartInstance) {
+                                    behaviourChartInstance.destroy();
+                                    behaviourChartInstance = null;
+                                }
+                                chartContent.innerHTML = '<div class="text-center py-5"><h4 class="text-muted">No behavior summary data available for the selected criteria</h4></div>';
+                                return;
+                            }
+
+                            let categories = [];
+                            let safeData = [];
+                            let unsafeData = [];
+
+                            Object.entries(data[header]).forEach(([category, values]) => {
+                                categories.push(category);
+                                safeData.push(values.safe);
+                                unsafeData.push(values.unsafe);
+                            });
+
+                            if (categories.length > 0) {
+                                renderBehaviourChart(categories, safeData, unsafeData);
+                                chartContainer.style.display = 'block';
+                            } else {
+                                if (behaviourChartInstance) {
+                                    behaviourChartInstance.destroy();
+                                    behaviourChartInstance = null;
+                                }
+                                chartContent.innerHTML = '<div class="text-center py-5"><h4 class="text-muted">No behavior data available for the selected criteria</h4></div>';
+                            }
+                        } catch (error) {
+                            console.error("Failed to fetch behaviour summary:", error);
+                            const chartContent = document.querySelector('#column_stacked');
+                            if (behaviourChartInstance) {
+                                behaviourChartInstance.destroy();
+                                behaviourChartInstance = null;
+                            }
+                            // Clear existing content before showing error
+                            chartContent.innerHTML = '<div class="text-center" style="padding: 12rem 0;"><h4 class="text-muted">No behavior summary data available</h4></div>';
+                        }
+                    }
+
+                    function renderBehaviourChart(categories, safeData, unsafeData) {
+                        const options = {
+                            series: [
+                                {
+                                    name: "Safe",
+                                    data: safeData
+                                },
+                                {
+                                    name: "Unsafe",
+                                    data: unsafeData
+                                }
+                            ],
+                            chart: {
+                                type: "bar",
+                                height: 350,
+                                stacked: true
+                            },
+                            plotOptions: {
+                                bar: {
+                                    horizontal: false
+                                }
+                            },
+                            xaxis: {
+                                categories: categories
+                            },
+                            colors: ["#1cc5ae", "#f9c766"],
+                            legend: {
+                                position: "top"
+                            },
+                            dataLabels: {
+                                enabled: true
+                            }
+                        };
+
+                        if (behaviourChartInstance) {
+                            behaviourChartInstance.destroy();
+                        }
+
+                        behaviourChartInstance = new ApexCharts(document.querySelector("#column_stacked"), options);
+                        behaviourChartInstance.render();
+                    }
+
+
+                    async function fetchResponses(header, params) {
+                        try {
+                            const response = await fetch(`/dashboard/get_responses/${header}?${params.toString()}`);
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            const data = await response.json();
+
+                            const tableHead = document.getElementById("responseTableHead");
+                            const tableBody = document.getElementById("responseTableBody");
+                            const downloadButton = document.getElementById("downloadCSV");
+
+                            tableHead.innerHTML = "";
+                            tableBody.innerHTML = "";
+
+                            if (data.error || !data.responses || data.responses.length === 0) {
+                                tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><h4 class="text-muted">No response data available for the selected criteria</h4></td></tr>';
+                                if (downloadButton) {
+                                    downloadButton.style.display = 'none';
+                                }
+                                window.currentTableData = null;
+                                return;
+                            }
+
+                            if (downloadButton) {
+                                downloadButton.style.display = 'block';
+                            }
+
+                            window.currentTableData = {
+                                headers: ['ID', 'Date', 'Employee Name', 'User Type', 'Employee ID', ...data.questions, 'Assigned To'],
+                                responses: data.responses
+                            };
+
+                            let headerRow = "<tr><th>ID</th><th>Date</th><th>Employee Name</th><th>User Type</th><th>Employee ID</th>";
+                            data.questions.forEach(question => {
+                                headerRow += `<th>${question}</th>`;
+                            });
+                            headerRow += "<th>Assigned To</th><th>Comment</th></tr>";
+                            tableHead.innerHTML = headerRow;
+
+                            data.responses.forEach(response => {
+                                let row = `<tr>
+                                    <td>${response.id}</td>
+                                    <td>${response.start_time}</td>
+                                    <td>${response.empName}</td>
+                                    <td>${response.usertype}</td>
+                                    <td>${response.companyEMPID || '-'}</td>`;
+
+                                data.questions.forEach(question => {
+                                    row += `<td>${response.answers[question] || '-'}</td>`;
+                                });
+
+                                row += `<td>${response.assignee}</td><td>${response.comment || '-'}</td></tr>`;
+                                tableBody.innerHTML += row;
+                            });
+                        } catch (error) {
+                            console.error('Error fetching responses:', error);
+                            const tableBody = document.getElementById("responseTableBody");
+                            const downloadButton = document.getElementById("downloadCSV");
+                            tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><h4 class="text-muted">No response data available</h4></td></tr>';
+                            if (downloadButton) {
+                                downloadButton.style.display = 'none';
+                            }
+                            window.currentTableData = null;
+                        }
+                    }
+                            
+                    // Add these new functions for CSV download
+                    function downloadCSV() {
+                        if (!window.currentTableData) {
+                            console.error('No data available to download');
+                            return;
+                        }
+
+                        const { headers, responses } = window.currentTableData;
+                        
+                        // Create CSV content
+                        let csvContent = headers.join(',') + '\n';
+
+                        responses.forEach(response => {
+                            const row = [
+                                response.id,
+                                response.start_time,
+                                escapeCsvValue(response.empName),
+                                escapeCsvValue(response.usertype),
+                                response.companyEMPID || '-',
+                                ...headers.slice(5, -1).map(question => escapeCsvValue(response.answers[question] || '-')),
+                                escapeCsvValue(response.assignee)
+                            ];
+                            csvContent += row.join(',') + '\n';
+                        });
+
+                        // Create and trigger download
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `responses_${getCurrentDateTime()}.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+
+                    function escapeCsvValue(value) {
+                        if (value === null || value === undefined) return '';
+                        const stringValue = String(value);
+                        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                            return `"${stringValue.replace(/"/g, '""')}"`;
+                        }
+                        return stringValue;
+                    }
+
+                    function getCurrentDateTime() {
+                        const now = new Date();
+                        return now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+                    }
+
+                    // Add event listener for download button
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // ... [Previous DOMContentLoaded code remains the same] ...
+
+                        // Add event listener for CSV download
+                        const downloadButton = document.getElementById('downloadCSV');
+                        if (downloadButton) {
+                            downloadButton.addEventListener('click', downloadCSV);
+                        }
+                    });
+                    
+                    // Initialize company selector when the page loads
+                    document.addEventListener('DOMContentLoaded', async function() {
+                        // Fetch companies first
+                        await fetchCompanies();
+                        
+                        // The original header fetch is now handled by fetchCompanies -> changeCompany -> fetchHeadersForCompany
+                        // Add event listener for CSV download
+                        const downloadButton = document.getElementById('downloadCSV');
+                        if (downloadButton) {
+                            downloadButton.addEventListener('click', downloadCSV);
+                        }
+                    });
+
+                    function hideChartContainer() {
+                        const chartContainer = document.querySelector('.col-md-7');
+                        if (chartContainer) {
+                            chartContainer.style.display = 'none';
+                        }
+                    }
+
+                    function showChartContainer() {
+                        const chartContainer = document.querySelector('.col-md-7');
+                        if (chartContainer) {
+                            chartContainer.style.display = 'block';
+                        }
+                    }
+
+                    function applyDateFilter() {
+                        const activeHeader = document.querySelector('#headerNav .nav-link.active').textContent;
+                        fetchAllData(activeHeader);
+                    }
+                                    
+                </script>
+
+
+{% endblock content %}
+
+{% block extra_js %}
+    <!-- apexcharts -->
+
+    <script src="{{url_for('static' ,filename='libs/apexcharts/dist/apexcharts.min.js')}}"></script>
+
+    <!-- Vector map-->
+     
+    <script src="{{url_for('static' ,filename='libs/jsvectormap/dist/js/jsvectormap.min.js')}}"></script>
+    <script src="{{url_for('static' ,filename='libs/jsvectormap/dist/maps/world-merc.js')}}"></script>
+
+    <!-- Dashboard init -->
+    <script  src="{{url_for('static' ,filename='js/pages/dashboard-analytics.init.js')}}"></script>
+{% endblock extra_js %}
