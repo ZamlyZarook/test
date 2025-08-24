@@ -1,0 +1,804 @@
+{% extends "partials/base.html" %}
+{% block title %}{{ issue.issue_key }} - {{ issue.summary }}{% endblock title %}
+
+{% block extra_css %}
+<!-- Sweet Alert css-->
+<link href="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+<style>
+    .issue-header {
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .issue-breadcrumb {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    .issue-type-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+    }
+    .comment-section {
+        margin-top: 20px;
+    }
+    .comment {
+        padding: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        background-color: #fff;
+    }
+    .activity-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .meta-label {
+        color: #6b7280;
+        font-weight: 500;
+        width: 120px;
+    }
+    .meta-value {
+        color: #111827;
+    }
+    .status-select {
+        min-width: 150px;
+    }
+    .details-item {
+        display: flex;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .details-item:last-child {
+        border-bottom: none;
+    }
+    .activity-timeline {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Issue Header -->
+            <!-- Header/Title Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                                {% if project %}
+                        <h4 class="mb-sm-0">{{ project.name }} - {{ issue.summary }}</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                              
+                                    <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_issues', project_id=project.id) }}">Issues</a></li>
+                                {% endif %}
+                                <li class="breadcrumb-item active">{{ issue.issue_key }}</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <!-- Issue Key and Type -->
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-light rounded me-2">
+                                <span class="avatar-title text-primary fs-20">
+                                    {% if issue.type.name == 'Epic' %}
+                                        <i class="ri-layout-masonry-line"></i>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-0">{{ issue.issue_key }}</h6>
+                                <h4 class="mb-0">{{ issue.summary }}</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="ms-auto">
+                            <button class="btn btn-soft-primary me-2" onclick="handleBackNavigation()">
+                                <i class="ri-arrow-left-line align-bottom me-1"></i> Back
+                            </button>
+                            <button class="btn btn-soft-warning me-2" data-bs-toggle="modal" data-bs-target="#activityModal">
+                                <i class="ri-history-line align-bottom me-1"></i> Activity
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="activityModalLabel">
+                                        <i class="ri-history-line align-bottom me-1"></i>
+                                        Activity Log
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="activity-timeline" id="activityList">
+                                        {% for activity in history %}
+                                        <div class="activity-item mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="flex-shrink-0">
+                                                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                         class="rounded-circle avatar-xs">
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <h6 class="mb-0">{{ activity.user.name }}</h6>
+                                                    <small class="text-muted">
+                                                        <span class="utc-datetime" data-utc-datetime="{{ activity.changed_at.isoformat() if activity.changed_at else 'None' }}">
+                                                            {{ activity.changed_at.strftime('%b %d, %Y %H:%M') }}
+                                                        </span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4 ps-1">
+                                                <p class="text-muted mb-0">
+                                                    Changed {{ activity.field_name }} from 
+                                                    <span class="fw-medium">{{ activity.old_value }}</span> to 
+                                                    <span class="fw-medium text-primary">{{ activity.new_value }}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status and Metadata -->
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <!-- Status -->
+                        <div class="d-flex align-items-center">
+                            <span class="badge" style="{% if issue.status.name == 'To Do' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      elif issue.status.name == 'In Progress' %}color: rgb(251, 188, 5); background-color: rgb(254, 247, 224){% 
+                                                      elif issue.status.name == 'Review' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      elif issue.status.name == 'Done' %}color: rgb(52, 168, 83); background-color: rgb(230, 244, 234){% 
+                                                      endif %}">
+                                {{ issue.status.name }}
+                            </span>
+                        </div>
+                    
+                        <!-- Priority -->
+                        <div class="d-flex align-items-center">
+                            <span class="badge" style="{% if issue.priority.name == 'Highest' %}color: rgb(234, 67, 53); background-color: rgb(253, 232, 230){% 
+                                                      elif issue.priority.name == 'High' %}color: rgb(234, 67, 53); background-color: rgb(253, 232, 230){% 
+                                                      elif issue.priority.name == 'Medium' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      elif issue.priority.name == 'Low' %}color: rgb(52, 168, 83); background-color: rgb(230, 244, 234){% 
+                                                      elif issue.priority.name == 'Lowest' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      endif %}">
+                                {{ issue.priority.name }}
+                            </span>
+                        </div>
+
+                        <!-- Assignee -->
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-group">
+                                <div class="avatar-group-item shadow">
+                                    {% if issue.assignee.profile_picture_base64 %}
+                                        <img src="data:image;base64,{{ issue.assignee.profile_picture_base64 }}" 
+                                             alt="{{ issue.assignee.name }}" class="rounded-circle avatar-xs">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                             alt="{{ issue.assignee.name }}" class="rounded-circle avatar-xs">
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="ms-2">{{ issue.assignee.name }}</span>
+                        </div>
+
+                        <!-- Created Info -->
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="ri-calendar-line me-1"></i>
+                            Created&nbsp; <span class="utc-date" data-utc-date="{{ issue.created_at.isoformat() if issue.created_at else 'None' }}">
+                                {{ issue.created_at.strftime('%b %d, %Y') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- Description Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="ri-file-text-line me-2 text-muted"></i>
+                                    Description
+                                </h5>
+                            </div>
+                            <div class="description-content">
+                                {{ issue.description or 'No description provided.' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <!-- Comments Section -->
+                    <div class="card">
+                        <div class="card-header bg-light py-3 d-flex align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-discuss-line me-2"></i> Comments
+                                {% if comments|length > 0 %}
+                                    <span class="badge bg-soft-primary text-primary rounded-pill ms-2">{{ comments|length }}</span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- New Comment Form -->
+                            <div class="mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        {% if current_user.profile_picture_base64 %}
+                                            <img src="data:image;base64,{{ current_user.profile_picture_base64 }}" 
+                                                class="rounded-circle avatar-sm me-3" alt="{{ current_user.name }}">
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                class="rounded-circle avatar-sm me-3" alt="{{ current_user.name }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <textarea class="form-control bg-light border-light" 
+                                                id="newComment" 
+                                                rows="3" 
+                                                placeholder="Write a comment..."></textarea>
+                                        <div class="d-flex justify-content-end mt-2">
+                                            <button type="button" class="btn btn-ghost-secondary btn-icon waves-effect me-1">
+                                                <i class="ri-attachment-line fs-16"></i>
+                                            </button>
+                                            <button class="btn btn-primary" id="addCommentBtn">
+                                                <i class="ri-send-plane-line align-bottom me-1"></i> Add Comment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <!-- Comments List -->
+                            <div id="commentsList">
+                                {% if comments|length == 0 %}
+                                    <div class="text-center p-4">
+                                        <i class="ri-chat-3-line fs-2 text-muted"></i>
+                                        <p class="mt-2">No comments yet. Be the first to comment!</p>
+                                    </div>
+                                {% else %}
+                                    {% for comment in comments %}
+                                    <div class="comment mb-4">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0">
+                                                {% if comment.author.profile_picture_base64 %}
+                                                    <img src="data:image;base64,{{ comment.author.profile_picture_base64 }}" 
+                                                        class="rounded-circle avatar-sm me-3" alt="{{ comment.author.name }}">
+                                                {% else %}
+                                                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                        class="rounded-circle avatar-sm me-3" alt="{{ comment.author.name }}">
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-start mb-2">
+                                                    <div>
+                                                        <h6 class="mb-0">{{ comment.author.name }}</h6>
+                                                        <small class="text-muted">
+                                                            <span class="utc-datetime" data-utc-datetime="{{ comment.created_at.isoformat() if comment.created_at else 'None' }}">
+                                                                {{ comment.created_at.strftime('%b %d, %Y %H:%M') }}
+                                                            </span>
+                                                        </small>
+                                                    </div>
+                                                    <div class="ms-auto">
+                                                        <!-- <div class="dropdown">
+                                                            <button class="btn btn-ghost-secondary btn-icon btn-sm fs-16" 
+                                                                    type="button" 
+                                                                    data-bs-toggle="dropdown" 
+                                                                    aria-expanded="false">
+                                                                <i class="ri-more-fill"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#">
+                                                                        <i class="ri-edit-2-line align-bottom me-2 text-muted"></i> Edit
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item text-danger" href="#">
+                                                                        <i class="ri-delete-bin-5-line align-bottom me-2"></i> Delete
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div> -->
+                                                    </div>
+                                                </div>
+                                                <div class="comment-content">
+                                                    {{ comment.comment }}
+                                                </div>
+                                                <!-- <div class="mt-2">
+                                                    <a href="javascript:void(0);" class="btn btn-ghost-primary btn-sm">
+                                                        <i class="ri-reply-line align-bottom"></i> Reply
+                                                    </a>
+                                                </div> -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Status Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Status</label>
+                                <select class="form-control status-select" id="issueStatus">
+                                    {% for status in statuses %}
+                                        <option value="{{ status.id }}" 
+                                            {% if status.id == issue.status_id %} selected {% endif %}>
+                                            {{ status.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Assignee</label>
+                                <select class="form-control" id="issueAssignee">
+                                    <option value="">Unassigned</option>
+                                    {% for member in project_members %}
+                                    <option value="{{ member.id }}"
+                                            {% if member.id == issue.assignee_id %}selected{% endif %}>
+                                        {{ member.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label fw-medium">Priority</label>
+                                <select class="form-control" id="issuePriority">
+                                    {% for priority in priorities %}
+                                    <option value="{{ priority.id }}"
+                                            {% if priority.id == issue.priority_id %}selected{% endif %}>
+                                        {{ priority.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Details</h5>
+                            <div class="details-item">
+                                <span class="meta-label">Type</span>
+                                <span class="meta-value">{{ issue.type.name }}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="meta-label">Reporter</span>
+                                <span class="meta-value">{{ issue.reporter.name }}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="meta-label">Created</span>
+                                <span class="meta-value utc-date" data-utc-date="{{ issue.created_at.isoformat() if issue.created_at else 'None' }}">
+                                    {{ issue.created_at.strftime('%Y-%m-%d') }}
+                                </span>
+                                                        </div>
+                            <div class="details-item">
+                                <span class="meta-label">Updated</span>
+                                <span class="meta-value utc-date" data-utc-date="{{ issue.updated_at.isoformat() if issue.updated_at else 'None' }}">
+                                    {{ issue.updated_at.strftime('%Y-%m-%d') if issue.updated_at else '-' }}
+                                </span>
+                                                        </div>
+                            {% if issue.epic %}
+                            <div class="details-item">
+                                <span class="meta-label">Epic</span>
+                                <span class="meta-value">
+                                    <a href="{{ url_for('tasks.issue_detail', issue_id=issue.epic.id) }}" 
+                                       class="text-primary">
+                                        {{ issue.epic.summary }}
+                                    </a>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Attachments Card - Add this to issue_detail.html -->
+                    <div class="card">
+                        <div class="card-header bg-light py-3 d-flex align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-attachment-line me-2"></i> Attachments
+                                {% if issue.attachments|length > 0 %}
+                                    <span class="badge bg-soft-primary text-primary rounded-pill ms-2">{{ issue.attachments|length }}</span>
+                                {% endif %}
+                            </h5>
+                            
+                            <div class="ms-auto">
+                                <!-- <button type="button" class="btn btn-sm btn-soft-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#addAttachmentModal">
+                                    <i class="ri-add-line align-bottom"></i> Add
+                                </button> -->
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if issue.attachments|length == 0 %}
+                                <div class="text-center p-3">
+                                    <i class="ri-attachment-line fs-2 text-muted"></i>
+                                    <p class="mt-2">No attachments yet</p>
+                                </div>
+                            {% else %}
+                                <div class="vstack gap-3">
+                                    {% for attachment in issue.attachments %}
+                                    <div class="p-2 border rounded">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-3">
+                                                <div class="avatar-sm">
+                                                    <div class="avatar-title bg-light text-primary rounded fs-24">
+                                                        <i class="ri-file-text-line"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="fs-13 mb-1">
+                                                    <a href="{{ url_for('tasks.download_issue_attachment', attachment_id=attachment.id) }}" class="text-body">
+                                                        {{ attachment.file_name }}
+                                                    </a>
+                                                </h5>
+                                                <div>
+                                                    <p class="text-muted mb-0 fs-11">
+                                                        <span>Uploaded by {{ attachment.uploader.name if attachment.uploader else 'Unknown' }}</span>
+                                                        <span class="ms-2 utc-date" data-utc-date="{{ attachment.uploaded_at.isoformat() if attachment.uploaded_at else 'None' }}">
+                                                            {{ attachment.uploaded_at.strftime('%b %d, %Y') if attachment.uploaded_at else 'Unknown date' }}
+                                                        </span>
+                                                                                                        </p>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0 ms-2">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-ghost-secondary btn-icon btn-sm fs-16" 
+                                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="ri-more-2-fill"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ url_for('tasks.download_issue_attachment', attachment_id=attachment.id) }}">
+                                                                <i class="ri-download-2-line me-2 align-bottom text-muted"></i>Download
+                                                            </a>
+                                                        </li>
+                                                        <!-- <li>
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="deleteAttachment({{ attachment.id }})">
+                                                                <i class="ri-delete-bin-line me-2 align-bottom text-muted"></i>Delete
+                                                            </a>
+                                                        </li> -->
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Add Attachment Modal -->
+                    <div class="modal fade" id="addAttachmentModal" tabindex="-1" aria-labelledby="addAttachmentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addAttachmentModalLabel">
+                                        <i class="ri-attachment-line me-1"></i> Add Attachment
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="uploadIssueAttachmentForm" enctype="multipart/form-data">
+                                        <div class="mb-3">
+                                            <label for="attachmentFile" class="form-label">File</label>
+                                            <input type="file" class="form-control" id="attachmentFile" name="file" required>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" id="uploadAttachmentBtn">Upload</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+
+<script>
+// When first arriving at the issue detail page
+function saveIssueReferrer() {
+  // Only save if coming from a known source page and it's not already saved
+  if (document.referrer && !sessionStorage.getItem('issueDetailReferrer')) {
+    const referringUrl = document.referrer;
+    
+    // Check if the referrer is one of our known issue list pages
+    if (referringUrl.includes('/project/') && referringUrl.includes('/issues') ||
+        referringUrl.includes('/kanban_board')) {
+      sessionStorage.setItem('issueDetailReferrer', referringUrl);
+    }
+  }
+}
+
+// When the back button is clicked
+function handleBackNavigation() {
+  // Check if we have a saved referrer
+  const savedReferrer = sessionStorage.getItem('issueDetailReferrer');
+  
+  if (savedReferrer) {
+    // Clear the stored referrer
+    sessionStorage.removeItem('issueDetailReferrer');
+    // Navigate to the saved referrer
+    window.location.href = savedReferrer;
+  } else {
+    // Fallback navigation logic
+    const projectLink = document.querySelector('.breadcrumb-item a[href*="/project/"]');
+    if (projectLink) {
+      const projectUrl = projectLink.getAttribute('href');
+      const projectId = projectUrl.split('/').pop();
+      window.location.href = `/tasks/project/${projectId}/issues`;
+    } else {
+      window.location.href = '/tasks/projects';
+    }
+  }
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', saveIssueReferrer);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const issueId = getIssueIdFromUrl();
+    
+    // Initialize field handlers
+    initializeStatusHandler();
+    initializeAssigneeHandler();
+    initializePriorityHandler();
+    
+    // Initialize comment functionality
+    initializeComments(issueId);
+});
+
+// Get issue ID from URL
+function getIssueIdFromUrl() {
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 1];
+}
+
+// Initialize status change handler
+function initializeStatusHandler() {
+    const statusSelect = document.getElementById('issueStatus');
+    if (!statusSelect) return;
+    
+    statusSelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const issueId = getIssueIdFromUrl();
+        const newStatus = this.value;
+        
+        try {
+            const response = await fetch(`/tasks/api/issues/${issueId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status_id: parseInt(newStatus, 10)
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update status');
+            }
+            
+            const result = await response.json();
+            showSuccessAlert('Status updated successfully');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Error updating status:', error);
+            showErrorAlert(error.message || 'Failed to update status');
+        }
+    });
+}
+
+// Initialize assignee change handler
+function initializeAssigneeHandler() {
+    const assigneeSelect = document.getElementById('issueAssignee');
+    if (!assigneeSelect) return;
+    
+    assigneeSelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const issueId = getIssueIdFromUrl();
+        const newAssignee = this.value;
+        
+        try {
+            const response = await fetch(`/tasks/api/issues/${issueId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    assignee_id: newAssignee ? parseInt(newAssignee, 10) : null
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update assignee');
+            }
+            
+            const result = await response.json();
+            showSuccessAlert('Assignee updated successfully');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Error updating assignee:', error);
+            showErrorAlert(error.message || 'Failed to update assignee');
+        }
+    });
+}
+
+// Initialize priority change handler
+function initializePriorityHandler() {
+    const prioritySelect = document.getElementById('issuePriority');
+    if (!prioritySelect) return;
+    
+    prioritySelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const issueId = getIssueIdFromUrl();
+        const newPriority = this.value;
+        
+        try {
+            const response = await fetch(`/tasks/api/issues/${issueId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    priority_id: parseInt(newPriority)
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update priority');
+            }
+            
+            const result = await response.json();
+            showSuccessAlert('Priority updated successfully');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Error updating priority:', error);
+            showErrorAlert('Failed to update priority');
+        }
+    });
+}
+
+// Initialize comments functionality
+function initializeComments(issueId) {
+    const commentForm = document.getElementById('newComment');
+    const addCommentBtn = document.getElementById('addCommentBtn');
+    
+    if (!commentForm || !addCommentBtn) return;
+    
+    addCommentBtn.addEventListener('click', async function() {
+        const commentText = commentForm.value.trim();
+        if (!commentText) {
+            showErrorAlert('Please enter a comment');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/tasks/api/issues/${issueId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    comment: commentText
+                })
+            });
+            
+            if (!response.ok) throw new Error('Failed to add comment');
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showSuccessAlert('Comment added successfully');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(result.error || 'Failed to add comment');
+            }
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            showErrorAlert('Failed to add comment');
+        }
+    });
+}
+
+// Utility functions for alerts
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'Success!',
+        text: message,
+        icon: 'success',
+        customClass: {
+            confirmButton: 'btn btn-primary w-xs mt-2'
+        },
+        buttonsStyling: false,
+        timer: 1500
+    });
+}
+
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'Error!',
+        text: message,
+        icon: 'error',
+        customClass: {
+            confirmButton: 'btn btn-primary w-xs mt-2'
+        },
+        buttonsStyling: false
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Edit Document Entry{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Edit Document Entry</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Masters</a></li>
+                                <li class="breadcrumb-item"><a href="javascript:window.history.back();">Orders</a></li>
+                                <li class="breadcrumb-item active">Edit Document Entry</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <button onclick="window.history.back()" class="btn btn-secondary">
+                            <i class="ri-arrow-left-line me-1"></i> Back
+                        </button>
+                    </div>
+
+
+                    <!-- Edit Document Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="ri-file-edit-line me-2"></i> Document Entry Details
+                                </h5>
+                                <span class="badge badge-soft-primary ms-2">
+                                    #{{ entry.docserial }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('masters.edit_entry', entry_id=entry.id) }}">
+                                {{ form.csrf_token }}
+                                
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-user-line me-1 text-primary"></i>
+                                                Customer
+                                            </label>
+                                            <input type="text" class="form-control"
+                                                value="{{ entry.customer.customer_name if entry.customer else '-' }}" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-fingerprint-line me-1 text-primary"></i>
+                                                Document Serial
+                                            </label>
+                                            <input type="text" class="form-control" value="{{ entry.docserial }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-ship-line me-1 text-primary"></i>
+                                                Shipment Type
+                                            </label>
+                                            <input type="text" class="form-control" value="{{ entry.shipment_type.shipment_name }}"
+                                                readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-price-tag-3-line me-1 text-primary"></i>
+                                                Ship Category
+                                            </label>
+                                            <input type="text" class="form-control" value="{{ entry.ship_category_rel.catname }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-calendar-event-line me-1 text-primary"></i>
+                                                Deadline Date
+                                            </label>
+                                            <input type="date" class="form-control"
+                                                value="{{ entry.dealineDate.strftime('%Y-%m-%d') if entry.dealineDate }}" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-task-line me-1 text-primary"></i>
+                                                Document Status
+                                            </label>
+                                            {{ form.docStatusID(class="form-select") }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Assignment Section -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-user-settings-line me-1 text-primary"></i>
+                                                Assigned To
+                                            </label>
+                                            <select name="assigned_to" class="form-select">
+                                                <option value="">-- Select User --</option>
+                                                {% for user in eligible_users %}
+                                                    <option value="{{ user.id }}" {% if user.id == current_user_id %}selected{% endif %}>
+                                                        {{ user.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-checkbox-circle-line me-1 text-primary"></i>
+                                                Original Ready
+                                            </label>
+                                            <input type="text" class="form-control" value="{{ entry.cusOriginalReady }}" readonly>
+                                        </div>
+                                    </div>                             
+                                </div>
+
+
+                                <div class="mb-4">
+                                    <label class="form-label">
+                                        <i class="ri-chat-3-line me-1 text-primary"></i>
+                                        Comments
+                                    </label>
+                                    <textarea class="form-control" rows="4" readonly>{{ entry.custComment }}</textarea>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                    <a href="{{ url_for('masters.orders') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="ri-save-line me-1"></i>Update Status & Assignments
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock extra_js %}

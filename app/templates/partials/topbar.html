@@ -1,0 +1,637 @@
+{% block header %}
+        <header id="page-topbar">
+            <div class="layout-width">
+                <div class="navbar-header">
+                    <div class="d-flex">
+                        <!-- LOGO -->
+                        <div class="navbar-brand-box horizontal-logo">
+                            <a href="/" class="logo logo-dark">
+                                <span class="logo-sm">
+                                    <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="17">
+                                </span>
+                            </a>
+
+                            <a href="/" class="logo logo-light">
+                                <span class="logo-sm">
+                                    <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="17">
+                                </span>
+                            </a>
+                        </div>
+
+                        <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
+                            <span class="hamburger-icon">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </button>
+
+                        <!-- Company Logo Display -->
+                        {% if current_user.company and current_user.company.logo_data_url %}
+                        <div class="d-flex align-items-center ms-3">
+                            <img src="{{ current_user.company.logo_data_url }}" 
+                                alt="{{ current_user.company.company_name }}" 
+                                class="rounded-circle header-profile-user">
+                            <span class="ms-2 d-none d-md-inline-block text-muted small">
+                                {{ current_user.company.company_name }}
+                            </span>
+                        </div>
+                        {% endif %}
+
+                        <!-- App Search-->
+                        {#<form class="app-search d-none d-md-block">
+                            <div class="position-relative">
+                                <input type="text" class="form-control" placeholder="Search..." autocomplete="off"
+                                    id="search-options" value="">
+                                <span class="mdi mdi-magnify search-widget-icon"></span>
+                                <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none"
+                                    id="search-close-options"></span>
+                            </div>
+                            <div class="dropdown-menu dropdown-menu-lg" id="search-dropdown">
+                                <div data-simplebar style="max-height: 320px;">
+                                    <!-- item-->
+                                    <div class="dropdown-header">
+                                        <h6 class="text-overflow text-muted mb-0 text-uppercase">Recent Searches</h6>
+                                    </div>
+
+                                    <div class="dropdown-item bg-transparent text-wrap">
+                                        <a href="/" class="btn btn-soft-secondary btn-sm btn-rounded">how to setup <i
+                                                class="mdi mdi-magnify ms-1"></i></a>
+                                        <a href="/" class="btn btn-soft-secondary btn-sm btn-rounded">buttons <i
+                                                class="mdi mdi-magnify ms-1"></i></a>
+                                    </div>
+                                    <!-- item-->
+                                    <div class="dropdown-header mt-2">
+                                        <h6 class="text-overflow text-muted mb-1 text-uppercase">Pages</h6>
+                                    </div>
+
+                                    <!-- item-->
+                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                        <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
+                                        <span>Analytics Dashboard</span>
+                                    </a>
+
+                                    <!-- item-->
+                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                        <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
+                                        <span>Help Center</span>
+                                    </a>
+
+                                    <!-- item-->
+                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
+                                        <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
+                                        <span>My account settings</span>
+                                    </a>
+
+                                    <!-- item-->
+                                    <div class="dropdown-header mt-2">
+                                        <h6 class="text-overflow text-muted mb-2 text-uppercase">Members</h6>
+                                    </div>
+
+                                    <div class="notification-list">
+                                        <!-- item -->
+                                        <a href="javascript:void(0);" class="d-flex dropdown-item notify-item py-2">
+                                            <img src="{{url_for('static' ,filename='images/users/avatar-2.jpg')}}" class="me-3 rounded-circle avatar-xs"
+                                                alt="user-pic">
+                                            <div class="flex-1">
+                                                <h6 class="m-0">Angela Bernier</h6>
+                                                <span class="fs-11 mb-0 text-muted">Manager</span>
+                                            </div>
+                                        </a>
+                                        <!-- item -->
+                                        <a href="javascript:void(0);" class="d-flex dropdown-item notify-item py-2">
+                                            <img src="{{url_for('static' ,filename='images/users/avatar-3.jpg')}}" class="me-3 rounded-circle avatar-xs"
+                                                alt="user-pic">
+                                            <div class="flex-1">
+                                                <h6 class="m-0">David Grasso</h6>
+                                                <span class="fs-11 mb-0 text-muted">Web Designer</span>
+                                            </div>
+                                        </a>
+                                        <!-- item -->
+                                        <a href="javascript:void(0);" class="d-flex dropdown-item notify-item py-2">
+                                            <img src="{{url_for('static' ,filename='images/users/avatar-5.jpg')}}" class="me-3 rounded-circle avatar-xs"
+                                                alt="user-pic">
+                                            <div class="flex-1">
+                                                <h6 class="m-0">Mike Bunch</h6>
+                                                <span class="fs-11 mb-0 text-muted">React Developer</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="text-center pt-3 pb-1">
+                                    <a href="#" class="btn btn-primary btn-sm">View All Results <i
+                                            class="ri-arrow-right-line ms-1"></i></a>
+                                </div>
+                            </div>
+                        </form>#}
+                    </div>
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="dropdown d-md-none topbar-head-dropdown header-item">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle shadow-none"
+                                id="page-header-search-dropdown" data-bs-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
+                                <i class="bx bx-search fs-22"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"
+                                aria-labelledby="page-header-search-dropdown">
+                                <form class="p-3">
+                                    <div class="form-group m-0">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" placeholder="Search ..."
+                                                aria-label="Recipient's username">
+                                            <button class="btn btn-primary" type="submit"><i
+                                                    class="mdi mdi-magnify"></i></button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- <div class="dropdown ms-1 topbar-head-dropdown header-item">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle shadow-none"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img id="header-lang-img" src="{{url_for('static' ,filename='images/flags/us.svg')}}" alt="Header Language" height="20"
+                                    class="rounded">
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language py-2" data-lang="en"
+                                    title="English">
+                                    <img src="{{url_for('static' ,filename='images/flags/us.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">English</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="sp"
+                                    title="Spanish">
+                                    <img src="{{url_for('static' ,filename='images/flags/spain.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">Española</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="gr"
+                                    title="German">
+                                    <img src="{{url_for('static' ,filename='images/flags/germany.svg')}}" alt="user-image" class="me-2 rounded"
+                                        height="18"> <span class="align-middle">Deutsche</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="it"
+                                    title="Italian">
+                                    <img src="{{url_for('static' ,filename='images/flags/italy.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">Italiana</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="ru"
+                                    title="Russian">
+                                    <img src="{{url_for('static' ,filename='images/flags/russia.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">русский</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="ch"
+                                    title="Chinese">
+                                    <img src="{{url_for('static' ,filename='images/flags/china.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">中国人</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="fr"
+                                    title="French">
+                                    <img src="{{url_for('static' ,filename='images/flags/french.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">français</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item notify-item language" data-lang="ar" title="Arabic">
+                                    <img src="{{url_for('static' ,filename='images/flags/ar.svg')}}" alt="user-image" class="me-2 rounded" height="18">
+                                    <span class="align-middle">Arabic</span>
+                                </a>
+                            </div>
+                        </div> -->
+
+                        <!-- <div class="dropdown topbar-head-dropdown ms-1 header-item">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle shadow-none"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class='bx bx-category-alt fs-22'></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg p-0 dropdown-menu-end">
+                                <div class="p-3 border-top-0 border-start-0 border-end-0 border-dashed border">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <h6 class="m-0 fw-semibold fs-15"> Web Apps </h6>
+                                        </div>
+                                        <div class="col-auto">
+                                            <a href="#!" class="btn btn-sm btn-soft-info shadow-none"> View All Apps
+                                                <i class="ri-arrow-right-s-line align-middle"></i></a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-2">
+                                    <div class="row g-0">
+                                        <div class="col">
+                                            <a class="dropdown-icon-item" href="#!">
+                                                <img src="{{url_for('static' ,filename='images/brands/github.png')}}" alt="Github">
+                                                <span>GitHub</span>
+                                            </a>
+                                        </div>
+                                        <div class="col">
+                                            <a class="dropdown-icon-item" href="#!">
+                                                <img src="{{url_for('static' ,filename='images/brands/bitbucket.png')}}" alt="bitbucket">
+                                                <span>Bitbucket</span>
+                                            </a>
+                                        </div>
+                                        <div class="col">
+                                            <a class="dropdown-icon-item" href="#!">
+                                                <img src="{{url_for('static' ,filename='images/brands/dribbble.png')}}" alt="dribbble">
+                                                <span>Dribbble</span>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-0">
+                                        <div class="col">
+                                            <a class="dropdown-icon-item" href="#!">
+                                                <img src="{{url_for('static' ,filename='images/brands/dropbox.png')}}" alt="dropbox">
+                                                <span>Dropbox</span>
+                                            </a>
+                                        </div>
+                                        <div class="col">
+                                            <a class="dropdown-icon-item" href="#!">
+                                                <img src="{{url_for('static' ,filename='images/brands/mail_chimp.png')}}" alt="mail_chimp">
+                                                <span>Mail Chimp</span>
+                                            </a>
+                                        </div>
+                                        <div class="col">
+                                            <a class="dropdown-icon-item" href="#!">
+                                                <img src="{{url_for('static' ,filename='images/brands/slack.png')}}" alt="slack">
+                                                <span>Slack</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
+
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle shadow-none"
+                                data-toggle="fullscreen">
+                                <i class='bx bx-fullscreen fs-22'></i>
+                            </button>
+                        </div>
+
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode shadow-none">
+                                <i class='bx bx-moon fs-22'></i>
+                            </button>
+                        </div>
+
+                  
+                        <!-- Notification dropdown button with dynamic count -->
+                        <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle shadow-none"
+                                id="page-header-notifications-dropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true"
+                                aria-expanded="false">
+                                <i class='bx bx-bell fs-22'></i>
+                                {% if notifications.total_count > 0 %}
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger" id="topbar-notification-count">
+                                    {{ notifications.total_count }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                                {% endif %}
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"
+                                aria-labelledby="page-header-notifications-dropdown">
+
+                                <div class="dropdown-head bg-primary bg-pattern rounded-top">
+                                    <div class="p-3">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="m-0 fs-16 fw-semibold text-white"> Notifications </h6>
+                                            </div>
+                                            <div class="col-auto dropdown-tabs">
+                                                {% if notifications.total_count > 0 %}
+                                                <span class="badge badge-soft-light fs-13" id="topbar-notification-badge"> {{ notifications.total_count }} New</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="px-2 pt-2">
+                                        <ul class="nav nav-tabs dropdown-tabs nav-tabs-custom" data-dropdown-tabs="true"
+                                            id="notificationItemsTab" role="tablist">
+                                            <li class="nav-item waves-effect waves-light">
+                                                <a class="nav-link active" data-bs-toggle="tab" href="#all-noti-tab" role="tab"
+                                                    aria-selected="true">
+                                                    All {% if notifications.total_count > 0 %}({{ notifications.total_count }}){% endif %}
+                                                </a>
+                                            </li>
+                                            <li class="nav-item waves-effect waves-light">
+                                                <a class="nav-link" data-bs-toggle="tab" href="#messages-tab" role="tab"
+                                                    aria-selected="false">
+                                                    Messages {% if notifications.chat_notifications|length > 0 %}({{ notifications.chat_notifications|length }}){% endif %}
+                                                </a>
+                                            </li>
+                                            <li class="nav-item waves-effect waves-light">
+                                                <a class="nav-link" data-bs-toggle="tab" href="#alerts-tab" role="tab"
+                                                    aria-selected="false">
+                                                    Alerts {% if (notifications.questionnaire_reviews|length + notifications.monthly_safety_reviews|length) > 0 %}({{ notifications.questionnaire_reviews|length + notifications.monthly_safety_reviews|length }}){% endif %}
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content position-relative" id="notificationItemsTabContent">
+                                    <!-- All tab content - shows all notifications -->
+                                    <div class="tab-pane fade show active py-2 ps-2" id="all-noti-tab" role="tabpanel">
+                                        <div data-simplebar style="max-height: 300px;" class="pe-2">
+                                            {% if notifications.total_count > 0 %}
+                                                <!-- Chat notifications -->
+                                                {% for notification in notifications.chat_notifications %}
+                                                <div class="text-reset notification-item d-block dropdown-item position-relative chat-notification-item" 
+                                                     data-message-id="{{ notification.id }}" 
+                                                     data-thread-id="{{ notification.thread_id }}"
+                                                     data-module="{{ notification.module_name }}"
+                                                     data-entry-id="{{ notification.entry_id }}">
+                                                    <div class="d-flex">
+                                                        <div class="avatar-xs me-3">
+                                                            <span class="avatar-title bg-soft-primary text-primary rounded-circle fs-16">
+                                                                <i class="ri-message-2-line"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <a href="javascript:void(0)" class="stretched-link chat-notification-link">
+                                                                <h6 class="mt-0 mb-2 lh-base">New message from <b>{{ notification.sender_name }}</b></h6>
+                                                                <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                                                <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                                    <span><i class="mdi mdi-clock-outline"></i> {{ notification.timestamp.strftime('%Y-%m-%d %H:%M') if notification.timestamp else 'N/A' }}</span>
+                                                                    <span class="ms-2"><i class="ri-file-text-line"></i> {{ notification.docserial }}</span>
+                                                                </p>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                
+                                                <!-- Questionnaire review notifications -->
+                                                {% for notification in notifications.questionnaire_reviews %}
+                                                <div class="text-reset notification-item d-block dropdown-item position-relative">
+                                                    <div class="d-flex">
+                                                        <div class="avatar-xs me-3">
+                                                            <span class="avatar-title bg-soft-info text-info rounded-circle fs-16">
+                                                                <i class="ri-questionnaire-line"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <a href="{{ url_for('main.view_user_response', id=notification.id) }}" class="stretched-link">
+                                                                <h6 class="mt-0 mb-2 lh-base">RIR Response <b>{{ notification.code }}</b> needs your review</h6>
+                                                            </a>
+                                                            <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                                <span><i class="mdi mdi-clock-outline"></i> {{ notification.timestamp.strftime('%Y-%m-%d %H:%M') if notification.timestamp else 'N/A' }}</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                
+                                                <!-- Monthly safety data review notifications -->
+                                                {% for notification in notifications.monthly_safety_reviews %}
+                                                <div class="text-reset notification-item d-block dropdown-item position-relative">
+                                                    <div class="d-flex">
+                                                        <div class="avatar-xs me-3">
+                                                            <span class="avatar-title bg-soft-success text-success rounded-circle fs-16">
+                                                                <i class="ri-file-chart-line"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <a href="{{ url_for('hse_data.view_record_data', id=notification.id) }}" class="stretched-link">
+                                                                <h6 class="mt-0 mb-2 lh-base">Monthly Safety Record <b>{{ notification.code }}</b> needs your review</h6>
+                                                            </a>
+                                                            <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                                <span><i class="mdi mdi-clock-outline"></i> {{ notification.timestamp.strftime('%Y-%m-%d %H:%M') if notification.timestamp else 'N/A' }}</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                
+                                                <div class="my-3 text-center view-all">
+                                                    <button type="button" class="btn btn-soft-success waves-effect waves-light">View
+                                                        All Notifications <i class="ri-arrow-right-line align-middle"></i></button>
+                                                </div>
+                                            {% else %}
+                                                <div class="w-100 text-center py-4">
+                                                    <div class="avatar-md mx-auto mb-4">
+                                                        <div class="avatar-title bg-light text-secondary rounded-circle fs-24">
+                                                            <i class="ri-notification-off-line"></i>
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="mb-1">No Notifications</h5>
+                                                    <p class="text-muted">You're all caught up! No pending notifications.</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Messages tab content -->
+                                    <div class="tab-pane fade py-2 ps-2" id="messages-tab" role="tabpanel" aria-labelledby="messages-tab">
+                                        <div data-simplebar style="max-height: 300px;" class="pe-2">
+                                            {% if notifications.chat_notifications|length > 0 %}
+                                                {% for notification in notifications.chat_notifications %}
+                                                <div class="text-reset notification-item d-block dropdown-item position-relative chat-notification-item" 
+                                                     data-message-id="{{ notification.id }}" 
+                                                     data-thread-id="{{ notification.thread_id }}"
+                                                     data-module="{{ notification.module_name }}"
+                                                     data-entry-id="{{ notification.entry_id }}">
+                                                    <div class="d-flex">
+                                                        <div class="avatar-xs me-3">
+                                                            <span class="avatar-title bg-soft-primary text-primary rounded-circle fs-16">
+                                                                <i class="ri-message-2-line"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <a href="javascript:void(0)" class="stretched-link chat-notification-link">
+                                                                <h6 class="mt-0 mb-2 lh-base">New message from <b>{{ notification.sender_name }}</b></h6>
+                                                                <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                                                <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                                    <span><i class="mdi mdi-clock-outline"></i> {{ notification.timestamp.strftime('%Y-%m-%d %H:%M') if notification.timestamp else 'N/A' }}</span>
+                                                                    <span class="ms-2"><i class="ri-file-text-line"></i> {{ notification.docserial }}</span>
+                                                                </p>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="w-100 text-center py-4">
+                                                    <div class="avatar-md mx-auto mb-4">
+                                                        <div class="avatar-title bg-light text-secondary rounded-circle fs-24">
+                                                            <i class="ri-mail-line"></i>
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="mb-1">No Messages</h5>
+                                                    <p class="text-muted">Your message inbox is empty.</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Alerts tab content -->
+                                    <div class="tab-pane fade py-2 ps-2" id="alerts-tab" role="tabpanel" aria-labelledby="alerts-tab">
+                                        <div data-simplebar style="max-height: 300px;" class="pe-2">
+                                            {% if (notifications.questionnaire_reviews|length + notifications.monthly_safety_reviews|length) > 0 %}
+                                                <!-- RIR Response review alerts -->
+                                                {% if notifications.questionnaire_reviews|length > 0 %}
+                                                <div class="text-reset notification-item d-block dropdown-item">
+                                                    <div class="d-flex">
+                                                        <div class="flex-shrink-0 avatar-xs me-3">
+                                                            <span class="avatar-title bg-soft-warning text-warning rounded-circle fs-16">
+                                                                <i class="ri-questionnaire-line"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <a href="{{ url_for('main.list_responses') }}" class="stretched-link">
+                                                                <h6 class="mt-0 mb-2 fs-13 lh-base">You have <b class="text-danger">{{ notifications.questionnaire_reviews|length }}</b> RIR responses pending review</h6>
+                                                            </a>
+                                                            <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                                <span><i class="mdi mdi-clock-outline"></i> Review Required</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                
+                                                <!-- Monthly Safety review alerts -->
+                                                {% if notifications.monthly_safety_reviews|length > 0 %}
+                                                <div class="text-reset notification-item d-block dropdown-item">
+                                                    <div class="d-flex">
+                                                        <div class="flex-shrink-0 avatar-xs me-3">
+                                                            <span class="avatar-title bg-soft-info text-info rounded-circle fs-16">
+                                                                <i class="ri-file-chart-line"></i>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <a href="{{ url_for('hse_data.record_data') }}" class="stretched-link">
+                                                                <h6 class="mt-0 mb-2 fs-13 lh-base">You have <b class="text-danger">{{ notifications.monthly_safety_reviews|length }}</b> monthly safety records pending review</h6>
+                                                            </a>
+                                                            <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                                <span><i class="mdi mdi-clock-outline"></i> Review Required</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="w-100 text-center py-4">
+                                                    <div class="avatar-md mx-auto mb-4">
+                                                        <div class="avatar-title bg-light text-secondary rounded-circle fs-24">
+                                                            <i class="ri-error-warning-line"></i>
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="mb-1">No Alerts</h5>
+                                                    <p class="text-muted">You have no pending alerts or reviews.</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                      
+
+                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                            <button type="button" class="btn shadow-none" id="page-header-user-dropdown" data-bs-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <img class="rounded-circle header-profile-user"
+     src="{% if current_user.profile_picture %}data:image/jpeg;base64,{{ current_user.profile_picture_base64 }}{% else %}{{ url_for('static', filename='images/users/user-dummy-img4.png') }}{% endif %}"
+     alt="Header Avatar">
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-none d-xl-block ms-1 fs-12 text-muted user-name-sub-text">
+                                            {{ current_user.name }}
+                                        
+                                    </span>
+                                        <!-- <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ current_user.username }}</span> -->
+                                        <span class="d-none d-xl-block ms-1 fs-12 text-muted">
+                                            {% if current_user.role == 'super_admin' %}
+                                                Super Admin
+                                            {% elif current_user.role == 'company_admin' %}
+                                                Company Admin
+                                            {% elif current_user.role == 'developer' %}
+                                                Developer
+                                            {% elif current_user.role == 'user' %}
+                                                Custom House Agent
+                                            {% elif current_user.role == 'customer' %}
+                                                Customer
+                                            {% elif current_user.role == 'base_user' %}
+                                                Base User
+                                            {% else %}
+                                                {{ current_user.role }}
+                                            {% endif %}
+                                        </span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 text-muted user-name-sub-text">
+                                            {% if current_user.role == 'customer' %}
+                                                {{ current_user.customer.short_name if current_user.customer and current_user.customer.short_name else current_user.name }}
+                                            {% elif current_user.role == 'clearing_agent' %}
+                                                {{ current_user.customer.short_name if current_user.customer and current_user.customer.short_name else current_user.name }}
+                                            {% elif current_user.role == 'clearing_company' %}
+                                                {{ current_user.customer.short_name if current_user.customer and current_user.customer.short_name else current_user.name }}
+                                            {% else %}
+                                                {{ current_user.company.company_name }}
+                                            {% endif %}
+                                        </span>
+                                        
+                                    </span>
+                                </span> 
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <!-- item-->
+                                <h6 class="dropdown-header">Welcome {{ current_user.username.split()[0] }}!</h6>
+                                <a class="dropdown-item" href="{{ url_for('user.profile') }}">
+                                    <i class="ri-user-line align-middle me-1"></i> Profile
+                                </a>
+                                <a class="dropdown-item" href="#"><i
+                                        class="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1"></i> <span
+                                        class="align-middle">Messages</span></a>
+
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#"><span
+                                        class="badge bg-soft-success text-success mt-1 float-end">New</span><i
+                                        class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> <span
+                                        class="align-middle">Settings</span></a>
+                               <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                            <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> 
+                                            <span class="align-middle" data-key="t-logout">Logout</span>
+                                        </a>                                        
+                            </div>
+                        </div>
+                       {% if messages %}
+                        {% for message in messages %}
+                        <input type="hidden" id="login-msg" value="{{message}}">
+    
+                        <button type="button" class="btn btn-primary" id="liveToastBtn" hidden></button>
+                        <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+                            <div class="toast align-items-right text-white bg-primary border-0" id="toast-message" role="alert"
+                                aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                       
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                                        aria-label="Close"></button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor%}
+                        {% endif%}
+                    
+                    </div>
+                </div>
+            </div>
+        </header>
+{% endblock header %}

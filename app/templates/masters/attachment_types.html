@@ -1,0 +1,505 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Attachment Type Management{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Attachment Type Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item active">Attachment Types</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <a href="{{ url_for('masters.add_attachment_type') }}" class="btn btn-primary">
+                            <i class="ri-add-line me-1"></i> Add Attachment Type
+                        </a>
+                    </div>
+
+                    <!-- Attachment Types Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Attachment Types List</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="attachment-tree">
+                                {% for attachment_type in attachment_types %}
+                                <div class="card shadow-sm mt-3">
+                                    <div class="card-header bg-light d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <i class="ri-attachment-line me-2 text-muted"></i>
+                                            <span class="fw-bold">{{ attachment_type.attachment_name }}</span>
+                                            <span class="text-muted ms-2">({{ attachment_type.attachment_code }})</span>
+                                            <span class="badge badge-soft-primary ms-2">{{ attachment_type.role.role_name }}</span>
+                                            {% if attachment_type.is_active %}
+                                            <span class="badge badge-soft-success ms-2">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-soft-danger ms-2">Inactive</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="hstack gap-2">
+                                            <a href="{{ url_for('masters.edit_attachment_type', attachment_type_id=attachment_type.id) }}" 
+                                               class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+                                                <i class="ri-pencil-line"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" title="Documents" onclick="toggleDocuments('{{ attachment_type.id }}')">
+                                                <i class="ri-file-list-line"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" title="Delete" onclick="confirmDelete('{{ attachment_type.id }}')">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="documents{{ attachment_type.id }}" class="card-body" style="display: none;">
+                                        <div class="border-bottom pb-3 mb-3">
+                                            <h6 class="mb-3 text-uppercase fs-12 fw-semibold text-muted">Documents</h6>
+                                            <!-- Add Document Form -->
+                                            <form class="document-form row g-3 align-items-end"
+                                                data-attachment-type-id="{{ attachment_type.id }}">
+                                                <div class="col-md-5">
+                                                    <label for="description{{ attachment_type.id }}" class="form-label">Document Description</label>
+                                                    <input type="text" class="form-control"
+                                                        id="description{{ attachment_type.id }}" name="description" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="sampleFile{{ attachment_type.id }}" class="form-label">Sample Document (Optional)</label>
+                                                    <input type="file" class="form-control" id="sampleFile{{ attachment_type.id }}" name="sampleFile">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="d-flex gap-3">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                id="isMandatory{{ attachment_type.id }}" name="isMandatory">
+                                                            <label class="form-check-label" for="isMandatory{{ attachment_type.id }}">
+                                                                Mandatory
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                id="allowMultiple{{ attachment_type.id }}" name="allowMultiple">
+                                                            <label class="form-check-label" for="allowMultiple{{ attachment_type.id }}">
+                                                                Multiple Files
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary w-100 mt-2">
+                                                        <i class="ri-add-line me-1"></i> Add
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <!-- Documents List -->
+                                        <div class="documents-list" id="documentsList{{ attachment_type.id }}">
+                                            <!-- Documents will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this attachment type?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Document Modal -->
+    <div class="modal fade" id="editDocumentModal" tabindex="-1" aria-labelledby="editDocumentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDocumentModalLabel">Edit Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDocumentForm" class="row g-3">
+                        <input type="hidden" id="editDocumentId">
+                        <input type="hidden" id="editAttachmentTypeId">
+                        <div class="col-md-12 mb-3">
+                            <label for="editDescription" class="form-label">Document Description</label>
+                            <input type="text" class="form-control" id="editDescription" name="description" required>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="editSampleFile" class="form-label">Sample Document</label>
+                            <input type="file" class="form-control" id="editSampleFile" name="sampleFile">
+                            <div id="currentFileInfo" class="form-text mt-1"></div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="d-flex gap-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="editIsMandatory" name="isMandatory">
+                                    <label class="form-check-label" for="editIsMandatory">Mandatory Document</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="editAllowMultiple" name="allowMultiple">
+                                    <label class="form-check-label" for="editAllowMultiple">Allow Multiple Files</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="saveDocumentBtn" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Auto-hide flash messages after 5 seconds
+    const flashMessage = document.getElementById('flash-message');
+    if (flashMessage) {
+        setTimeout(() => {
+            const closeBtn = flashMessage.querySelector('.btn-close');
+            if (closeBtn) closeBtn.click();
+        }, 5000);
+    }
+
+    // Document form submission
+    document.querySelectorAll('.document-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const attachmentTypeId = this.dataset.attachmentTypeId;
+            
+            // Create FormData object for file upload
+            const formData = new FormData();
+            formData.append('attachment_type_id', attachmentTypeId);
+            formData.append('description', this.querySelector('[name="description"]').value);
+            formData.append('is_mandatory', this.querySelector('[name="isMandatory"]').checked ? 1 : 0);
+            formData.append('allow_multiple', this.querySelector('[name="allowMultiple"]').checked ? 1 : 0);
+
+            // Get the file if it exists
+            const fileInput = this.querySelector('[name="sampleFile"]');
+            if (fileInput.files.length > 0) {
+                formData.append('sampleFile', fileInput.files[0]);
+            }
+
+            fetch('/masters/attachment-document/add', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadDocuments(attachmentTypeId);
+                    this.reset();
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Document added successfully',
+                        icon: 'success',
+                        confirmButtonColor: '#0ab39c'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message || 'Failed to add document',
+                        icon: 'error',
+                        confirmButtonColor: '#f06548'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'An unexpected error occurred',
+                    icon: 'error',
+                    confirmButtonColor: '#f06548'
+                });
+            });
+        });
+    });
+
+    // Edit Document Button Handler
+    document.addEventListener('click', function(e) {
+        const editDocumentBtn = e.target.closest('.edit-document-btn');
+        if (editDocumentBtn) {
+            const documentId = editDocumentBtn.dataset.documentId;
+            const attachmentTypeId = editDocumentBtn.dataset.attachmentTypeId;
+            const description = editDocumentBtn.dataset.description;
+            const isMandatory = editDocumentBtn.dataset.isMandatory === 'true';
+            const allowMultiple = editDocumentBtn.dataset.allowMultiple === 'true';
+            const hasSample = editDocumentBtn.dataset.hasSample === 'true';
+
+            // Populate the edit modal fields
+            document.getElementById('editDocumentId').value = documentId;
+            document.getElementById('editAttachmentTypeId').value = attachmentTypeId;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editIsMandatory').checked = isMandatory;
+            document.getElementById('editAllowMultiple').checked = allowMultiple;
+
+            // Show sample file information if exists
+            const currentFileInfo = document.getElementById('currentFileInfo');
+            if (hasSample) {
+                currentFileInfo.innerHTML = '<span class="text-success"><i class="ri-file-text-line me-1"></i>Current sample file exists. Upload a new file to replace it.</span>';
+            } else {
+                currentFileInfo.innerHTML = '<span class="text-muted">No sample file uploaded</span>';
+            }
+            
+            // Show the edit modal
+            const editDocumentModal = new bootstrap.Modal(document.getElementById('editDocumentModal'));
+            editDocumentModal.show();
+        }
+    });
+
+    // Save Document Changes Button Handler
+    document.getElementById('saveDocumentBtn').addEventListener('click', function() {
+        const documentId = document.getElementById('editDocumentId').value;
+        const attachmentTypeId = document.getElementById('editAttachmentTypeId').value;
+        const description = document.getElementById('editDescription').value;
+        const isMandatory = document.getElementById('editIsMandatory').checked;
+        const allowMultiple = document.getElementById('editAllowMultiple').checked;
+        const sampleFile = document.getElementById('editSampleFile').files[0];
+
+        // Create form data for the request
+        const formData = new FormData();
+        formData.append('description', description);
+        formData.append('is_mandatory', isMandatory ? 1 : 0);
+        formData.append('allow_multiple', allowMultiple ? 1 : 0);
+
+        // Only append file if a new one is selected
+        if (sampleFile) {
+            formData.append('sampleFile', sampleFile);
+        }
+        
+        // Send update request
+        fetch(`/masters/attachment-document/${documentId}/update`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('editDocumentModal')).hide();
+                
+                // Show success alert
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Document updated successfully',
+                    icon: 'success',
+                    confirmButtonColor: '#0ab39c'
+                }).then(() => {
+                    // Reload the documents section
+                    loadDocuments(attachmentTypeId);
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message || 'Failed to update document',
+                    icon: 'error',
+                    confirmButtonColor: '#f06548'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'An unexpected error occurred',
+                icon: 'error',
+                confirmButtonColor: '#f06548'
+            });
+        });
+    });
+});
+
+function toggleDocuments(attachmentTypeId) {
+    const documentsDiv = document.getElementById(`documents${attachmentTypeId}`);
+    if (documentsDiv.style.display === 'none') {
+        documentsDiv.style.display = 'block';
+        loadDocuments(attachmentTypeId);
+    } else {
+        documentsDiv.style.display = 'none';
+    }
+}
+
+function confirmDelete(id) {
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = "{{ url_for('masters.delete_attachment_type', attachment_type_id=0) }}".replace('0', id);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function loadDocuments(attachmentTypeId) {
+    fetch(`/masters/attachment-documents/${attachmentTypeId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const documentsList = document.getElementById(`documentsList${attachmentTypeId}`);
+                documentsList.innerHTML = data.documents.map(doc => `
+                <div class="card shadow-none border mb-2">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <i class="ri-file-text-line me-2 text-muted"></i>
+                                <span>${doc.description}</span>
+                                ${doc.is_mandatory ? '<span class="badge badge-soft-warning ms-2">Mandatory</span>' : ''}
+                                ${doc.allow_multiple ? '<span class="badge badge-soft-info ms-2">Multiple Files</span>' : ''}
+                                ${doc.sample_file_url ? `<a href="${doc.sample_file_url}" class="ms-2 text-info" target="_blank"><i class="ri-download-line"></i> Sample</a>` : ''}
+                            </div>
+                            <div class="hstack gap-2">
+                                <button class="btn btn-sm btn-primary edit-document-btn" 
+                                    data-document-id="${doc.id}" 
+                                    data-attachment-type-id="${attachmentTypeId}"
+                                    data-description="${doc.description}"
+                                    data-is-mandatory="${doc.is_mandatory ? 'true' : 'false'}"
+                                    data-allow-multiple="${doc.allow_multiple ? 'true' : 'false'}"
+                                    data-has-sample="${doc.sample_file_url ? 'true' : 'false'}">
+                                    <i class="ri-pencil-line"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-document-btn" 
+                                    data-document-id="${doc.id}" 
+                                    data-attachment-type-id="${attachmentTypeId}">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+                
+                // Add event listeners to newly created delete document buttons
+                document.querySelectorAll('.delete-document-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const docId = this.getAttribute('data-document-id');
+                        const attTypeId = this.getAttribute('data-attachment-type-id');
+                        deleteDocument(docId, attTypeId);
+                    });
+                });
+
+                // Initialize tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading documents:', error);
+        });
+}
+
+function deleteDocument(documentId, attachmentTypeId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You want to delete this document?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'No, cancel!',
+        confirmButtonColor: '#f06548',
+        cancelButtonColor: '#0ab39c'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/masters/attachment-document/${documentId}/delete`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadDocuments(attachmentTypeId);
+                    Swal.fire(
+                        'Deleted!',
+                        'Document has been deleted.',
+                        'success'
+                    );
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        data.message || 'Failed to delete document',
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire(
+                    'Error!',
+                    'An unexpected error occurred',
+                    'error'
+                );
+            });
+        }
+    });
+}
+</script>
+{% endblock extra_js %}

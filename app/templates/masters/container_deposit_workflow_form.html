@@ -1,0 +1,519 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if workflow %}Edit{% else %}New{% endif %} Container Deposit Workflow{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if workflow %}Edit{% else %}New{% endif %} Container Deposit Workflow</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.container_deposit_workflows') }}">Workflows</a></li>
+                                <li class="breadcrumb-item active">{% if workflow %}Edit{% else %}Add{% endif %} Workflow</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <form method="POST" id="workflowForm">
+                        <!-- Workflow Basic Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-soft-primary">
+                                <h6 class="card-title mb-0">
+                                    <i class="ri-information-line me-1"></i>
+                                    Workflow Information
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="workflow_code" class="form-label">Workflow Code <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="workflow_code" name="workflow_code" 
+                                                   value="{{ workflow.workflow_code if workflow else '' }}" 
+                                                   placeholder="Enter workflow code" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="workflow_name" class="form-label">Workflow Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="workflow_name" name="workflow_name" 
+                                                   value="{{ workflow.workflow_name if workflow else '' }}" 
+                                                   placeholder="Enter workflow name" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch mt-4">
+                                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                                       {% if not workflow or workflow.is_active %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_active">
+                                                    Active
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Workflow Steps -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-soft-info d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">
+                                    <i class="ri-list-ordered me-1"></i>
+                                    Workflow Steps
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addWorkflowStep()">
+                                    <i class="ri-add-line me-1"></i>Add Step
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="workflowSteps">
+                                    {% if workflow and workflow.workflow_steps %}
+                                        {% for step in workflow.workflow_steps.order_by('step_number') %}
+                                        <div class="workflow-step-card mb-3" data-step-number="{{ step.step_number }}">
+                                            <input type="hidden" name="existing_step_ids[]" value="{{ step.id }}">
+
+                                            <div class="card shadow-none border">
+                                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">
+                                                        <i class="ri-number-{{ step.step_number }} me-1"></i>
+                                                        Step {{ step.step_number }}
+                                                    </h6>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeWorkflowStep(this)">
+                                                            <i class="ri-delete-bin-line"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Step Name <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control step-name" name="step_names[]" 
+                                                                   value="{{ step.step_name }}" placeholder="Enter step name" required>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Description</label>
+                                                            <input type="text" class="form-control step-description" name="step_descriptions[]" 
+                                                                   value="{{ step.description or '' }}" placeholder="Enter step description">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Documents for this step -->
+                                                    <div class="step-documents">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <label class="form-label mb-0">Required Documents</label>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addDocumentToStep(this)">
+                                                                <i class="ri-add-line me-1"></i>Add Document
+                                                            </button>
+                                                        </div>
+                                                        <div class="documents-container">
+                                                            {% for step_doc in step.step_documents %}
+                                                            <div class="document-row mb-2" data-doc-index="{{ loop.index0 }}" data-step-doc-id="{{ step_doc.id }}">
+                                                                <input type="hidden" name="existing_step_doc_ids_{{ step.step_number }}[]" value="{{ step_doc.id }}">
+                                                                <div class="row align-items-center">
+                                                                    <div class="col-md-6">
+                                                                        <select class="form-select document-select" name="step_documents_{{ step.step_number }}[]">
+                                                                            <option value="">Select Document</option>
+                                                                            {% for document in available_documents %}
+                                                                            <option value="{{ document.id }}" {% if step_doc.document_id == document.id %}selected{% endif %}>
+                                                                                {{ document.document_code }} - {{ document.document_name }}
+                                                                            </option>
+                                                                            {% endfor %}
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <div class="form-check form-switch">
+                                                                            <input class="form-check-input mandatory-check" type="checkbox" 
+                                                                                   name="step_doc_mandatory_{{ step.step_number }}_{{ loop.index0 }}" 
+                                                                                   value="1"
+                                                                                   {% if step_doc.is_mandatory %}checked{% endif %}>
+                                                                            <label class="form-check-label">Mandatory</label>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-2">
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDocumentFromStep(this)">
+                                                                            <i class="ri-delete-bin-line"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                    <!-- Default first step -->
+                                    <div class="workflow-step-card mb-3" data-step-number="1">
+                                        <input type="hidden" name="existing_step_ids[]" value="">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">
+                                                    <i class="ri-number-1 me-1"></i>
+                                                    Step 1
+                                                </h6>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeWorkflowStep(this)">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Step Name <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control step-name" name="step_names[]" 
+                                                               placeholder="Enter step name" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Description</label>
+                                                        <input type="text" class="form-control step-description" name="step_descriptions[]" 
+                                                               placeholder="Enter step description">
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Documents for this step -->
+                                                <div class="step-documents">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <label class="form-label mb-0">Required Documents</label>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addDocumentToStep(this)">
+                                                            <i class="ri-add-line me-1"></i>Add Document
+                                                        </button>
+                                                    </div>
+                                                    <div class="documents-container">
+                                                        <!-- Documents will be added here -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if not workflow or not workflow.workflow_steps %}
+                                <div class="text-center py-3" id="noStepsMessage">
+                                    <i class="ri-list-ordered fs-1 text-muted mb-2"></i>
+                                    <p class="text-muted mb-0">Click "Add Step" to create your first workflow step</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mb-2">
+                            <a href="{{ url_for('masters.container_deposit_workflows') }}" class="btn btn-light">
+                                <i class="ri-close-line me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ri-save-line me-1"></i>
+                                {% if workflow %}Update{% else %}Create{% endif %} Workflow
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+
+<!-- Document Row Template (Hidden) -->
+<div id="documentRowTemplate" style="display: none;">
+    <div class="document-row mb-2" data-doc-index="DOC_INDEX">
+        <input type="hidden" name="existing_step_doc_ids_STEP_NUMBER[]" value="">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <select class="form-select document-select" name="step_documents_STEP_NUMBER[]">
+                    <option value="">Select Document</option>
+                    {% for document in available_documents %}
+                    <option value="{{ document.id }}">{{ document.document_code }} - {{ document.document_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input mandatory-check" type="checkbox" 
+                           name="step_doc_mandatory_STEP_NUMBER_DOC_INDEX" value="1">
+                    <label class="form-check-label">Mandatory</label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDocumentFromStep(this)">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    let stepCounter = {{ workflow.workflow_steps.count() if workflow else 1 }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+        
+        // Form validation
+        const form = document.getElementById('workflowForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!validateWorkflowForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="ri-loader-2-line me-1 spinner-border spinner-border-sm"></i>Processing...';
+                }
+            });
+        }
+        
+        // Update step counter based on existing steps
+        updateStepCounter();
+        
+        // Update document indices for existing documents
+        updateAllDocumentIndices();
+    });
+
+    function addWorkflowStep() {
+        stepCounter++;
+        
+        const stepsContainer = document.getElementById('workflowSteps');
+        const noStepsMessage = document.getElementById('noStepsMessage');
+        
+        if (noStepsMessage) {
+            noStepsMessage.style.display = 'none';
+        }
+        
+        const stepHtml = `
+            <div class="workflow-step-card mb-3" data-step-number="${stepCounter}">
+                <input type="hidden" name="existing_step_ids[]" value="">
+                
+                <div class="card shadow-none border">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="ri-number-${stepCounter > 9 ? '' : stepCounter} me-1"></i>
+                            Step ${stepCounter}
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeWorkflowStep(this)">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Step Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control step-name" name="step_names[]" 
+                                    placeholder="Enter step name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Description</label>
+                                <input type="text" class="form-control step-description" name="step_descriptions[]" 
+                                    placeholder="Enter step description">
+                            </div>
+                        </div>
+                        
+                        <!-- Documents for this step -->
+                        <div class="step-documents">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">Required Documents</label>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addDocumentToStep(this)">
+                                    <i class="ri-add-line me-1"></i>Add Document
+                                </button>
+                            </div>
+                            <div class="documents-container">
+                                <!-- Documents will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        stepsContainer.insertAdjacentHTML('beforeend', stepHtml);
+    }
+
+    function removeWorkflowStep(button) {
+        const stepCard = button.closest('.workflow-step-card');
+        stepCard.remove();
+        
+        // Renumber remaining steps
+        renumberSteps();
+        
+        // Show no steps message if no steps remain
+        const remainingSteps = document.querySelectorAll('.workflow-step-card');
+        if (remainingSteps.length === 0) {
+            const noStepsMessage = document.getElementById('noStepsMessage');
+            if (noStepsMessage) {
+                noStepsMessage.style.display = 'block';
+            }
+        }
+    }
+
+    function addDocumentToStep(button) {
+        const stepCard = button.closest('.workflow-step-card');
+        const stepNumber = stepCard.getAttribute('data-step-number');
+        const documentsContainer = stepCard.querySelector('.documents-container');
+        
+        // Get the current number of documents in this step to generate unique index
+        const existingDocuments = documentsContainer.querySelectorAll('.document-row');
+        const docIndex = existingDocuments.length;
+        
+        const template = document.getElementById('documentRowTemplate');
+        let documentHtml = template.innerHTML
+            .replace(/STEP_NUMBER/g, stepNumber)
+            .replace(/DOC_INDEX/g, docIndex);
+        
+        documentsContainer.insertAdjacentHTML('beforeend', documentHtml);
+        
+        // Update document indices for this step
+        updateDocumentIndicesForStep(stepCard);
+    }
+
+    function removeDocumentFromStep(button) {
+        const documentRow = button.closest('.document-row');
+        const stepCard = button.closest('.workflow-step-card');
+        documentRow.remove();
+        
+        // Update document indices for this step after removal
+        updateDocumentIndicesForStep(stepCard);
+    }
+
+    function updateDocumentIndicesForStep(stepCard) {
+        const stepNumber = stepCard.getAttribute('data-step-number');
+        const documentRows = stepCard.querySelectorAll('.document-row');
+        
+        documentRows.forEach((row, index) => {
+            // Update data attribute
+            row.setAttribute('data-doc-index', index);
+            
+            // Update checkbox name
+            const checkbox = row.querySelector('.mandatory-check');
+            if (checkbox) {
+                checkbox.name = `step_doc_mandatory_${stepNumber}_${index}`;
+            }
+            
+            // Update hidden field name for existing step doc IDs
+            const hiddenField = row.querySelector('input[name*="existing_step_doc_ids"]');
+            if (hiddenField) {
+                hiddenField.name = `existing_step_doc_ids_${stepNumber}[]`;
+            }
+        });
+    }
+
+    function updateAllDocumentIndices() {
+        const stepCards = document.querySelectorAll('.workflow-step-card');
+        stepCards.forEach(stepCard => {
+            updateDocumentIndicesForStep(stepCard);
+        });
+    }
+
+    function renumberSteps() {
+        const stepCards = document.querySelectorAll('.workflow-step-card');
+        stepCards.forEach((card, index) => {
+            const newStepNumber = index + 1;
+            card.setAttribute('data-step-number', newStepNumber);
+            
+            // Update step header
+            const stepHeader = card.querySelector('.card-header h6');
+            stepHeader.innerHTML = `<i class="ri-number-${newStepNumber > 9 ? '' : newStepNumber} me-1"></i>Step ${newStepNumber}`;
+            
+            // Update document select names
+            const documentSelects = card.querySelectorAll('.document-select');
+            documentSelects.forEach(select => {
+                const oldName = select.getAttribute('name');
+                const newName = oldName.replace(/step_documents_\d+\[\]/, `step_documents_${newStepNumber}[]`);
+                select.setAttribute('name', newName);
+            });
+            
+            // Update document indices for this step
+            updateDocumentIndicesForStep(card);
+        });
+        
+        // Update counter
+        stepCounter = stepCards.length;
+    }
+
+    function updateStepCounter() {
+        const existingSteps = document.querySelectorAll('.workflow-step-card');
+        stepCounter = Math.max(existingSteps.length, 1);
+    }
+
+    function validateWorkflowForm() {
+        const workflowCode = document.getElementById('workflow_code').value.trim();
+        const workflowName = document.getElementById('workflow_name').value.trim();
+        
+        if (!workflowCode || !workflowName) {
+            alert('Please fill in workflow code and name');
+            return false;
+        }
+        
+        const stepCards = document.querySelectorAll('.workflow-step-card');
+        if (stepCards.length === 0) {
+            alert('Please add at least one workflow step');
+            return false;
+        }
+        
+        // Validate each step
+        for (let i = 0; i < stepCards.length; i++) {
+            const stepCard = stepCards[i];
+            const stepName = stepCard.querySelector('.step-name').value.trim();
+            
+            if (!stepName) {
+                alert(`Please enter a name for Step ${i + 1}`);
+                return false;
+            }
+        }
+        
+        return true;
+    }
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,602 @@
+{% extends "partials/base.html" %}
+{% block title %}{{ project.name }} - Details{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .section-container {
+        position: relative;
+        min-height: 100px;
+    }
+    .stats-icon {
+        font-size: 24px;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-bottom: 10px;
+    }
+    .category-progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <div class="d-flex align-items-center">
+                            {% if project.type.name == 'development' %}
+                            <i class="ri-code-box-line fs-22 me-2 text-primary"></i>
+                            {% else %}
+                            <i class="ri-task-line fs-22 me-2 text-success"></i>
+                            {% endif %}
+                            <h4 class="mb-sm-0">{{ project.name }}</h4>
+                        </div>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                                <li class="breadcrumb-item active">Project Details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <!-- Project Overview Card -->
+                <div class="col-xl-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-grow-1">
+                                    <span class="badge bg-{{ status_colors[project.status] }}">{{ project.status }}</span>
+                                    <span class="badge {% if project.type.name == 'development' %}bg-primary-subtle text-primary{% else %}bg-success-subtle text-success{% endif %} ms-1">
+                                        {{ project.type.name.title() }}
+                                    </span>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <a href="{{ url_for('tasks.project_edit', project_id=project.id) }}" 
+                                       class="btn btn-sm btn-success"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Edit">
+                                        <i class="ri-pencil-line"></i>
+                                    </a>
+                                    {% if project.type.name == 'development' %}
+                                    <a href="{{ url_for('tasks.project_issues', project_id=project.id) }}" 
+                                       class="btn btn-sm btn-primary ms-1"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Manage Issues">
+                                        <i class="ri-bug-line"></i>
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url_for('tasks.project_tasks', project_id=project.id) }}" 
+                                       class="btn btn-sm btn-warning ms-1"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Manage Tasks">
+                                        <i class="ri-task-line"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="text-muted mb-3">
+                                <i class="ri-key-line me-1"></i> {{ project.key }}
+                            </div>
+                            
+                            <div class="text-muted">{{ project.description or 'No description provided' }}</div>
+                            
+                            <hr>
+                            
+                            <!-- Project Lead -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Project Lead</h6>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                         alt="" class="rounded-circle avatar-xs">
+                                    <div class="ms-2">
+                                        <h6 class="mb-1">{{ project.lead.name }}</h6>
+                                        <p class="text-muted mb-0">{{ project.lead.role.role_name }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Timeline -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Timeline</h6>
+                                <div class="text-muted">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="ri-calendar-line me-2"></i>
+                                        <div>
+                                            <div class="fw-medium">Start Date</div>
+                                            <div class="utc-date" data-utc-date="{{ project.start_date.isoformat() if project.start_date else 'None' }}">
+                                                {{ project.start_date.strftime('%d %b, %Y') if project.start_date else 'Not set' }}
+                                            </div>
+                                                                                </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <i class="ri-calendar-check-line me-2"></i>
+                                        <div>
+                                            <div class="fw-medium">Due Date</div>
+                                            <div class="utc-date" data-utc-date="{{ project.end_date.isoformat() if project.end_date else 'None' }}">
+                                                {{ project.end_date.strftime('%d %b, %Y') if project.end_date else 'Not set' }}
+                                            </div>                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Overall Progress</h6>
+                                <div class="progress bg-soft-primary mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                         style="width: {{ stats.completion_percentage }}%"
+                                         aria-valuenow="{{ stats.completion_percentage }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <div class="text-muted">
+                                    <span class="fw-medium">{{ stats.completion_percentage }}%</span> completed
+                                </div>
+                            </div>
+
+                            <!-- Days Remaining -->
+                            {% if stats.days_remaining is not none %}
+                            <div class="mb-4">
+                                <h6 class="mb-3">Time Remaining</h6>
+                                <div class="d-flex align-items-center">
+                                    <i class="ri-time-line fs-18 me-2"></i>
+                                    <div>
+                                        <h5 class="mb-0">{{ stats.days_remaining }} days</h5>
+                                        <small class="text-muted">until due date</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Stats and Content -->
+                <div class="col-xl-9">
+                    <!-- Stats Card -->
+                    <div class="card mb-4">
+                        <div class="card-body section-container" id="stats-section">
+                            <div class="row">
+                                {% if project.type.name == 'development' %}
+                                <!-- Development Project Stats -->
+                                <div class="col-sm-6 col-md-4 col-lg-2">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-primary-subtle text-primary mx-auto">
+                                            <i class="ri-layout-masonry-line"></i>
+                                        </div>
+                                        <h5 class="total-epics mb-1">{{ stats.total_epics }}</h5>
+                                        <p class="text-muted mb-0">Epics</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-4 col-lg-2">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-success-subtle text-success mx-auto">
+                                            <i class="ri-book-read-line"></i>
+                                        </div>
+                                        <h5 class="total-stories mb-1">{{ stats.total_stories }}</h5>
+                                        <p class="text-muted mb-0">Stories</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-4 col-lg-2">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-info-subtle text-info mx-auto">
+                                            <i class="ri-task-line"></i>
+                                        </div>
+                                        <h5 class="total-tasks mb-1">{{ stats.total_tasks }}</h5>
+                                        <p class="text-muted mb-0">Tasks</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-4 col-lg-2">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-warning-subtle text-warning mx-auto">
+                                            <i class="ri-git-commit-line"></i>
+                                        </div>
+                                        <h5 class="total-subtasks mb-1">{{ stats.total_subtasks }}</h5>
+                                        <p class="text-muted mb-0">Sub-tasks</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-4 col-lg-2">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-danger-subtle text-danger mx-auto">
+                                            <i class="ri-bug-line"></i>
+                                        </div>
+                                        <h5 class="total-bugs mb-1">{{ stats.total_bugs }}</h5>
+                                        <p class="text-muted mb-0">Bugs</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-4 col-lg-2">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-primary-subtle text-primary mx-auto">
+                                            <i class="ri-team-line"></i>
+                                        </div>
+                                        <h5 class="total-members mb-1">{{ stats.total_members }}</h5>
+                                        <p class="text-muted mb-0">Team Size</p>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <!-- General Project Stats -->
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-primary-subtle text-primary mx-auto">
+                                            <i class="ri-task-line"></i>
+                                        </div>
+                                        <h5 class="total-tasks mb-1">{{ stats.total_tasks }}</h5>
+                                        <p class="text-muted mb-0">Total Tasks</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-success-subtle text-success mx-auto">
+                                            <i class="ri-check-double-line"></i>
+                                        </div>
+                                        <h5 class="completed-tasks mb-1">{{ stats.total_completed }}</h5>
+                                        <p class="text-muted mb-0">Completed</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-warning-subtle text-warning mx-auto">
+                                            <i class="ri-time-line"></i>
+                                        </div>
+                                        <h5 class="pending-tasks mb-1">{{ stats.total_tasks - stats.total_completed }}</h5>
+                                        <p class="text-muted mb-0">Pending</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="text-center mb-3">
+                                        <div class="stats-icon bg-info-subtle text-info mx-auto">
+                                            <i class="ri-team-line"></i>
+                                        </div>
+                                        <h5 class="total-members mb-1">{{ stats.total_members }}</h5>
+                                        <p class="text-muted mb-0">Team Size</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Distribution -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Status Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% if project.type.name == 'development' %}
+                                <!-- Development Status Distribution -->
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">To Do</h6>
+                                            <span class="badge bg-secondary">{{ stats.status_distribution.todo }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-secondary">
+                                            <div class="progress-bar bg-secondary" style="width: {{ (stats.status_distribution.todo / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">In Progress</h6>
+                                            <span class="badge bg-info">{{ stats.status_distribution.in_progress }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-info">
+                                            <div class="progress-bar bg-info" style="width: {{ (stats.status_distribution.in_progress / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">Review</h6>
+                                            <span class="badge bg-warning">{{ stats.status_distribution.review }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-warning">
+                                            <div class="progress-bar bg-warning" style="width: {{ (stats.status_distribution.review / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">Done</h6>
+                                            <span class="badge bg-success">{{ stats.status_distribution.done }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-success">
+                                            <div class="progress-bar bg-success" style="width: {{ (stats.status_distribution.done / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif project.type.name == 'general' %}
+                                <!-- General Project Status Distribution -->
+                                
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">To Do</h6>
+                                            <span class="badge bg-secondary">{{ stats.status_distribution.to_do }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-secondary">
+                                            <div class="progress-bar bg-secondary" style="width: {{ (stats.status_distribution.to_do / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">In Progress</h6>
+                                            <span class="badge bg-info">{{ stats.status_distribution.in_progress }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-info">
+                                            <div class="progress-bar bg-info" style="width: {{ (stats.status_distribution.in_progress / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h6 class="mb-0">Completed</h6>
+                                            <span class="badge bg-success">{{ stats.status_distribution.done }}</span>
+                                        </div>
+                                        <div class="progress category-progress bg-soft-success">
+                                            <div class="progress-bar bg-success" style="width: {{ (stats.status_distribution.done / stats.total_tasks * 100) if stats.total_tasks > 0 else 0 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4 mt-3">
+                                    
+                                    <h5 class="card-title mb-2">Project Categories</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Category</th>
+                                                    <th>Lead</th>
+                                                    <th>SLA Duration</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for category in project.categories %}
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="rounded-circle me-2" 
+                                                                  style="width: 12px; height: 12px; background-color: {{ category.color }}"></span>
+                                                            <span class="fw-medium">{{ category.name }}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {% if category.category_lead %}
+                                                        <div class="d-flex align-items-center">
+                                                            <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                                 alt="" class="rounded-circle avatar-xxs me-2">
+                                                            <span>{{ category.category_lead.name }}</span>
+                                                        </div>
+                                                        {% else %}
+                                                        <span class="text-muted">Not assigned</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="fw-medium">{{ category.sla_hours }} Hours</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {% endif %}
+                            </div>
+                        </div>
+    
+                        <!-- Team Members Card -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Team Members</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-centered align-middle table-nowrap mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Member</th>
+                                                <th scope="col">Assigned Items</th>
+                                                <th scope="col">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for member in project.team %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                             alt="" class="rounded-circle avatar-xs">
+                                                        <div class="ms-2">
+                                                            <h6 class="mb-1">{{ member.name }}</h6>
+                                                            <p class="text-muted mb-0">{{ member.email }}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if project.type.name == 'development' %}
+                                                        {{ member.get_assigned_issues_for_project(project.id)|length }} issues
+                                                    {% else %}
+                                                        {{ member.get_assigned_tasks_for_project(project.id)|length }} tasks
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge {% if member.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                                        {{ 'Active' if member.is_active else 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Recent Activity Timeline -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Recent Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for activity in activities %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                {% if activity.type == 'issue' %}
+                                                <i class="ri-bug-line fs-20 text-primary"></i>
+                                                {% else %}
+                                                <i class="ri-task-line fs-20 text-success"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                                <p class="text-muted mb-2">{{ activity.description }}</p>
+                                                <small class="text-muted">
+                                                    By {{ activity.user }} • 
+                                                    <span class="utc-datetime" data-utc-datetime="{{ activity.timestamp.isoformat() if activity.timestamp else 'None' }}">
+                                                        {{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                                    </span>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% include "partials/footer.html" %}
+    </div>
+{% endblock %}
+    
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Convert dates to local timezone
+            convertToLocalTime();
+    
+            // Auto-refresh data every 30 seconds
+            setInterval(function() {
+                loadProjectStats();
+            }, 30000);
+        });
+    
+        async function loadProjectStats() {
+            const projectId = window.location.pathname.split('/').pop();
+            try {
+                const response = await fetch(`/tasks/api/projects/${projectId}/stats`);
+                if (!response.ok) throw new Error('Failed to fetch stats');
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateStats(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading project stats:', error);
+            }
+        }
+
+        function convertToLocalTime() {
+            // Convert project dates
+            document.querySelectorAll('.utc-date').forEach(element => {
+                const utcDateStr = element.getAttribute('data-utc-date');
+                if (utcDateStr && utcDateStr !== 'None') {
+                const date = new Date(utcDateStr);
+                element.textContent = date.toLocaleDateString();
+                }
+            });
+
+            // Convert datetime stamps (with time)
+            document.querySelectorAll('.utc-datetime').forEach(element => {
+                const utcDateTimeStr = element.getAttribute('data-utc-datetime');
+                if (utcDateTimeStr && utcDateTimeStr !== 'None') {
+                const date = new Date(utcDateTimeStr);
+                element.textContent = date.toLocaleString();
+                }
+            });
+            }
+    
+        function updateStats(stats) {
+            // Update common stats
+            document.querySelector('.completion-rate').textContent = `${stats.completion_rate}%`;
+            
+            {% if project.type.name == 'development' %}
+            // Update development stats
+            document.querySelector('.total-epics').textContent = stats.total_epics;
+            document.querySelector('.total-stories').textContent = stats.total_stories;
+            document.querySelector('.total-tasks').textContent = stats.total_tasks;
+            document.querySelector('.total-bugs').textContent = stats.total_bugs;
+            {% else %}
+            // Update general project stats
+            document.querySelector('.total-tasks').textContent = stats.total_tasks;
+            document.querySelector('.completed-tasks').textContent = stats.total_completed;
+            document.querySelector('.pending-tasks').textContent = stats.total_tasks - stats.total_completed;
+            {% endif %}
+        }
+    </script>
+{% endblock %}

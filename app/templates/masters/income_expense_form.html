@@ -1,0 +1,147 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if income_expense %}Edit{% else %}New{% endif %} Income/Expense{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if income_expense %}Edit{% else %}New{% endif %} Income/Expense</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.income_expenses') }}">Income/Expense</a></li>
+                                <li class="breadcrumb-item active">{% if income_expense %}Edit{% else %}Add{% endif %} Income/Expense</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Income/Expense Form Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if income_expense %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Income/Expense Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('masters.save_income_expense') }}">
+                                {% if income_expense %}
+                                <input type="hidden" name="id" value="{{ income_expense.id }}">
+                                {% endif %}
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Basic Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
+                                                    <select class="form-select" id="type" name="type" required>
+                                                        <option value="">-- Select Type --</option>
+                                                        <option value="income" {% if income_expense and income_expense.type == 'income' %}selected{% endif %}>Income</option>
+                                                        <option value="expense" {% if income_expense and income_expense.type == 'expense' %}selected{% endif %}>Expense</option>
+                                                    </select>
+                                                    <div class="invalid-feedback">Please select a type.</div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="description" name="description" 
+                                                        value="{{ income_expense.description if income_expense else '' }}" required>
+                                                    <div class="invalid-feedback">Please enter a description.</div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="gl_code" class="form-label">GL Code <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="gl_code" name="gl_code" 
+                                                        value="{{ income_expense.gl_code if income_expense else '' }}" required>
+                                                    <div class="invalid-feedback">Please enter a GL code.</div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="status" name="status" 
+                                                            {% if not income_expense or income_expense.status %}checked{% endif %}>
+                                                        <label class="form-check-label" for="status">Active</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2 mt-4">
+                                    <a href="{{ url_for('masters.income_expenses') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>Save
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+        
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock extra_js %}

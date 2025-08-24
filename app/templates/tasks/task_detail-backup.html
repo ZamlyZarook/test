@@ -1,0 +1,539 @@
+{% extends "partials/base.html" %}
+{% block title %}{{ task.key }} - {{ task.title }}{% endblock title %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+<style>
+    .task-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+    }
+    .task-header {
+        padding: 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .task-id {
+        color: #6366f1;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    .task-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    .badge-status {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .status-in-progress {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+    .status-todo {
+        background-color: #e0e7ff;
+        color: #4f46e5;
+    }
+    .status-done {
+        background-color: #d1fae5;
+        color: #059669;
+    }
+    .meta-badges {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .description-section {
+        padding: 24px;
+    }
+    .description-header {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #374151;
+    }
+    .description-content {
+        color: #4b5563;
+        line-height: 1.6;
+    }
+    .activity-timeline {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 16px;
+    }
+    .activity-item {
+        padding: 16px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .task-container {
+    position: relative;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 24px;
+    overflow: hidden;
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Breadcrumb -->
+        <!-- Start page title -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                    <h4 class="mb-sm-0">{{ task.summary }}</h4>
+                    <div class="page-title-right">
+                        <ol class="breadcrumb m-0">
+                            <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                            {% if project %}
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_tasks', project_id=project.id) }}">Tasks</a></li>
+                            {% endif %}
+                            <li class="breadcrumb-item active">{{ task.issue_key }}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End page title -->
+
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- Task Details -->
+                    <!-- Task Details Container -->
+                    <div class="task-container position-relative">
+                        <!-- Top Right Actions -->
+                        <div class="position-absolute top-0 end-0 p-3">
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-light me-2" data-bs-toggle="modal" data-bs-target="#activityModal">
+                                    <i class="ri-time-line me-1"></i> Activity
+                                </button>
+                                <button class="btn btn-primary" id="editTaskBtn">
+                                    <i class="ri-edit-2-line me-1"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Task Header -->
+                        <div class="task-header d-flex align-items-center">
+                            <!-- User Avatar -->
+                            <div class="me-3">
+                                <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                    class="rounded-circle avatar-md" 
+                                    alt="Task Owner">
+                            </div>
+
+                            <!-- Task Metadata -->
+                            <div class="flex-grow-1">
+                                <div class="mb-1">
+                                    <span class="text-muted small">{{ task.issue_key }}</span>
+                                </div>
+                                <h4 class="task-title mb-2">{{ task.summary }}</h4>
+                                
+                                <!-- Status and Priority -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-{{ task.status.color }}-subtle text-{{ task.status.color }}">
+                                        {{ task.status.name }}
+                                    </span>
+                                    {% if task.priority %}
+                                    <span class="badge" style="background-color: {{ task.priority.color }}20; color: {{ task.priority.color }}">
+                                        {{ task.priority.name }}
+                                    </span>
+                                    {% endif %}
+                                    <span class="text-muted small">
+                                        <i class="ri-calendar-line align-bottom me-1"></i>
+                                        Created {{ task.created_at.strftime('%b %d, %Y') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="task-container">
+                        <div class="card-header bg-light py-3">
+                            <h6 class="mb-0">
+                                <i class="ri-chat-3-line me-2"></i> Comments
+                                {% if comments|length > 0 %}
+                                    <span class="badge bg-primary-subtle text-primary ms-2">{{ comments|length }}</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="p-4">
+                            <!-- Comment Form -->
+                            <div class="mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                            class="rounded-circle avatar-sm me-3">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <textarea class="form-control bg-light border-light" 
+                                                id="newComment" 
+                                                rows="3" 
+                                                placeholder="Write a comment..."></textarea>
+                                        <div class="d-flex justify-content-end mt-2">
+                                            <button class="btn btn-primary" id="addCommentBtn">
+                                                <i class="ri-send-plane-line me-1"></i> Add Comment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comments List -->
+                            <div id="commentsList">
+                                {% if comments|length == 0 %}
+                                    <div class="text-center p-4">
+                                        <i class="ri-chat-3-line fs-2 text-muted"></i>
+                                        <p class="mt-2">No comments yet. Be the first to comment!</p>
+                                    </div>
+                                {% else %}
+                                    {% for comment in comments %}
+                                    <div class="comment-item mb-4">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0">
+                                                <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                    class="rounded-circle avatar-sm me-3">
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-start mb-2">
+                                                    <div>
+                                                        <h6 class="mb-0">{{ comment.author.name }}</h6>
+                                                        <small class="text-muted">
+                                                            {{ comment.created_at.strftime('%b %d, %Y %H:%M') }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="comment-content">
+                                                    {{ comment.comment }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Status Control -->
+                    <div class="task-container">
+                        <div class="p-4">
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Status</label>
+                                <select class="form-control" id="taskStatus">
+                                    {% for status in statuses %}
+                                    <option value="{{ status.id }}" 
+                                            {% if status.id == task.status_id %}selected{% endif %}>
+                                        {{ status.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Assignee</label>
+                                <select class="form-control" id="taskAssignee">
+                                    <option value="">Unassigned</option>
+                                    {% for member in project_members %}
+                                    <option value="{{ member.id }}"
+                                            {% if member.id == task.assignee_id %}selected{% endif %}>
+                                        {{ member.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label fw-medium">Priority</label>
+                                <select class="form-control" id="taskPriority">
+                                    {% for priority in priorities %}
+                                    <option value="{{ priority.id }}"
+                                            {% if priority.id == task.priority_id %}selected{% endif %}>
+                                        {{ priority.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="task-container">
+                        <div class="p-4">
+                            <h6 class="fw-medium mb-3">Details</h6>
+                            <div class="details-list">
+                                <div class="details-item d-flex py-2">
+                                    <span class="text-muted w-35">Category</span>
+                                    <span>{{ task.category.name if task.category else '-' }}</span>
+                                </div>
+                                <div class="details-item d-flex py-2">
+                                    <span class="text-muted w-35">Created by</span>
+                                    <span>{{ task.reporter.name }}</span>
+                                </div>
+                                <div class="details-item d-flex py-2">
+                                    <span class="text-muted w-35">Created</span>
+                                    <span>{{ task.created_at.strftime('%Y-%m-%d') }}</span>
+                                </div>
+                                <div class="details-item d-flex py-2">
+                                    <span class="text-muted w-35">Updated</span>
+                                    <span>{{ task.updated_at.strftime('%Y-%m-%d') if task.updated_at else '-' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ri-time-line me-2"></i>Activity History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="activity-timeline">
+                    {% for activity in history %}
+                    <div class="activity-item">
+                        <div class="d-flex mb-2">
+                            <div class="flex-shrink-0">
+                                <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                     class="rounded-circle avatar-xs">
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">{{ activity.user.name }}</h6>
+                                <small class="text-muted">
+                                    {{ activity.changed_at.strftime('%b %d, %Y %H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="ms-5">
+                            <p class="text-muted mb-0">
+                                Changed {{ activity.field_name }} from 
+                                <span class="fw-medium">{{ activity.old_value }}</span> to 
+                                <span class="fw-medium text-primary">{{ activity.new_value }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+    
+{% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskId = getTaskIdFromUrl();
+        
+        // Initialize field handlers
+        initializeStatusHandler();
+        initializeAssigneeHandler();
+        initializePriorityHandler();
+        
+        // Initialize comments
+        initializeComments(taskId);
+    });
+    
+    // Get task ID from URL
+    function getTaskIdFromUrl() {
+        const pathParts = window.location.pathname.split('/');
+        return pathParts[pathParts.length - 1];
+    }
+    
+    // Initialize status change handler
+    function initializeStatusHandler() {
+        const statusSelect = document.getElementById('taskStatus');
+        if (!statusSelect) return;
+        
+        statusSelect.addEventListener('change', async function(e) {
+            e.preventDefault();
+            const taskId = getTaskIdFromUrl();
+            const newStatus = this.value;
+            
+            try {
+                const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status_id: parseInt(newStatus, 10)
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update status');
+                }
+                
+                const result = await response.json();
+                
+                showSuccessAlert('Status updated successfully');
+                loadTaskDetails(taskId);
+                
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showErrorAlert(error.message || 'Failed to update status');
+                loadTaskDetails(taskId);
+            }
+        });
+    }
+    
+    // Initialize assignee change handler
+    function initializeAssigneeHandler() {
+        const assigneeSelect = document.getElementById('taskAssignee');
+        if (!assigneeSelect) return;
+        
+        assigneeSelect.addEventListener('change', async function(e) {
+            e.preventDefault();
+            const taskId = getTaskIdFromUrl();
+            const newAssignee = this.value;
+            
+            try {
+                const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        assignee_id: newAssignee ? parseInt(newAssignee, 10) : null
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update assignee');
+                }
+                
+                showSuccessAlert('Assignee updated successfully');
+                loadTaskDetails(taskId);
+                
+            } catch (error) {
+                console.error('Error updating assignee:', error);
+                showErrorAlert(error.message || 'Failed to update assignee');
+                loadTaskDetails(taskId);
+            }
+        });
+    }
+    
+    // Initialize priority change handler
+    function initializePriorityHandler() {
+        const prioritySelect = document.getElementById('taskPriority');
+        if (!prioritySelect) return;
+        
+        prioritySelect.addEventListener('change', async function(e) {
+            e.preventDefault();
+            const taskId = getTaskIdFromUrl();
+            const newPriority = this.value;
+            
+            try {
+                const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        priority_id: parseInt(newPriority)
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update priority');
+                }
+                
+                showSuccessAlert('Priority updated successfully');
+                loadTaskDetails(taskId);
+                
+            } catch (error) {
+                console.error('Error updating priority:', error);
+                showErrorAlert('Failed to update priority');
+                loadTaskDetails(taskId);
+            }
+        });
+    }
+    
+    // Comments functionality
+    function initializeComments(taskId) {
+        const commentForm = document.getElementById('newComment');
+        const addCommentBtn = document.getElementById('addCommentBtn');
+        
+        if (!commentForm || !addCommentBtn) return;
+        
+        addCommentBtn.addEventListener('click', async function() {
+            const commentText = commentForm.value.trim();
+            if (!commentText) {
+                showErrorAlert('Please enter a comment');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/tasks/api/tasks/${taskId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        comment: commentText
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to add comment');
+                
+                showSuccessAlert('Comment added successfully');
+                commentForm.value = '';
+                loadTaskDetails(taskId);
+            } catch (error) {
+                console.error('Error adding comment:', error);
+                showErrorAlert('Failed to add comment');
+            }
+        });
+    }
+    
+    // Utility functions for alerts
+    function showSuccessAlert(message) {
+        Swal.fire({
+            title: 'Success!',
+            text: message,
+            icon: 'success',
+            confirmButtonClass: 'btn btn-primary w-xs mt-2',
+            buttonsStyling: false
+        });
+    }
+    
+    function showErrorAlert(message) {
+        Swal.fire({
+            title: 'Error!',
+            text: message,
+            icon: 'error',
+            confirmButtonClass: 'btn btn-primary w-xs mt-2',
+            buttonsStyling: false
+        });
+    }
+    </script>
+{% endblock %}

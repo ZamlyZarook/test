@@ -1,0 +1,342 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Runner Details{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Runner Details</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.runners') }}">Runners Management</a></li>
+                                <li class="breadcrumb-item active">Runner Details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('masters.runners') }}" class="btn btn-secondary">
+                                <i class="ri-arrow-left-line me-1"></i> Back
+                            </a>
+                            <a href="{{ url_for('masters.edit_runner', runner_id=runner.id) }}" class="btn btn-primary">
+                                <i class="ri-pencil-line me-1"></i> Edit
+                            </a>
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ runner.id }}')">
+                                <i class="ri-delete-bin-line me-1"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Runner Profile Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-user-line me-2 text-primary"></i> Runner Profile
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-4 text-center">
+                                    {% if runner.profile_image %}
+                                    <img src="{{ url_for('static', filename='profile_pics/' + runner.profile_image) }}"
+                                        alt="Profile" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                                    {% else %}
+                                    <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}" alt="Default Profile"
+                                        class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                                    {% endif %}
+                                    
+                                    <h5 class="mt-3 mb-1">{{ runner.first_name }} {{ runner.last_name }}</h5>
+                                    <p class="text-muted mb-0">{{ runner.runner_id }}</p>
+                                    
+                                    <div class="mt-3">
+                                        {% if runner.is_active %}
+                                        <span class="badge badge-soft-success">
+                                            <i class="ri-checkbox-circle-line me-1"></i> Active
+                                        </span>
+                                        {% else %}
+                                        <span class="badge badge-soft-danger">
+                                            <i class="ri-close-circle-line me-1"></i> Inactive
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-nowrap mb-0">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row" style="width: 30%;">NIC Number</th>
+                                                            <td>{{ runner.nic_no }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Email</th>
+                                                            <td>{{ runner.email }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Mobile</th>
+                                                            <td>{{ runner.mobile }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Date of Birth</th>
+                                                            <td>{{ runner.date_of_birth.strftime('%d-%b-%Y') if runner.date_of_birth else 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Assigned Area</th>
+                                                            <td>{{ runner.assigned_area }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-nowrap mb-0">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row" style="width: 30%;">Driving License</th>
+                                                            <td>{{ runner.driving_license_no }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">License Expiry</th>
+                                                            <td>{{ runner.driving_license_expiry.strftime('%d-%b-%Y') if runner.driving_license_expiry else 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Blood Group</th>
+                                                            <td>{{ runner.blood_group }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Allergies</th>
+                                                            <td>{{ runner.allergies or 'None' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Medical Insurance</th>
+                                                            <td>
+                                                                {% if runner.medical_insurance %}
+                                                                <span class="badge badge-soft-success">Yes</span>
+                                                                {% else %}
+                                                                <span class="badge badge-soft-danger">No</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Details Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-car-line me-2 text-primary"></i> Vehicle Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-0">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Registration No</th>
+                                                    <td>{{ runner.registration_no }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Vehicle Type</th>
+                                                    <td>{{ runner.vehicle_type }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Vehicle Model</th>
+                                                    <td>{{ runner.vehicle_model }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Vehicle Color</th>
+                                                    <td>{{ runner.vehicle_color }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Engine No</th>
+                                                    <td>{{ runner.engine_no }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-0">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Chassis No</th>
+                                                    <td>{{ runner.chassis_no }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance No</th>
+                                                    <td>{{ runner.insurance_no }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance Company</th>
+                                                    <td>{{ runner.insurance_company }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance Expiry</th>
+                                                    <td>{{ runner.insurance_expiry.strftime('%d-%b-%Y') if runner.insurance_expiry else 'N/A' }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Row for Medical Insurance and Emergency Contact -->
+                    <div class="row">
+                        <!-- Medical Insurance Card (if available) -->
+                        {% if runner.medical_insurance %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-heart-pulse-line me-2 text-primary"></i> Medical Insurance
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-0">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Insurance Company</th>
+                                                    <td>{{ runner.medical_insurance_company }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance No</th>
+                                                    <td>{{ runner.medical_insurance_no }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance Expiry</th>
+                                                    <td>{{ runner.medical_insurance_expiry.strftime('%d-%b-%Y') if runner.medical_insurance_expiry else 'N/A' }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Emergency Contact Card -->
+                        <div class="col-md-{% if runner.medical_insurance %}6{% else %}12{% endif %}">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-phone-line me-2 text-primary"></i> Emergency Contact
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-0">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Name</th>
+                                                    <td>{{ runner.emergency_contact_name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Relationship</th>
+                                                    <td>{{ runner.emergency_contact_relationship }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Telephone</th>
+                                                    <td>{{ runner.emergency_contact_telephone }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Mobile</th>
+                                                    <td>{{ runner.emergency_contact_mobile }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this runner?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+
+    function confirmDelete(id) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = "{{ url_for('masters.delete_runner', runner_id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+</script>
+{% endblock extra_js %}

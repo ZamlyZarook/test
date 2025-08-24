@@ -1,0 +1,113 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if order_unit %}Edit{% else %}New{% endif %} Order Unit{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if order_unit %}Edit{% else %}New{% endif %} Order Unit</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">PO</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.order_units') }}">Order Units</a></li>
+                                <li class="breadcrumb-item active">{% if order_unit %}Edit{% else %}Add{% endif %} Order Unit</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Order Unit Form Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if order_unit %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Order Unit Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <!-- Order Unit Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Order Unit Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="order_unit" class="form-label">Order Unit <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" id="order_unit" name="order_unit" 
+                                                                   value="{{ order_unit.order_unit if order_unit else '' }}" 
+                                                                   placeholder="e.g., EA, KG, LT, MT" required>
+                                                            <div class="form-text">Enter the unit of measurement (e.g., EA for Each, KG for Kilogram)</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('masters.order_units') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>{% if order_unit %}Update{% else %}Create{% endif %} Order Unit
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock extra_js %}

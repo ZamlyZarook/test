@@ -1,0 +1,1105 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Materials Management{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Materials Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">PO</a></li>
+                                <li class="breadcrumb-item active">Materials</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <a href="{{ url_for('masters.new_material') }}" class="btn btn-primary">
+                            <i class="ri-add-line me-1"></i> Add New Material
+                        </a>
+                    </div>
+
+                    <!-- Filters Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Filters</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="GET" class="row g-3">
+                                <div class="col-md-2">
+                                    <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                    <select class="form-select" id="entriesPerPage" name="per_page">
+                                        <option value="5" {% if request.args.get('per_page')=='5' %}selected{% endif %}>5</option>
+                                        <option value="10" {% if request.args.get('per_page')=='10' %}selected{% endif %}>10</option>
+                                        <option value="25" {% if request.args.get('per_page')=='25' %}selected{% endif %}>25</option>
+                                        <option value="50" {% if request.args.get('per_page')=='50' %}selected{% endif %}>50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="searchInput" class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="searchInput" name="search"
+                                        value="{{ request.args.get('search', '') }}" placeholder="Search materials...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-filter-3-line me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Materials Table Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Materials List</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-nowrap align-middle table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Material Code</th>
+                                            <th>Material Name</th>
+                                            <th>HS Code</th>
+                                            <th class="text-center">Documents</th>
+                                            <th>Created Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if materials %}
+                                        {% for material in materials %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>
+                                                <span class="fw-medium text-primary">{{ material.material_code }}</span>
+                                            </td>
+                                            <td>{{ material.material_name }}</td>
+                                            <td>
+                                                {% if material.hs_code %}
+                                                    <span class="badge badge-soft-success">{{ material.hs_code.code }}</span>
+                                                {% else %}
+                                                    <span class="badge badge-soft-warning">Not Connected</span>
+                                                {% endif %}
+                                            </td>
+                                            <!-- In the table body, replace the Documents <td> section -->
+                                            <td>
+                                                {% if material.hs_code %}
+                                                    {% set required_docs = material.hs_code.documents|length %}
+                                                    {% set uploaded_docs = material.hs_documents|length %}
+                                                    <div class="d-flex gap-2 align-items-center">
+                                                        <span class="badge badge-soft-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Required">
+                                                            <i class="ri-file-list-line me-1"></i>
+                                                            {{ required_docs }}
+                                                        </span>
+                                                        <span class="badge badge-soft-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Uploaded">
+                                                            <i class="ri-upload-line me-1"></i>
+                                                            {{ uploaded_docs }}
+                                                        </span>
+                                                        <button class="btn btn-sm btn-outline-info" onclick="openDocumentsModal({{ material.id }})">
+                                                            <i class="ri-file-list-3-line me-1"></i>
+                                                            Manage Documents
+                                                        </button>
+                                                        <!-- Expiry Status Indicator -->
+                                                        {% if material.expiry_status == 'warning' %}
+                                                            <i class="ri-alert-line text-danger fs-5" data-bs-toggle="tooltip" data-bs-placement="top" title="One or more documents expire within 30 days"></i>
+                                                        {% elif material.expiry_status == 'good' %}
+                                                            <i class="ri-checkbox-circle-line text-success fs-5" data-bs-toggle="tooltip" data-bs-placement="top" title="No documents expiring within next 30 days"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ material.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <a href="{{ url_for('masters.edit_material', material_id=material.id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+                                                        <i class="ri-pencil-line"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-info" onclick="openHSCodeModal({{ material.id }})" data-bs-toggle="tooltip" data-bs-placement="top" title="Connect HS Code">
+                                                        <i class="ri-link"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger" onclick="confirmDelete('{{ material.id }}')" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <i class="ri-box-3-line fs-1 text-muted mb-2"></i>
+                                                    <p class="text-muted mb-0">No materials found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if materials %}
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <div>
+                                    Showing {{ materials|length }} entries
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination mb-0">
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                        </li>
+                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="#">Next</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this material?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HS Code Selection Modal -->
+    <div class="modal fade" id="hsCodeModal" tabindex="-1" aria-labelledby="hsCodeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hsCodeModalLabel">Select HS Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Current HS Code info (if connected) -->
+                    <div id="currentHSCodeInfo" class="alert alert-info d-none">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="ri-link me-2"></i>
+                                <strong>Currently Connected:</strong> <span id="currentHSCodeText"></span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-warning" onclick="disconnectHSCode()">
+                                <i class="ri-link-unlink me-1"></i>Disconnect
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Box -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="hsCodeSearch" placeholder="Search HS Code, Description, Category...">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-primary" onclick="searchHSCodes()">
+                                <i class="ri-search-line"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- HS Codes List -->
+                    <div id="hsCodesContainer" style="max-height: 400px; overflow-y: auto;">
+                        <div class="text-center">
+                            <i class="ri-loader-2-line fs-1 text-muted"></i>
+                            <p>Loading HS Codes...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Modal -->
+    <div class="modal fade" id="documentsModal" tabindex="-1" aria-labelledby="documentsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentsModalLabel">
+                        <i class="ri-file-text-line me-2"></i>Material Documents
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="documentSection">
+                        <!-- Document progress will be displayed here -->
+                        <div id="documentProgress"></div>
+                        
+                        <!-- Existing documents will be loaded here dynamically -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Uploaded Documents</h6>
+                            </div>
+                            <div class="card-body" id="existingDocuments">
+                                <!-- Existing documents will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- New Document Upload Section -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Required Documents</h6>
+                            </div>
+                            <div class="card-body" id="newDocuments">
+                                <form id="newDocumentsForm" enctype="multipart/form-data">
+                                    <div class="row g-3" id="documentInputs">
+                                        <!-- Dynamic document inputs will be added here -->
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-primary" onclick="submitNewDocuments()">
+                                            <i class="ri-upload-line me-1"></i>Upload Selected Documents
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    let currentMaterialId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+
+    function showAlert(message, type = 'info') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            icon: type,
+            title: message
+        });
+    }
+
+    function confirmDelete(id) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = "{{ url_for('masters.delete_material', material_id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    function openHSCodeModal(materialId) {
+        currentMaterialId = materialId;
+        const modal = new bootstrap.Modal(document.getElementById('hsCodeModal'));
+        
+        // Check if material already has HS code
+        fetch(`{{ url_for('masters.material_hs_summary', material_id=0) }}`.replace('0', materialId))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.has_hs_code) {
+                    document.getElementById('currentHSCodeInfo').classList.remove('d-none');
+                    document.getElementById('currentHSCodeText').textContent = data.hs_code;
+                } else {
+                    document.getElementById('currentHSCodeInfo').classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking HS code:', error);
+                document.getElementById('currentHSCodeInfo').classList.add('d-none');
+            });
+        
+        modal.show();
+        loadHSCodes();
+    }
+
+    function loadHSCodes(search = '') {
+        fetch(`{{ url_for('masters.get_hs_codes') }}?search=${encodeURIComponent(search)}`)
+            .then(response => response.json())
+            .then(data => {
+                displayHSCodes(data.hs_codes);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('hsCodesContainer').innerHTML = 
+                    '<div class="text-center text-danger"><p>Error loading HS codes</p></div>';
+            });
+    }
+
+    function displayHSCodes(hsCodes) {
+        const container = document.getElementById('hsCodesContainer');
+        if (hsCodes.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted"><p>No HS codes found</p></div>';
+            return;
+        }
+
+        let html = '<div class="list-group">';
+        hsCodes.forEach(code => {
+            html += `
+                <div class="list-group-item list-group-item-action" onclick="selectHSCode(${code.id}, '${code.code}')">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${code.code}</h6>
+                        ${code.category ? `<small class="text-muted">${code.category}</small>` : ''}
+                    </div>
+                    <p class="mb-1">${code.description || 'No description'}</p>
+                    ${code.documents_count ? `<small class="text-info">${code.documents_count} documents required</small>` : ''}
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function searchHSCodes() {
+        const search = document.getElementById('hsCodeSearch').value;
+        loadHSCodes(search);
+    }
+
+    function selectHSCode(hsCodeId, hsCode) {
+        fetch(`{{ url_for('masters.connect_hs_code') }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                material_id: currentMaterialId,
+                hs_code_id: hsCodeId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: `HS Code ${hsCode} connected successfully`,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+                bootstrap.Modal.getInstance(document.getElementById('hsCodeModal')).hide();
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message,
+                    icon: 'error'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to connect HS code',
+                icon: 'error'
+            });
+        });
+    }
+
+    function disconnectHSCode() {
+        Swal.fire({
+            title: 'Disconnect HS Code?',
+            text: 'This will also delete all uploaded documents for this material.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, disconnect it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`{{ url_for('masters.disconnect_hs_code') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        material_id: currentMaterialId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'HS Code disconnected successfully',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                        bootstrap.Modal.getInstance(document.getElementById('hsCodeModal')).hide();
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message,
+                            icon: 'error'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to disconnect HS code',
+                        icon: 'error'
+                    });
+                });
+            }
+        });
+    }
+
+    function openDocumentsModal(materialId) {
+        currentMaterialId = materialId;
+        const modal = new bootstrap.Modal(document.getElementById('documentsModal'));
+        modal.show();
+        
+        // Show loading state
+        const existingDocuments = document.getElementById('existingDocuments');
+        const newDocuments = document.getElementById('newDocuments');
+        
+        existingDocuments.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading existing documents...</p></div>';
+        newDocuments.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading required documents...</p></div>';
+        
+        loadMaterialDocuments(materialId);
+    }
+
+    function loadMaterialDocuments(materialId) {
+        fetch(`{{ url_for('masters.get_material_documents') }}?material_id=${materialId}`)
+            .then(response => response.json())
+            .then(data => {
+                displayMaterialDocuments(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('existingDocuments').innerHTML = 
+                    '<div class="text-center text-danger"><p>Error loading documents</p></div>';
+                document.getElementById('newDocuments').innerHTML = '';
+            });
+    }
+
+    function displayMaterialDocuments(data) {
+        const existingContainer = document.getElementById('existingDocuments');
+        const newContainer = document.getElementById('newDocuments');
+        
+        if (!data.hs_code) {
+            existingContainer.innerHTML = '<div class="text-center text-warning"><p>No HS code connected to this material</p></div>';
+            newContainer.innerHTML = '';
+            return;
+        }
+
+        let progressHtml = '';
+        if (data.required_documents.length > 0) {
+            const totalRequired = data.required_documents.filter(doc => doc.is_mandatory).length;
+            const uploadedRequired = data.uploaded_documents.filter(doc => 
+                data.required_documents.find(req => req.id === doc.document_id && req.is_mandatory)
+            ).length;
+            
+            const progressPercentage = totalRequired > 0 ? Math.round((uploadedRequired / totalRequired) * 100) : 100;
+            
+            progressHtml = `
+                <div class="mb-4">
+                    <h5>Document Upload Progress</h5>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar ${progressPercentage < 100 ? 'bg-warning' : 'bg-success'}" role="progressbar" 
+                            style="width: ${progressPercentage}%;" aria-valuenow="${progressPercentage}" 
+                            aria-valuemin="0" aria-valuemax="100">
+                            ${uploadedRequired} of ${totalRequired} required documents
+                        </div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">
+                        ${progressPercentage < 100 ? 
+                            `Upload the remaining ${totalRequired - uploadedRequired} required document(s).` : 
+                            'All required documents have been uploaded.'}
+                    </small>
+                </div>
+            `;
+        }
+
+        // Display existing documents with expiry information
+        if (data.uploaded_documents.length > 0) {
+            let existingHtml = `
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6>HS Code: ${data.hs_code.code}</h6>
+                        <p class="text-muted">${data.hs_code.description || 'No description'}</p>
+                    </div>
+                </div>
+            `;
+
+            data.uploaded_documents.forEach(doc => {
+                const requiredDoc = data.required_documents.find(req => req.id === doc.document_id);
+                
+                // Determine expiry styling and text
+                let expiryBadgeClass = 'badge-soft-secondary';
+                let expiryText = 'No expiry date';
+                let expiryIcon = 'ri-calendar-line';
+                
+                if (doc.expiry_date) {
+                    const expiryDate = new Date(doc.expiry_date);
+                    const today = new Date();
+                    const diffTime = expiryDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (doc.expiry_status === 'expired') {
+                        expiryBadgeClass = 'badge-soft-danger';
+                        expiryText = `Expired on ${doc.expiry_date}`;
+                        expiryIcon = 'ri-error-warning-line';
+                    } else if (doc.expiry_status === 'warning') {
+                        expiryBadgeClass = 'badge-soft-warning';
+                        expiryText = `Expires in ${diffDays} days (${doc.expiry_date})`;
+                        expiryIcon = 'ri-alarm-warning-line';
+                    } else if (doc.expiry_status === 'good') {
+                        expiryBadgeClass = 'badge-soft-success';
+                        expiryText = `Expires on ${doc.expiry_date} (${diffDays} days)`;
+                        expiryIcon = 'ri-calendar-check-line';
+                    }
+                }
+                
+                existingHtml += `
+                    <div class="card mb-3 ${doc.expiry_status === 'expired' ? 'border-danger' : doc.expiry_status === 'warning' ? 'border-warning' : ''}">
+                        <div class="card-body">
+                            <h6 class="card-title d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="ri-file-text-line me-2"></i>
+                                    ${doc.display_name}
+                                    ${requiredDoc && requiredDoc.is_mandatory ? '<span class="badge badge-soft-danger ms-2">Required</span>' : '<span class="badge badge-soft-success ms-2">Optional</span>'}
+                                    <span class="badge badge-soft-success ms-2">Uploaded</span>
+                                </span>
+                            </h6>
+                            
+                            <div class="border rounded p-3 mb-3 bg-light">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="card-text mb-2">
+                                            <strong>File:</strong> ${doc.file_name}
+                                        </p>
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">Uploaded on: ${doc.uploaded_at}</small>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="card-text mb-2">
+                                            <span class="badge ${expiryBadgeClass}">
+                                                <i class="${expiryIcon} me-1"></i>
+                                                ${expiryText}
+                                            </span>
+                                        </p>
+                                        ${doc.comment ? `
+                                        <p class="card-text mb-2">
+                                            <small class="text-muted">Comment: ${doc.comment}</small>
+                                        </p>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-info" onclick="viewDocument('${doc.id}')">
+                                            <i class="ri-eye-line me-1"></i>View
+                                        </button>
+                                        ${doc.sample_file_path ? `
+                                        <button class="btn btn-sm btn-secondary" onclick="viewSampleDocument('${doc.sample_file_path}')">
+                                            <i class="ri-file-text-line me-1"></i>View Sample
+                                        </button>` : ''}
+                                        <button class="btn btn-sm btn-primary" onclick="downloadDocument('${doc.id}')">
+                                            <i class="ri-download-line me-1"></i>Download
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteDocument('${doc.id}')">
+                                            <i class="ri-delete-bin-line me-1"></i>Delete
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-warning" onclick="reuploadDocument('${doc.id}', '${doc.display_name}')">
+                                            <i class="ri-refresh-line me-1"></i>Re-upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            existingContainer.innerHTML = existingHtml;
+        } else {
+            existingContainer.innerHTML = '<div class="alert alert-info">No documents have been uploaded yet.</div>';
+        }
+
+        // Display required documents for upload with issuing body and document category
+        if (data.required_documents.length > 0) {
+            const formHtml = `
+                ${progressHtml}
+                <form id="newDocumentsForm" enctype="multipart/form-data">
+                    <div class="row g-3" id="documentInputs">
+                        ${data.required_documents.map(doc => {
+                            const hasUpload = data.uploaded_documents.some(uploaded => uploaded.document_id === doc.id);
+                            
+                            return `
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 ${doc.is_mandatory ? 'border-danger' : ''}">
+                                        <div class="card-body">
+                                            <h6 class="card-title mb-3">
+                                                ${doc.display_name}
+                                                ${doc.is_mandatory 
+                                                    ? '<span class="badge badge-soft-danger ms-2">Required</span>' 
+                                                    : '<span class="badge badge-soft-success ms-2">Optional</span>'}
+                                                ${hasUpload 
+                                                    ? '<span class="badge badge-soft-success ms-2">Uploaded</span>' 
+                                                    : '<span class="badge badge-soft-warning ms-2">Missing</span>'}
+                                            </h6>
+                                            <p class="text-muted small mb-2">
+                                                <i class="ri-building-line me-1"></i>
+                                                <strong>Issuing Body:</strong> ${doc.issuing_body_name}
+                                            </p>
+                                            <p class="text-muted small mb-3">
+                                                <i class="ri-folder-line me-1"></i>
+                                                <strong>Category:</strong> ${doc.document_category_name}
+                                            </p>
+                                            ${doc.sample_file_path ? `
+                                            <div class="mb-3">
+                                                <button type="button" class="btn btn-sm btn-outline-info" onclick="viewSampleDocument('${doc.sample_file_path}')">
+                                                    <i class="ri-file-text-line me-1"></i>View Sample Document
+                                                </button>
+                                            </div>
+                                            ` : ''}
+                                            
+                                            ${!hasUpload ? `
+                                            <div class="document-upload-container" data-doc-id="${doc.id}">
+                                                <div class="document-upload-item mb-3">
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <label class="form-label">Upload Document <span class="text-danger">*</span></label>
+                                                            <input type="file" class="form-control" name="document_${doc.id}" data-doc-id="${doc.id}" required>
+                                                            <input type="hidden" name="doc_id_${doc.id}" value="${doc.id}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mt-2">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                                                            <input type="date" class="form-control" name="expiry_date_${doc.id}" min="${new Date().toISOString().split('T')[0]}" required>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Comment</label>
+                                                            <textarea class="form-control" name="comment_${doc.id}" rows="2" placeholder="Optional comment"></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            ` : `
+                                            <div class="alert alert-success">
+                                                <i class="ri-check-line me-2"></i>
+                                                Document already uploaded
+                                            </div>
+                                            `}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" class="btn btn-primary" onclick="submitNewDocuments()">
+                            <i class="ri-upload-line me-1"></i>Upload Selected Documents
+                        </button>
+                    </div>
+                </form>`;
+            
+            newContainer.innerHTML = formHtml;
+        } else {
+            newContainer.innerHTML = `
+                ${progressHtml}
+                <div class="alert alert-info">
+                    <i class="ri-information-line me-2"></i>
+                    No documents are required for this HS code.
+                </div>
+            `;
+        }
+        
+        // Add hidden input for material ID
+        const form = document.getElementById('newDocumentsForm');
+        if (form) {
+            const materialIdInput = document.createElement('input');
+            materialIdInput.type = 'hidden';
+            materialIdInput.name = 'material_id';
+            materialIdInput.value = currentMaterialId;
+            form.appendChild(materialIdInput);
+        }
+    }
+
+
+    function submitNewDocuments() {
+        const form = document.getElementById('newDocumentsForm');
+        if (!form) {
+            showAlert('Form not found', 'error');
+            return;
+        }
+        
+        // Check if any files are selected
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        let hasFiles = false;
+        let validationErrors = [];
+        
+        for (let i = 0; i < fileInputs.length; i++) {
+            if (fileInputs[i].files.length > 0) {
+                hasFiles = true;
+                
+                // Get the corresponding expiry date input
+                const docId = fileInputs[i].getAttribute('data-doc-id');
+                const expiryInput = form.querySelector(`input[name="expiry_date_${docId}"]`);
+                
+                if (!expiryInput || !expiryInput.value) {
+                    const docName = fileInputs[i].closest('.card').querySelector('.card-title').textContent.trim();
+                    validationErrors.push(`Expiry date is required for: ${docName}`);
+                } else {
+                    // Check if expiry date is in the future
+                    const today = new Date().toISOString().split('T')[0];
+                    if (expiryInput.value <= today) {
+                        const docName = fileInputs[i].closest('.card').querySelector('.card-title').textContent.trim();
+                        validationErrors.push(`Expiry date must be in the future for: ${docName}`);
+                    }
+                }
+            }
+        }
+        
+        if (!hasFiles) {
+            showAlert('Please select at least one file to upload', 'warning');
+            return;
+        }
+        
+        if (validationErrors.length > 0) {
+            showAlert(validationErrors.join('\n'), 'error');
+            return;
+        }
+        
+        // Get the submit button
+        const submitBtn = form.querySelector('.btn-primary');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        // Disable the button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading...';
+        
+        // Get form data
+        const formData = new FormData(form);
+        
+        fetch(`{{ url_for('masters.upload_material_document') }}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Documents uploaded successfully', 'success');
+                
+                // Refresh the document modal
+                loadMaterialDocuments(currentMaterialId);
+            } else {
+                throw new Error(data.message || 'Error uploading documents');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert(error.message || 'An error occurred while uploading documents', 'error');
+        })
+        .finally(() => {
+            // Re-enable the button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    }
+
+
+
+    function viewDocument(documentId) {
+        // Open document in new tab
+        window.open(`{{ url_for('masters.download_material_document', document_id=0) }}`.replace('0', documentId), '_blank');
+    }
+
+    function downloadDocument(documentId) {
+        // Download document
+        window.open(`{{ url_for('masters.download_material_document', document_id=0) }}`.replace('0', documentId), '_blank');
+    }
+
+    function deleteDocument(documentId) {
+        Swal.fire({
+            title: 'Delete Document',
+            text: 'Are you sure you want to delete this document?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`{{ url_for('masters.delete_material_document', document_id=0) }}`.replace('0', documentId), {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Document deleted successfully', 'success');
+                        loadMaterialDocuments(currentMaterialId);
+                    } else {
+                        throw new Error(data.message || 'Unknown error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert(error.message || 'Failed to delete document', 'error');
+                });
+            }
+        });
+    }
+
+    function reuploadDocument(documentId, documentName) {
+        Swal.fire({
+            title: 'Re-upload Document',
+            html: `
+                <form id="reuploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="reuploadDocumentName" class="form-label">Document</label>
+                        <input type="text" class="form-control" id="reuploadDocumentName" value="${documentName}" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reuploadDocumentFile" class="form-label">Upload New Document <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="reuploadDocumentFile" name="file" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reuploadExpiryDate" class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="reuploadExpiryDate" name="expiry_date" min="${new Date().toISOString().split('T')[0]}" required>
+                        <small class="text-danger">Expiry date is mandatory</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reuploadComment" class="form-label">Comment</label>
+                        <textarea class="form-control" id="reuploadComment" name="comment" rows="3" placeholder="Optional comment"></textarea>
+                    </div>
+                </form>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Re-upload',
+            preConfirm: () => {
+                const form = document.getElementById('reuploadForm');
+                const formData = new FormData(form);
+                
+                // Validate required fields
+                const file = document.getElementById('reuploadDocumentFile').files[0];
+                const expiryDate = document.getElementById('reuploadExpiryDate').value;
+                
+                if (!file) {
+                    Swal.showValidationMessage('Please select a file');
+                    return false;
+                }
+                
+                if (!expiryDate) {
+                    Swal.showValidationMessage('Expiry date is required');
+                    return false;
+                }
+                
+                // Check if expiry date is in the future
+                const today = new Date().toISOString().split('T')[0];
+                if (expiryDate <= today) {
+                    Swal.showValidationMessage('Expiry date must be in the future');
+                    return false;
+                }
+                
+                formData.append('material_id', currentMaterialId);
+                formData.append('document_id', documentId);
+
+                return fetch(`{{ url_for('masters.upload_material_document') }}`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        throw new Error(data.message);
+                    }
+                    return data;
+                });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                showAlert('Document re-uploaded successfully', 'success');
+                loadMaterialDocuments(currentMaterialId);
+            }
+        }).catch((error) => {
+            showAlert(error.message || 'Failed to re-upload document', 'error');
+        });
+    }
+
+    function viewSampleDocument(path) {
+        if (!path) {
+            showAlert('No sample file available', 'warning');
+            return;
+        }
+        
+        // Use the Flask route with proper URL construction
+        window.open(`{{ url_for('masters.view_sample_document', file_path='PLACEHOLDER') }}`.replace('PLACEHOLDER', encodeURIComponent(path)), '_blank');
+    }
+</script>
+
+<style>
+    /* Document upload styles */
+    .document-upload-container {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #f8f9fa;
+    }
+
+    .document-upload-item {
+        background-color: white;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    /* Progress bar styling */
+    .progress {
+        height: 20px;
+        background-color: #e9ecef;
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 20px;
+    }
+
+    /* Card styling */
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .document-upload-item .row {
+            margin-bottom: 10px;
+        }
+        
+        .document-upload-item .col-md-6 {
+            margin-bottom: 10px;
+        }
+    }
+    /* Add these to the existing CSS in materials.html */
+
+
+/* Form validation styling */
+
+
+/* Icon sizing for expiry status indicators */
+.fs-5 {
+    font-size: 1.25rem !important;
+}
+
+/* Responsive design for document cards */
+@media (max-width: 768px) {
+    .document-upload-item .row {
+        margin-bottom: 10px;
+    }
+    
+    .document-upload-item .col-md-6 {
+        margin-bottom: 15px;
+    }
+    
+    .d-flex.gap-2 {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+}
+
+/* Enhanced tooltip styling */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+}
+
+/* Loading state styling */
+.spinner-border-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+</style>
+{% endblock extra_js %}

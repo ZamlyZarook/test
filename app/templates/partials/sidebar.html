@@ -1,0 +1,140 @@
+{% block sidebar %}
+        <!-- ========== App Menu ========== -->
+        <div class="app-menu navbar-menu">
+            <!-- LOGO -->
+            <div class="navbar-brand-box">
+                <!-- Dark Logo-->
+                <a href="/" class="logo logo-dark">
+                    <span class="logo-sm">
+                        <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="33">
+                    </span>
+                    <span class="logo-lg">
+                        <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="26">
+                    </span>
+                </a>
+                <!-- Light Logo-->
+                <a href="/" class="logo logo-light">
+                    <span class="logo-sm">
+                        <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="33">
+                    </span>
+                    <span class="logo-lg">
+                        <img src="{{url_for('static' ,filename='images/logo-white.png')}}" alt="" height="60">
+                    </span>
+                </a>
+                <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+                    <i class="ri-record-circle-line"></i>
+                </button>
+            </div>
+
+            <div id="scrollbar">
+                <div class="container-fluid">
+                    <div id="two-column-menu"></div>
+                    <ul class="navbar-nav" id="navbar-nav">
+                        <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                        
+                        {% macro render_menu(menu_item, level=1) %}
+                        <li class="nav-item">
+                            {% if menu_item.children %}
+                                <!-- Parent menu with children -->
+                                <a class="nav-link menu-link menu-level-{{ level }}" 
+                                   href="#sidebar{{ menu_item.menu.id }}" 
+                                   data-bs-toggle="collapse" 
+                                   role="button" 
+                                   aria-expanded="false" 
+                                   data-menu-id="{{ menu_item.menu.id }}"
+                                   data-level="{{ level }}">
+                                    {% if menu_item.menu.icon and level == 1 %}
+                                        <i class="{{ menu_item.menu.icon }}"></i> 
+                                    {% endif %}
+                                    <span data-key="t-{{ menu_item.menu.name|lower|replace(' ', '-') }}">{{ menu_item.menu.name }}</span>
+                                </a>
+                                
+                                <!-- Collapsible submenu container -->
+                                <div class="collapse menu-dropdown menu-level-{{ level }}" id="sidebar{{ menu_item.menu.id }}">
+                                    <ul class="nav nav-sm flex-column submenu-level-{{ level }}">
+                                        {% for child in menu_item.children %}
+                                            {% if current_user.assigned_role.has_menu_permission(child.menu.id) %}
+                                                <!-- Recursively render child menus with increased level -->
+                                                {{ render_menu(child, level + 1) }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% else %}
+                                <!-- Leaf menu item (no children) -->
+                                <a href="{{ url_for(menu_item.menu.route) if menu_item.menu.route else '#' }}" 
+                                   class="nav-link menu-level-{{ level }}" 
+                                   data-level="{{ level }}">
+                                    {% if menu_item.menu.icon and level == 1 %}
+                                        <i class="{{ menu_item.menu.icon }}"></i>
+                                    {% endif %}
+                                    <span>{{ menu_item.menu.name }}</span>
+                                </a>
+                            {% endif %}
+                        </li>
+                        {% endmacro %}
+
+                        <!-- Render top-level menu items -->
+                        {% for menu_item in get_menu_tree() %}
+                            {% if current_user.assigned_role and current_user.assigned_role.has_menu_permission(menu_item.menu.id) %}
+                                {{ render_menu(menu_item, 1) }}
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="sidebar-background"></div>
+        </div>
+        <!-- Left Sidebar End -->
+        <!-- Vertical Overlay-->
+        <div class="vertical-overlay"></div>
+
+        <!-- Additional CSS for multi-level styling -->
+        <style>
+        /* Simple level-based styling */
+        .menu-level-1 { 
+            padding-left: 1rem; 
+            font-weight: 500;
+        }
+        .menu-level-2 { 
+            padding-left: 0.7rem; 
+            font-size: 0.9rem;
+        }
+        .menu-level-3 { 
+            padding-left: 2.4rem; 
+            font-size: 0.85rem;
+        }
+        .menu-level-4 { 
+            padding-left: 3rem; 
+            font-size: 0.8rem;
+        }
+        .menu-level-5 { 
+            padding-left: 3.6rem; 
+            font-size: 0.75rem;
+        }
+        
+        /* Clean submenu containers - no background colors */
+        .submenu-level-1,
+        .submenu-level-2,
+        .submenu-level-3,
+        .submenu-level-4,
+        .submenu-level-5 { 
+            margin: 0;
+        }
+        
+        /* Simple nav item styling */
+        .nav-item .nav-link {
+            border: none;
+            margin: 0;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Active state styling */
+        .nav-link.active {
+            color: #fff;
+            font-weight: 500;
+        }
+        </style>
+{% endblock sidebar %}

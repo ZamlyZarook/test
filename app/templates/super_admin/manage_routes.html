@@ -1,0 +1,446 @@
+{% extends "partials/base.html" %}
+{% block title %}Manage Routes{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Route Management</h4>
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('super_admin.company_configuration') }}">Super Admin</a></li>
+                                    <li class="breadcrumb-item active">Routes</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end page title -->
+
+                <!-- Routes content -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex align-items-center">
+                                    <h5 class="card-title mb-0 flex-grow-1">Routes and Permissions</h5>
+                                    <div class="flex-shrink-0">
+                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addRouteModal">
+                                            <i class="ri-add-line align-bottom me-1"></i> Add Route
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Category Tabs -->
+                                <ul class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#all" role="tab">
+                                            All Routes
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#admin" role="tab">
+                                            Administration
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#api" role="tab">
+                                            API
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#tools" role="tab">
+                                            Tools
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#tasks" role="tab">
+                                            Tasks
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <!-- Search and Filter -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-lg-4">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" id="searchRoute" placeholder="Search routes...">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <select class="form-select" id="filterStatus">
+                                            <option value="">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Routes Table -->
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="all" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table align-middle table-nowrap mb-0" id="routesTable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th scope="col">Route Name</th>
+                                                        <th scope="col">Description</th>
+                                                        <th scope="col">Status</th>
+                                                        <th scope="col">Role Access</th>
+                                                        <th scope="col">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for route in routes %}
+                                                    <tr data-route-id="{{ route.id }}" class="route-row" data-category="{{ route.route_name.split('.')[0] }}">
+                                                        <td>{{ route.route_name }}</td>
+                                                        <td>{{ route.description }}</td>
+                                                        <td>
+                                                            <div class="form-check form-switch form-switch-success">
+                                                                <input class="form-check-input" type="checkbox" 
+                                                                    id="status_{{ route.id }}" 
+                                                                    {% if route.is_active %}checked{% endif %}
+                                                                    onchange="updateRouteStatus({{ route.id }})">
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-soft-primary" 
+                                                                    onclick="showRoleModal({{ route.id }})">
+                                                                <i class="ri-user-settings-line me-1"></i>Manage Roles
+                                                            </button>
+                                                        </td>
+                                                        <td>
+                                                            <div class="hstack gap-2">
+                                                                <button class="btn btn-sm btn-soft-info" 
+                                                                        onclick="editRoute({{ route.id }})">
+                                                                    <i class="ri-pencil-fill"></i>
+                                                                </button>
+                                                                <button class="btn btn-sm btn-soft-danger" 
+                                                                        onclick="deleteRoute({{ route.id }})">
+                                                                    <i class="ri-delete-bin-2-line"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Route Modal -->
+        <div class="modal fade" id="addRouteModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Route</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="addRouteForm" onsubmit="addRoute(event)">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Route Name</label>
+                                <input type="text" class="form-control" name="route_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-success">Add Route</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Management Modal -->
+        <div class="modal fade" id="roleModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Manage Role Access</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="rolesList" class="vstack gap-3">
+                            {% for role in roles %}
+                            <div class="form-check form-switch">
+                                <input class="form-check-input role-permission" 
+                                    type="checkbox" 
+                                    id="role_{{ role.id }}"
+                                    data-role-id="{{ role.id }}">
+                                <label class="form-check-label" for="role_{{ role.id }}">
+                                    {{ role.role_name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="saveRolePermissions()">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize DataTable
+            if ($.fn.DataTable.isDataTable('#routesTable')) {
+                $('#routesTable').DataTable().destroy();
+            }
+            
+            let table = $('#routesTable').DataTable({
+                pageLength: 10,
+                order: [[0, 'asc']],
+                buttons: ['copy', 'excel', 'pdf', 'print'],
+                responsive: true,
+                dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search routes..."
+                },
+                drawCallback: function() {
+                    $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+                }
+            });
+
+            // Custom search functionality
+            $('#searchRoute').on('keyup', function() {
+                table.search(this.value).draw();
+            });
+
+            // Status filter
+            $('#filterStatus').on('change', function() {
+                let value = this.value;
+                if (value === 'active') {
+                    table.column(2).search('checked').draw();
+                } else if (value === 'inactive') {
+                    table.column(2).search('^((?!checked).)*$', true, false).draw();
+                } else {
+                    table.column(2).search('').draw();
+                }
+            });
+
+            // Tab filtering
+            $('.nav-tabs .nav-link').on('click', function() {
+                let category = $(this).attr('href').replace('#', '').toLowerCase();
+                if (category === 'all') {
+                    table.column(0).search('').draw();
+                } else {
+                    table.column(0).search(category).draw();
+                }
+            });
+        });
+
+        let currentRouteId = null;
+
+        function showRoleModal(routeId) {
+            currentRouteId = routeId;
+            const modal = new bootstrap.Modal(document.getElementById('roleModal'));
+
+            // Reset all checkboxes before fetching new data
+            document.querySelectorAll('.role-permission').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Fetch current permissions and set checkboxes
+            fetch(`/Super_Admin/get_route_permissions?route_id=${routeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        data.permissions.forEach(perm => {
+                            const checkbox = document.querySelector(`.role-permission[data-role-id="${perm.role_id}"]`);
+                            if (checkbox) {
+                                checkbox.checked = perm.can_access;
+                            }
+                        });
+                        modal.show();
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error fetching permissions', 'danger');
+                });
+        }
+
+
+        function saveRolePermissions() {
+            const permissions = [];
+            document.querySelectorAll('.role-permission').forEach(checkbox => {
+                permissions.push({
+                    roleId: checkbox.dataset.roleId,
+                    hasAccess: checkbox.checked
+                });
+            });
+
+            // Use bulk update endpoint
+            fetch('/Super_Admin/update_route_permissions_bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    route_id: currentRouteId,
+                    permissions: permissions
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Permissions updated successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('roleModal')).hide();
+                    location.reload();
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while updating permissions', 'danger');
+            });
+        }
+
+        function updateRouteStatus(routeId) {
+            const checkbox = document.getElementById(`status_${routeId}`);
+            const isActive = checkbox.checked;
+
+            // Send a POST request to the backend
+            fetch('/Super_Admin/update_route_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    route_id: routeId,
+                    is_active: isActive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showAlert(data.message, 'success');
+                } else {
+                    // Show error message and revert the toggle
+                    showAlert(data.message, 'danger');
+                    checkbox.checked = !isActive; // Revert the toggle if the update fails
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while updating the route status', 'danger');
+                checkbox.checked = !isActive; // Revert the toggle on error
+            });
+        }
+
+        function updatePermission(routeId, roleId, hasAccess) {
+            return fetch('/Super_Admin/update_route_permission', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    route_id: routeId,
+                    role_id: roleId,
+                    has_access: hasAccess
+                })
+            }).then(response => response.json());
+        }
+
+        function addRoute(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const routeData = {
+                route_name: formData.get('route_name'),
+                description: formData.get('description')
+            };
+
+            fetch('/Super_Admin/add_route', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(routeData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Route added successfully', 'success');
+                    location.reload();
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred while adding the route', 'danger');
+            });
+        }
+
+        function deleteRoute(routeId) {
+            if (confirm('Are you sure you want to delete this route?')) {
+                fetch(`/Super_Admin/delete_route/${routeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Route deleted successfully', 'success');
+                        location.reload();
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('An error occurred while deleting the route', 'danger');
+                });
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+    </script>
+
+{% endblock content %}

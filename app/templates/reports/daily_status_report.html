@@ -1,0 +1,629 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Daily Status Report{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Daily Status Report</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Reports</a></li>
+                                <li class="breadcrumb-item active">Daily Status Report</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Filter Card - Keep your original structure -->
+                    <div class="card shadow-none border mb-3">
+                        <div class="card-body">
+                            <form method="GET" action="{{ url_for('reports.daily_status') }}" id="filterForm">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="status1" class="form-label">Status</label>
+                                            <select class="form-select" id="status1" name="status1">
+                                                <option value="">All Statuses</option>
+                                                <option value="open">Open</option>
+                                                <option value="new">New</option>
+                                                <option value="ongoing">Ongoing</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="customer_id" class="form-label">Customer</label>
+                                            <select class="form-select" id="customer_id" name="customer_id">
+                                                <option value="">All Customers</option>
+                                                {% for customer in customers %}
+                                                <option value="{{ customer.id }}">{{ customer.customer_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="branch_id" class="form-label">Branch</label>
+                                            <select class="form-select" id="branch_id" name="branch_id">
+                                                <option value="">All Branches</option>
+                                                {% for branch in branches %}
+                                                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="business_type" class="form-label">Business Type</label>
+                                            <select class="form-select" id="business_type" name="business_type">
+                                                <option value="">All Types</option>
+                                                <option value="1">Sales Nomination</option>
+                                                <option value="2">Agent Nomination</option>
+                                                <option value="3">Free hand</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="date_range" class="form-label">Date Range</label>
+                                            <input type="text" class="form-control" id="date_range" name="date_range" 
+                                                placeholder="Select date range" data-provider="flatpickr" 
+                                                data-date-format="d M, Y" data-range-date="true">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="sales_person_id" class="form-label">Sales Person</label>
+                                            <select class="form-select" id="sales_person_id" name="sales_person_id">
+                                                <option value="">All Sales People</option>
+                                                {% for person in sales_people %}
+                                                <option value="{{ person.id }}">{{ person.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="shipment_type_id" class="form-label">Shipment Type</label>
+                                            <select class="form-select" id="shipment_type_id" name="shipment_type_id">
+                                                <option value="">All Types</option>
+                                                <option value="1">Custom</option>
+                                                <option value="2">BOI</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3 d-flex align-items-end h-100">
+                                            <button type="button" class="btn btn-primary w-100" onclick="loadData()">
+                                                <i class="ri-filter-line me-1"></i>Filter
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Column Selector Card -->
+                    <div class="card shadow-none border mb-3">
+                        <div class="card-header py-3">
+                            <h6 class="mb-0">
+                                <i class="ri-layout-column-line me-2"></i>Column Visibility
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div id="columnSelector" style="max-height: 200px; overflow-y: auto; columns: 4; column-gap: 20px;">
+                                        <!-- Column checkboxes will be populated here -->
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="selectAllColumns()">
+                                            Select All
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="clearAllColumns()">
+                                            Clear All
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="resetColumns()">
+                                            Reset to Default
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Table Card - Replace table with AG Grid -->
+                    <div class="card">
+                        <div class="card-header py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    Shipments Status Report
+                                    <span class="badge bg-secondary ms-2" id="recordCount">0 records</span>
+                                </h5>
+                                <div class="btn-group">
+                                    <!-- <button type="button" class="btn btn-light btn-sm" onclick="printGrid()">
+                                        <i class="ri-printer-line me-1"></i>Print
+                                    </button>
+                                    <button type="button" class="btn btn-light btn-sm" onclick="emailReport()">
+                                        <i class="ri-mail-line me-1"></i>Email
+                                    </button> -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownDownload" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="ri-download-line me-1"></i>Download
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownDownload">
+                                            <li><a class="dropdown-item" href="#" onclick="exportToExcel()">Excel</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="exportToCSV()">CSV</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <!-- AG Grid replaces the original table -->
+                            <div id="myGrid" class="ag-theme-alpine" style="height: 600px; width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- AG Grid CSS and JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine.css">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/ag-grid-community.min.js"></script>
+
+<style>
+    .ag-theme-alpine {
+        --ag-header-height: 45px;
+        --ag-row-height: 40px;
+        --ag-font-size: 13px;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-open { background-color: #0d6efd; color: white; }
+    .status-new { background-color: #198754; color: white; }
+    .status-ongoing { background-color: #ffc107; color: black; }
+    .status-completed { background-color: #17a2b8; color: white; }
+    
+    #columnSelector .form-check {
+        margin-bottom: 0.5rem;
+        break-inside: avoid;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+        
+        // Initialize date range picker
+        if (typeof flatpickr === 'function') {
+            flatpickr("#date_range", {
+                mode: "range",
+                dateFormat: "d M, Y"
+            });
+        }
+    });
+
+    let gridApi;
+    let gridColumnApi;
+
+    // Column definitions
+    const columnDefs = [
+        { headerName: "ID", field: "id", width: 80, pinned: 'left', hide: false },
+        { 
+            headerName: "Status", 
+            field: "status", 
+            width: 120,
+            cellRenderer: function(params) {
+                const status = params.value.toLowerCase();
+                return `<span class="status-badge status-${status}">${params.value}</span>`;
+            },
+            hide: false
+        },
+        { headerName: "Branch", field: "branch_name", width: 120, hide: false },
+        { headerName: "Import ID", field: "import_id", width: 120, hide: false },
+        { headerName: "Shipment Deadline", field: "shipment_deadline", width: 150, hide: false },
+        { headerName: "BL No", field: "bl_no", width: 120, hide: false },
+        { headerName: "License Number", field: "license_number", width: 140, hide: false },
+        { headerName: "Primary Job", field: "primary_job", width: 120, hide: true },
+        { headerName: "Shipment Type", field: "shipment_type", width: 130, hide: false },
+        { headerName: "Sub Type", field: "sub_type", width: 100, hide: true },
+        { headerName: "Customer Category", field: "customer_category", width: 150, hide: true },
+        { headerName: "Business Type", field: "business_type", width: 140, hide: false },
+        { headerName: "Customer", field: "customer_name", width: 200, hide: false },
+        { headerName: "Billing Party", field: "billing_party", width: 140, hide: true },
+        { headerName: "Clearing Agent", field: "clearing_agent", width: 140, hide: true },
+        { headerName: "Contact Person", field: "contact_person", width: 140, hide: true },
+        { headerName: "Sales Person", field: "sales_person", width: 140, hide: false },
+        { headerName: "CS Executive", field: "cs_executive", width: 140, hide: true },
+        { headerName: "Wharf Clerk", field: "wharf_clerk", width: 140, hide: true },
+        { headerName: "PO No", field: "po_no", width: 120, hide: true },
+        { headerName: "Invoice No", field: "invoice_no", width: 120, hide: true },
+        { headerName: "Customer Ref No", field: "customer_ref_no", width: 150, hide: true },
+        { headerName: "Customs DTI No", field: "customs_dti_no", width: 150, hide: true },
+        { headerName: "MBL Number", field: "mbl_number", width: 130, hide: true },
+        { headerName: "Vessel", field: "vessel", width: 120, hide: true },
+        { headerName: "Voyage", field: "voyage", width: 100, hide: true },
+        { headerName: "ETA", field: "eta", width: 160, hide: false },
+        { headerName: "Shipper", field: "shipper", width: 150, hide: true },
+        { headerName: "Port of Loading", field: "port_of_loading", width: 150, hide: true },
+        { headerName: "Port of Discharge", field: "port_of_discharge", width: 160, hide: true },
+        { headerName: "Job Type", field: "job_type", width: 100, hide: true },
+        { headerName: "FCL Gate Out Date", field: "fcl_gate_out_date", width: 160, hide: true },
+        { headerName: "POD Datetime", field: "pod_datetime", width: 160, hide: true },
+        { headerName: "No of Packages", field: "no_of_packages", width: 140, hide: true },
+        { headerName: "Package Type", field: "package_type", width: 130, hide: true },
+        { headerName: "CBM", field: "cbm", width: 80, hide: true },
+        { headerName: "Gross Weight", field: "gross_weight", width: 120, hide: true },
+        { headerName: "Cargo Description", field: "cargo_description", width: 200, hide: true },
+        { headerName: "Liner", field: "liner", width: 120, hide: true },
+        { headerName: "Entrepot", field: "entrepot", width: 120, hide: true },
+        { headerName: "Job Currency", field: "job_currency", width: 120, hide: true },
+        { headerName: "Ex Rating Buying", field: "ex_rating_buying", width: 150, hide: true },
+        { headerName: "Ex Rating Selling", field: "ex_rating_selling", width: 150, hide: true },
+        { headerName: "Remarks", field: "remarks", width: 200, hide: true },
+        { headerName: "On Hold", field: "on_hold", width: 120, hide: true },
+        { headerName: "Cleared Date", field: "cleared_date", width: 130, hide: true },
+        { headerName: "Est. Job Closing Date", field: "estimated_job_closing_date", width: 180, hide: true },
+        { headerName: "Created", field: "created_at", width: 160, hide: true },
+        { headerName: "Updated", field: "updated_at", width: 160, hide: true }
+    ];
+
+    // Grid options
+    const gridOptions = {
+        columnDefs: columnDefs,
+        defaultColDef: {
+            resizable: true,
+            sortable: true,
+            filter: true,
+            floatingFilter: true,
+            minWidth: 80
+        },
+        enableRangeSelection: true,
+        enableClipboard: true,
+        suppressMenuHide: true,
+        animateRows: true,
+        rowSelection: 'multiple',
+        suppressRowClickSelection: true,
+        onGridReady: function(params) {
+            gridApi = params.api;
+            gridColumnApi = params.columnApi;
+            initializeColumnSelector();
+            loadData();
+        },
+        onColumnVisible: function(event) {
+            updateColumnSelector();
+        }
+    };
+
+    // Initialize grid
+    document.addEventListener('DOMContentLoaded', function() {
+        const gridDiv = document.querySelector('#myGrid');
+        new agGrid.Grid(gridDiv, gridOptions);
+    });
+
+    // Initialize column selector checkboxes
+    function initializeColumnSelector() {
+        const selector = document.getElementById('columnSelector');
+        selector.innerHTML = '';
+        
+        columnDefs.forEach(colDef => {
+            const checkDiv = document.createElement('div');
+            checkDiv.className = 'form-check';
+            
+            const checkbox = document.createElement('input');
+            checkbox.className = 'form-check-input';
+            checkbox.type = 'checkbox';
+            checkbox.id = `col_${colDef.field}`;
+            checkbox.checked = !colDef.hide;
+            checkbox.addEventListener('change', () => toggleColumn(colDef.field, checkbox.checked));
+            
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = checkbox.id;
+            label.textContent = colDef.headerName;
+            
+            checkDiv.appendChild(checkbox);
+            checkDiv.appendChild(label);
+            selector.appendChild(checkDiv);
+        });
+    }
+
+    // Toggle column visibility
+    function toggleColumn(field, visible) {
+        gridColumnApi.setColumnVisible(field, visible);
+    }
+
+    // Update column selector based on current visibility
+    function updateColumnSelector() {
+        columnDefs.forEach(colDef => {
+            const checkbox = document.getElementById(`col_${colDef.field}`);
+            if (checkbox) {
+                checkbox.checked = gridColumnApi.getColumn(colDef.field).isVisible();
+            }
+        });
+    }
+
+    // Select all columns
+    function selectAllColumns() {
+        columnDefs.forEach(colDef => {
+            gridColumnApi.setColumnVisible(colDef.field, true);
+            const checkbox = document.getElementById(`col_${colDef.field}`);
+            if (checkbox) checkbox.checked = true;
+        });
+    }
+
+    // Clear all columns except ID
+    function clearAllColumns() {
+        columnDefs.forEach(colDef => {
+            if (colDef.field !== 'id') {
+                gridColumnApi.setColumnVisible(colDef.field, false);
+                const checkbox = document.getElementById(`col_${colDef.field}`);
+                if (checkbox) checkbox.checked = false;
+            }
+        });
+    }
+
+    // Reset columns to default
+    function resetColumns() {
+        columnDefs.forEach(colDef => {
+            gridColumnApi.setColumnVisible(colDef.field, !colDef.hide);
+            const checkbox = document.getElementById(`col_${colDef.field}`);
+            if (checkbox) checkbox.checked = !colDef.hide;
+        });
+    }
+
+    // Load data from server
+    function loadData() {
+        gridApi.showLoadingOverlay();
+        
+        const formData = new FormData(document.getElementById('filterForm'));
+        const params = new URLSearchParams(formData);
+        
+        fetch(`{{ url_for('reports.api_daily_status') }}?${params}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    gridApi.setRowData(data.shipments);
+                    updateRecordCount(data.shipments.length);
+                } else {
+                    console.error('API Error:', data.error);
+                    gridApi.showNoRowsOverlay();
+                    alert('Error loading data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading data:', error);
+                gridApi.showNoRowsOverlay();
+                alert('Error loading data. Please try again.');
+            });
+    }
+
+    // Update record count
+    function updateRecordCount(count) {
+        document.getElementById('recordCount').textContent = `${count} records`;
+    }
+
+    // Updated export functions that handle filtered data from AG Grid
+
+function exportToExcel() {
+    const visibleColumns = getVisibleColumnFields();
+    
+    if (visibleColumns.length === 0) {
+        alert('Please select at least one column to export.');
+        return;
+    }
+    
+    // Get filtered data from AG Grid
+    const filteredData = getFilteredRowData();
+    
+    if (filteredData.length === 0) {
+        alert('No data to export after applying filters.');
+        return;
+    }
+    
+    // Send filtered data to backend for Excel export
+    exportFilteredData(filteredData, visibleColumns, 'excel');
+}
+
+function exportToCSV() {
+    const visibleColumns = getVisibleColumnFields();
+    
+    if (visibleColumns.length === 0) {
+        alert('Please select at least one column to export.');
+        return;
+    }
+    
+    // Get filtered data from AG Grid
+    const filteredData = getFilteredRowData();
+    
+    if (filteredData.length === 0) {
+        alert('No data to export after applying filters.');
+        return;
+    }
+    
+    // Send filtered data to backend for CSV export
+    exportFilteredData(filteredData, visibleColumns, 'csv');
+}
+
+    // Get filtered row data from AG Grid
+    function getFilteredRowData() {
+        const filteredData = [];
+        
+        // Use AG Grid API to get all filtered nodes
+        gridApi.forEachNodeAfterFilterAndSort(function(node) {
+            if (node.data) {
+                filteredData.push(node.data);
+            }
+        });
+        
+        return filteredData;
+    }
+
+    // Send filtered data to backend for export
+    function exportFilteredData(data, columns, format) {
+        // Create a form to send data via POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ url_for('reports.export_filtered_daily_status') }}`;
+        form.style.display = 'none';
+        
+        // Add CSRF token if you're using it
+        const csrfToken = document.querySelector('meta[name=csrf-token]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.getAttribute('content');
+            form.appendChild(csrfInput);
+        }
+        
+        // Add filtered data as JSON
+        const dataInput = document.createElement('input');
+        dataInput.type = 'hidden';
+        dataInput.name = 'filtered_data';
+        dataInput.value = JSON.stringify(data);
+        form.appendChild(dataInput);
+        
+        // Add selected columns
+        const columnsInput = document.createElement('input');
+        columnsInput.type = 'hidden';
+        columnsInput.name = 'columns';
+        columnsInput.value = columns.join(',');
+        form.appendChild(columnsInput);
+        
+        // Add format
+        const formatInput = document.createElement('input');
+        formatInput.type = 'hidden';
+        formatInput.name = 'format';
+        formatInput.value = format;
+        form.appendChild(formatInput);
+        
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+
+    // Get list of visible column field names (existing function)
+    function getVisibleColumnFields() {
+        const visibleColumns = [];
+        columnDefs.forEach(colDef => {
+            if (gridColumnApi.getColumn(colDef.field) && gridColumnApi.getColumn(colDef.field).isVisible()) {
+                visibleColumns.push(colDef.field);
+            }
+        });
+        return visibleColumns;
+    }
+
+    // Alternative method using fetch API (if you prefer AJAX over form submission)
+    async function exportFilteredDataWithFetch(data, columns, format) {
+        try {
+            const response = await fetch(`{{ url_for('reports.export_filtered_daily_status') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({
+                    filtered_data: data,
+                    columns: columns,
+                    format: format
+                })
+            });
+            
+            if (response.ok) {
+                // Get filename from response headers
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `DSR_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+                
+                if (contentDisposition) {
+                    const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (matches && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                // Download the file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                alert('Error exporting data. Please try again.');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Error exporting data. Please try again.');
+        }
+    }
+        function printGrid() {
+            window.print();
+        }
+
+    function emailReport() {
+        alert('Email functionality will be implemented here.');
+    }
+</script>
+{% endblock extra_js %}

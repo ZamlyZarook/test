@@ -1,0 +1,338 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Wharf Profile Details{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Wharf Profile Details</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.wharf_profiles') }}">Wharf Profiles</a></li>
+                                <li class="breadcrumb-item active">Wharf Profile Details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('masters.wharf_profiles') }}" class="btn btn-secondary">
+                                <i class="ri-arrow-left-line me-1"></i> Back
+                            </a>
+                            <a href="{{ url_for('masters.edit_wharf_profile', id=wharf_profile.id) }}" class="btn btn-primary">
+                                <i class="ri-pencil-line me-1"></i> Edit
+                            </a>
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ wharf_profile.id }}')">
+                                <i class="ri-delete-bin-line me-1"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-user-line me-2 text-primary"></i> Personal Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-4">
+                                    <img src="{{ url_for('static', filename='profile_pics/' + (wharf_profile.profile_image if wharf_profile.profile_image else 'default.jpg')) }}"
+                                        alt="Profile Image" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-nowrap mb-4">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row" style="width: 30%;">Wharf ID</th>
+                                                            <td>{{ wharf_profile.wharf_id }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">First Name</th>
+                                                            <td>{{ wharf_profile.first_name }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Last Name</th>
+                                                            <td>{{ wharf_profile.last_name }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">NIC Number</th>
+                                                            <td>{{ wharf_profile.nic_no }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Date of Birth</th>
+                                                            <td>{{ wharf_profile.date_of_birth.strftime('%Y-%m-%d') if wharf_profile.date_of_birth else 'N/A' }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-nowrap mb-4">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row" style="width: 30%;">Contact Number</th>
+                                                            <td>{{ wharf_profile.contact_number }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Email</th>
+                                                            <td>{{ wharf_profile.email }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Address</th>
+                                                            <td>{{ wharf_profile.address }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Status</th>
+                                                            <td>
+                                                                {% if wharf_profile.status %}
+                                                                <span class="badge badge-soft-success">
+                                                                    <i class="ri-checkbox-circle-line me-1"></i> Active
+                                                                </span>
+                                                                {% else %}
+                                                                <span class="badge badge-soft-danger">
+                                                                    <i class="ri-close-circle-line me-1"></i> Inactive
+                                                                </span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Driving License</th>
+                                                            <td>{{ wharf_profile.driving_license_number }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Information Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-car-line me-2 text-primary"></i> Vehicle Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-4">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Registration Number</th>
+                                                    <td>{{ wharf_profile.registration_no }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Vehicle Type</th>
+                                                    <td>{{ wharf_profile.vehicle_type }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Vehicle Model</th>
+                                                    <td>{{ wharf_profile.vehicle_model }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-4">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Vehicle Color</th>
+                                                    <td>{{ wharf_profile.vehicle_color }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Engine Number</th>
+                                                    <td>{{ wharf_profile.engine_no }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Chassis Number</th>
+                                                    <td>{{ wharf_profile.chassis_no }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Insurance Information Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-shield-line me-2 text-primary"></i> Insurance Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-4">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Insurance Number</th>
+                                                    <td>{{ wharf_profile.insurance_number }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance Company</th>
+                                                    <td>{{ wharf_profile.insurance_company }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Insurance Expiry</th>
+                                                    <td>{{ wharf_profile.insurance_expiry.strftime('%Y-%m-%d') if wharf_profile.insurance_expiry else 'N/A' }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-nowrap mb-4">
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row" style="width: 30%;">Medical Insurance Number</th>
+                                                    <td>{{ wharf_profile.medical_insurance_number }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Medical Insurance Expiry</th>
+                                                    <td>{{ wharf_profile.medical_insurance_expiry.strftime('%Y-%m-%d') if wharf_profile.medical_insurance_expiry else 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Driving License Expiry</th>
+                                                    <td>{{ wharf_profile.driving_license_expiry.strftime('%Y-%m-%d') if wharf_profile.driving_license_expiry else 'N/A' }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-file-line me-2 text-primary"></i> Documents
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card shadow-none border">
+                                        <div class="card-body text-center">
+                                            <i class="ri-file-pdf-line display-6 text-danger mb-2"></i>
+                                            <h6>NIC Document</h6>
+                                            {% if wharf_profile.nic_document %}
+                                            <a href="{{ url_for('static', filename='documents/' + wharf_profile.nic_document) }}" 
+                                               class="btn btn-soft-primary btn-sm mt-2" target="_blank">
+                                                <i class="ri-download-line me-1"></i> Download
+                                            </a>
+                                            {% else %}
+                                            <span class="badge badge-soft-warning">Not Available</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card shadow-none border">
+                                        <div class="card-body text-center">
+                                            <i class="ri-file-word-line display-6 text-primary mb-2"></i>
+                                            <h6>Insurance Document</h6>
+                                            {% if wharf_profile.insurance_document %}
+                                            <a href="{{ url_for('static', filename='documents/' + wharf_profile.insurance_document) }}" 
+                                               class="btn btn-soft-primary btn-sm mt-2" target="_blank">
+                                                <i class="ri-download-line me-1"></i> Download
+                                            </a>
+                                            {% else %}
+                                            <span class="badge badge-soft-warning">Not Available</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this wharf profile?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+
+    function confirmDelete(id) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = "{{ url_for('masters.delete_wharf_profile', id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="content-section">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">{{ legend }}</legend>
+
+            <div class="form-group mb-3">
+                {{ form.countryCode.label(class="form-control-label") }}
+                {% if form.countryCode.errors %}
+                {{ form.countryCode(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.countryCode.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.countryCode(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.alpha2Code.label(class="form-control-label") }}
+                {% if form.alpha2Code.errors %}
+                {{ form.alpha2Code(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.alpha2Code.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.alpha2Code(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.countryName.label(class="form-control-label") }}
+                {% if form.countryName.errors %}
+                {{ form.countryName(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.countryName.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.countryName(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.nationality.label(class="form-control-label") }}
+                {% if form.nationality.errors %}
+                {{ form.nationality(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.nationality.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.nationality(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.regionID.label(class="form-control-label") }}
+                {% if form.regionID.errors %}
+                {{ form.regionID(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.regionID.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.regionID(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-check mb-3">
+                {{ form.isLocal(class="form-check-input") }}
+                {{ form.isLocal.label(class="form-check-label") }}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.countryFlag.label(class="form-control-label") }}
+                {% if form.countryFlag.errors %}
+                {{ form.countryFlag(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.countryFlag.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.countryFlag(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.currency_code.label(class="form-control-label") }}
+                {% if form.currency_code.errors %}
+                {{ form.currency_code(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.currency_code.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.currency_code(class="form-control") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group mb-3">
+                {{ form.currency_name.label(class="form-control-label") }}
+                {% if form.currency_name.errors %}
+                {{ form.currency_name(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.currency_name.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.currency_name(class="form-control") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+            <a class="btn btn-secondary" href="{{ url_for('masters.countries') }}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock content %}

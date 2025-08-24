@@ -1,0 +1,218 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if document %}Edit{% else %}New{% endif %} Container Document{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if document %}Edit{% else %}New{% endif %} Container Document</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.container_documents') }}">Container Documents</a></li>
+                                <li class="breadcrumb-item active">{% if document %}Edit{% else %}Add{% endif %} Document</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Container Document Form Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if document %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Container Document Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" enctype="multipart/form-data">
+                                <!-- Document Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Document Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="document_code" class="form-label">Document Code <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" id="document_code" name="document_code" 
+                                                                   value="{{ document.document_code if document else '' }}" 
+                                                                   placeholder="Enter document code" required>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="document_name" class="form-label">Document Name <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" id="document_name" name="document_name" 
+                                                                   value="{{ document.document_name if document else '' }}" 
+                                                                   placeholder="Enter document name" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="sample_file" class="form-label">Sample Document</label>
+                                                            <input type="file" class="form-control" id="sample_file" name="sample_file" 
+                                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+                                                            <div class="form-text">
+                                                                Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG (Max 10MB)
+                                                            </div>
+                                                            {% if document and document.sample_file_path %}
+                                                            <div class="mt-2">
+                                                                <small class="text-info">
+                                                                    <i class="ri-file-line me-1"></i>
+                                                                    Current file: 
+                                                                    <a href="{{ url_for('masters.download_container_document', document_id=document.id) }}" 
+                                                                       target="_blank" class="text-decoration-underline">
+                                                                        {{ document.sample_file_path.split('/')[-1] }}
+                                                                    </a>
+                                                                </small>
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <div class="form-check form-switch mt-4">
+                                                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                                                       {% if not document or document.is_active %}checked{% endif %}>
+                                                                <label class="form-check-label" for="is_active">
+                                                                    Active Status
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('masters.container_documents') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>
+                                        {% if document %}Update{% else %}Create{% endif %} Document
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+        
+        // File upload validation
+        const fileInput = document.getElementById('sample_file');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Check file size (10MB limit)
+                    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                    if (file.size > maxSize) {
+                        alert('File size must be less than 10MB');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Check file type
+                    const allowedTypes = [
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'image/jpeg',
+                        'image/jpg',
+                        'image/png'
+                    ];
+                    
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Please select a valid file type (PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG)');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+                }
+            });
+        }
+        
+        // Form validation
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const documentCode = document.getElementById('document_code').value.trim();
+                const documentName = document.getElementById('document_name').value.trim();
+                
+                if (!documentCode || !documentName) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="ri-loader-2-line me-1 spinner-border spinner-border-sm"></i>Processing...';
+                }
+            });
+        }
+    });
+</script>
+{% endblock extra_js %}

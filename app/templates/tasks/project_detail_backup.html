@@ -1,0 +1,347 @@
+{% extends "partials/base.html" %}
+{% block title %}{{ project.name }} - Details{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .section-container {
+        position: relative;
+        min-height: 100px;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{{ project.name }}</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                                <li class="breadcrumb-item active">Project Details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <!-- Project Overview Card -->
+                <div class="col-xl-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-grow-1">
+                                    <span class="badge bg-{{ status_colors[project.status] }}">{{ project.status }}</span>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <a href="{{ url_for('tasks.project_edit', project_id=project.id) }}" 
+                                       class="btn btn-sm btn-success"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Edit">
+                                        <i class="ri-pencil-line"></i>
+                                    </a>
+                                    <a href="{{ url_for('tasks.project_issues', project_id=project.id) }}" 
+                                       class="btn btn-sm btn-primary ms-1"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Manage Project">
+                                        <i class="ri-settings-4-line"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="text-muted mb-3">
+                                <i class="ri-key-line me-1"></i> {{ project.key }}
+                            </div>
+                            
+                            <div class="text-muted">{{ project.description or 'No description provided' }}</div>
+                            
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <h6>Project Lead</h6>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                         alt="" class="rounded-circle avatar-xs">
+                                    <span class="ms-2">{{ project.lead.name }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6>Timeline</h6>
+                                <div class="text-muted">
+                                    <div><i class="ri-calendar-line me-1"></i> Start: {{ project.start_date.strftime('%d %b, %Y') if project.start_date else 'Not set' }}</div>
+                                    <div><i class="ri-calendar-check-line me-1"></i> Due: {{ project.end_date.strftime('%d %b, %Y') if project.end_date else 'Not set' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Stats Card -->
+                <div class="col-xl-9">
+                    <div class="card">
+                        <div class="card-body section-container" id="stats-section">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="text-center mb-3">
+                                        <h5 class="total-epics">-</h5>
+                                        <p class="text-muted mb-0">Total Epics</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="text-center mb-3">
+                                        <h5 class="total-stories">-</h5>
+                                        <p class="text-muted mb-0">Total Stories</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="text-center mb-3">
+                                        <h5 class="total-tasks">-</h5>
+                                        <p class="text-muted mb-0">Total Tasks</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="text-center mb-3">
+                                        <h5 class="total-subtasks">-</h5>
+                                        <p class="text-muted mb-0">Total Subtasks</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="text-center mb-3">
+                                        <h5 class="total-bugs">-</h5>
+                                        <p class="text-muted mb-0">Total Bugs</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="text-center mb-3">
+                                        <h5 class="completion-rate">-</h5>
+                                        <p class="text-muted mb-0">Completion Rate</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Members Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Team Members</h5>
+                        </div>
+                        <div class="card-body section-container" id="team-section">
+                            <div class="table-responsive">
+                                <table class="table table-centered align-middle table-nowrap mb-0" id="team-members-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Member</th>
+                                            <th scope="col">Role</th>
+                                            <th scope="col">Assigned Tasks</th>
+                                            <th scope="col">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4" class="text-center">Loading team members...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Timeline -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Recent Activity</h5>
+                        </div>
+                        <div class="card-body section-container" id="timeline-section">
+                            <div class="list-group" id="timeline-container">
+                                <div class="list-group" id="timeline-container">
+                                    <div class="text-center text-muted">Loading activities...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Get project ID from URL
+    const projectId = window.location.pathname.split('/').pop();
+    console.log('Project ID:', projectId); // Debug log
+
+    // Function to load project stats
+    // Function to load project stats
+    async function loadProjectStats() {
+        try {
+            const response = await fetch(`/tasks/api/projects/${projectId}/stats`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const stats = result.data;
+                document.querySelector('.total-epics').textContent = stats.total_epics;
+                document.querySelector('.total-stories').textContent = stats.total_stories;
+                document.querySelector('.total-tasks').textContent = stats.total_tasks;
+                document.querySelector('.total-subtasks').textContent = stats.total_subtasks;
+                document.querySelector('.total-bugs').textContent = stats.total_bugs;
+                document.querySelector('.completion-rate').textContent = `${stats.completion_rate}%`;
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    // Function to load team members
+    // Function to load team members
+    async function loadTeamMembers() {
+        try {
+            console.log('Fetching team members...'); // Debug log
+            const response = await fetch(`/tasks/api/projects/${projectId}/team`);
+            console.log('Team response:', response); // Debug log
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Team data:', result); // Debug log
+            
+            const tableBody = document.querySelector('#team-members-table tbody');
+            if (!tableBody) {
+                console.error('Team members table body not found!');
+                return;
+            }
+            
+            if (result.success && result.data.length > 0) {
+                tableBody.innerHTML = result.data.map(member => `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="${member.profile_picture || '/static/images/users/user-dummy-img.jpg'}" 
+                                    alt="" class="rounded-circle avatar-xs">
+                                <span class="ms-2">${member.name}</span>
+                            </div>
+                        </td>
+                        <td>${member.role}</td>
+                        <td>${member.assigned_tasks}</td>
+                        <td>
+                            <span class="badge bg-${member.status === 'Active' ? 'success' : 'danger'}">
+                                ${member.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No team members found</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error loading team members:', error);
+            const tableBody = document.querySelector('#team-members-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading team members</td></tr>';
+            }
+        }
+    }
+
+    // Function to load timeline
+    async function loadTimeline() {
+        try {
+            console.log('Fetching timeline...'); // Debug log
+            const response = await fetch(`/tasks/api/projects/${projectId}/timeline`);
+            console.log('Timeline response:', response); // Debug log
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Timeline data:', result); // Debug log
+            
+            const timelineContainer = document.querySelector('#timeline-container');
+            if (!timelineContainer) {
+                throw new Error('Timeline container not found');
+            }
+            
+            if (result.success && result.data.length > 0) {
+                timelineContainer.innerHTML = result.data.map(event => `
+                    <div class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${event.title}</h6>
+                            <small>${event.timestamp}</small>
+                        </div>
+                        <p class="mb-1">${event.description}</p>
+                        <small>By ${event.user}</small>
+                    </div>
+                `).join('');
+            } else {
+                timelineContainer.innerHTML = '<div class="text-center text-muted">No recent activity</div>';
+            }
+        } catch (error) {
+            console.error('Error loading timeline:', error);
+            const timelineContainer = document.querySelector('#timeline-container');
+            if (timelineContainer) {
+                timelineContainer.innerHTML = '<div class="text-center text-danger">Error loading timeline</div>';
+            }
+        }
+    }
+
+    // Load all data initially
+    loadProjectStats();
+    loadTeamMembers();
+    loadTimeline();
+
+    // Refresh data every 30 seconds
+    setInterval(() => {
+        loadProjectStats();
+        loadTeamMembers();
+        loadTimeline();
+    }, 30000);
+});
+</script>
+{% endblock %}

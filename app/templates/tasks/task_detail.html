@@ -1,0 +1,1640 @@
+{% extends "partials/base.html" %}
+{% block title %}{{ task.task_key }} - {{ task.title }}{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .task-header {
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .task-breadcrumb {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    .task-type-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+    }
+    .comment-section {
+        margin-top: 20px;
+    }
+    .comment {
+        padding: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        background-color: #fff;
+    }
+    .activity-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .meta-label {
+        color: #6b7280;
+        font-weight: 500;
+        width: 120px;
+    }
+    .meta-value {
+        color: #111827;
+    }
+    .status-select {
+        min-width: 150px;
+    }
+    .details-item {
+        display: flex;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .details-item:last-child {
+        border-bottom: none;
+    }
+    .activity-timeline {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Task Header -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                                {% if project %}
+                        <h4 class="mb-sm-0">{{ project.name }} - {{ task.title }}</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                               
+                                    <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_tasks', project_id=project.id) }}">Tasks</a></li>
+                                {% endif %}
+                                <li class="breadcrumb-item active">{{ task.task_key }}</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <!-- Task Key and Type -->
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-light rounded me-2">
+                                <span class="avatar-title text-primary fs-20">
+                                        <i class="ri-task-line"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-0">{{ task.task_key }}</h6>
+                                <h4 class="mb-0">{{ task.title }}</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="ms-auto">
+                            <button class="btn btn-soft-primary me-2" onclick="handleBackNavigation()">
+                                <i class="ri-arrow-left-line align-bottom me-1"></i> Back
+                            </button>
+                            <button class="btn btn-soft-warning me-2" data-bs-toggle="modal" data-bs-target="#activityModal">
+                                <i class="ri-history-line align-bottom me-1"></i> Activity
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="activityModalLabel">
+                                        <i class="ri-history-line align-bottom me-1"></i>
+                                        Activity Log
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="activity-timeline" id="activityList">
+                                        {% for activity in history %}
+                                        <div class="activity-item mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="flex-shrink-0">
+                                                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                         class="rounded-circle avatar-xs">
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <h6 class="mb-0">{{ activity.user.name }}</h6>
+                                                    <small class="text-muted">
+                                                        <span class="utc-datetime" data-utc-datetime="{{ activity.changed_at.isoformat() if activity.changed_at else 'None' }}">
+                                                            {{ activity.changed_at.strftime('%b %d, %Y %H:%M') }}
+                                                        </span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="ms-4 ps-1">
+                                                <p class="text-muted mb-0">
+                                                    Changed {{ activity.field_name }} from 
+                                                    <span class="fw-medium">{{ activity.old_value }}</span> to 
+                                                    <span class="fw-medium text-primary">{{ activity.new_value }}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status and Metadata -->
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <!-- Status -->
+                        <div class="d-flex align-items-center">
+                            <span class="badge" style="{% if task.status.name == 'To Do' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      elif task.status.name == 'In Progress' %}color: rgb(251, 188, 5); background-color: rgb(254, 247, 224){% 
+                                                      elif task.status.name == 'Review' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      elif task.status.name == 'Done' %}color: rgb(52, 168, 83); background-color: rgb(230, 244, 234){% 
+                                                      endif %}">
+                                {{ task.status.name }}
+                            </span>
+                        </div>
+                    
+                        <!-- Priority -->
+                        <div class="d-flex align-items-center">
+                            <span class="badge" style="{% if task.priority.name == 'Critical' %}color: rgb(234, 67, 53); background-color: rgb(253, 232, 230){% 
+                                                      elif task.priority.name == 'Important' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      elif task.priority.name == 'Normal' %}color: rgb(52, 168, 83); background-color: rgb(230, 244, 234){% 
+                                                      elif task.priority.name == 'Optional' %}color: rgb(66, 133, 244); background-color: rgb(232, 240, 254){% 
+                                                      endif %}">
+                                {{ task.priority.name }}
+                            </span>
+                        </div>
+
+                        <!-- Assignee -->
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-group">
+                                <div class="avatar-group-item shadow">
+                                    {% if task.assignee.profile_picture_base64 %}
+                                        <img src="data:image;base64,{{ task.assignee.profile_picture_base64 }}" 
+                                             alt="{{ task.assignee.name }}" class="rounded-circle avatar-xs">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                             alt="{{ task.assignee.name }}" class="rounded-circle avatar-xs">
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="ms-2">{{ task.assignee.name }}</span>
+                        </div>
+
+                        <!-- Created Info -->
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="ri-calendar-line me-1"></i>
+                            Created&nbsp;<span class="utc-date" data-utc-date="{{ task.created_at.isoformat() if task.created_at else 'None' }}">
+                                {{ task.created_at.strftime('%b %d, %Y') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- Description Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="ri-file-text-line me-2 text-muted"></i>
+                                    Description
+                                </h5>
+                            </div>
+                            <div class="description-content">
+                                <div class="description-content">
+                                    {{ task.description | replace("\n", "<br>") | safe if task.description else 'No description provided.' }}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="card">
+                        <div class="card-header bg-light py-3 d-flex align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-discuss-line me-2"></i> Comments
+                                {% if comments|length > 0 %}
+                                    <span class="badge bg-soft-primary text-primary rounded-pill ms-2">{{ comments|length }}</span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- New Comment Form -->
+                            <div class="mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        {% if current_user.profile_picture_base64 %}
+                                            <img src="data:image;base64,{{ current_user.profile_picture_base64 }}" 
+                                                class="rounded-circle avatar-sm me-3" alt="{{ current_user.name }}">
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                class="rounded-circle avatar-sm me-3" alt="{{ current_user.name }}">
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <textarea class="form-control bg-light border-light" 
+                                                id="newComment" 
+                                                rows="3" 
+                                                placeholder="Write a comment..."></textarea>
+                                        <div class="d-flex justify-content-end mt-2">
+                                            <button type="button" class="btn btn-ghost-secondary btn-icon waves-effect me-1" data-bs-toggle="modal" data-bs-target="#addAttachmentModal">
+                                                <i class="ri-attachment-line fs-16"></i>
+                                            </button>
+                                            <button class="btn btn-primary" id="addCommentBtn">
+                                                <i class="ri-send-plane-line align-bottom me-1"></i> Add Comment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <!-- Comments List -->
+                            <div id="commentsList">
+                                {% if comments|length == 0 %}
+                                    <div class="text-center p-4">
+                                        <i class="ri-chat-3-line fs-2 text-muted"></i>
+                                        <p class="mt-2">No comments yet. Be the first to comment!</p>
+                                    </div>
+                                {% else %}
+                                    {% for comment in comments %}
+                                    <div class="comment mb-4">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0">
+                                                {% if comment.user.profile_picture_base64 %}
+                                                    <img src="data:image;base64,{{ comment.user.profile_picture_base64 }}" 
+                                                        class="rounded-circle avatar-sm me-3" alt="{{ comment.user.name }}">
+                                                {% else %}
+                                                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                        class="rounded-circle avatar-sm me-3" alt="{{ comment.user.name }}">
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-start mb-2">
+                                                    <div>
+                                                        <h6 class="mb-0">{{ comment.user.name }}</h6>
+                                                        <small class="text-muted">
+                                                            <span class="utc-datetime" data-utc-datetime="{{ comment.created_at.isoformat() if comment.created_at else 'None' }}">
+                                                                {{ comment.created_at.strftime('%b %d, %Y %H:%M') }}
+                                                            </span>
+                                                        </small>
+                                                    </div>
+                                                    <div class="ms-auto">
+                                                        <!-- Dropdown menu commented out -->
+                                                    </div>
+                                                </div>
+                                                <div class="comment-content">
+                                                    {{ comment.comment }}
+                                                </div>
+                                                <!-- Reply button commented out -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Status Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Status</label>
+                                <select class="form-control status-select" id="taskStatus">
+                                    {% for status in statuses %}
+                                        <option value="{{ status.id }}" 
+                                            data-is-done="{{ status.is_done|int }}"
+                                            {% if status.id == task.status_id %} selected {% endif %}>
+                                            {{ status.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Add this after the Status dropdown in task_detail.html -->
+                            <div class="mb-4 review-status-container" style="display: none;">
+                                <label class="form-label fw-medium">Review Status</label>
+                                <select class="form-control" id="reviewStatus">
+                                    <option value="0" {% if task.is_reviewed == 0 %}selected{% endif %}>Pending for review</option>
+                                    <option value="1" {% if task.is_reviewed == 1 %}selected{% endif %}>Reviewed & Closed</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Assignee</label>
+                                <select class="form-control" id="taskAssignee">
+                                    <option value="">Unassigned</option>
+                                    {% for member in project_members %}
+                                    <option value="{{ member.id }}"
+                                            {% if member.id == task.assigned_to %}selected{% endif %}>
+                                        {{ member.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label fw-medium">Priority</label>
+                                <select class="form-control" id="taskPriority">
+                                    {% for priority in priorities %}
+                                    <option value="{{ priority.id }}"
+                                            {% if priority.id == task.priority_id %}selected{% endif %}>
+                                        {{ priority.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details Card -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Details</h5>
+                          
+                            <div class="details-item">
+                                <span class="meta-label">Created by</span>
+                                <span class="meta-value">{{ task.creator.name }}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="meta-label">Created</span>
+                                <span class="meta-value utc-date" data-utc-date="{{ task.created_at.isoformat() if task.created_at else 'None' }}">
+                                    {{ task.created_at.strftime('%Y-%m-%d') }}
+                                </span>
+                                                        </div>
+                            <div class="details-item">
+                                <span class="meta-label">Updated</span>
+                                <span class="meta-value utc-date" data-utc-date="{{ task.updated_at.isoformat() if task.updated_at else 'None' }}">
+                                    {{ task.updated_at.strftime('%Y-%m-%d') if task.updated_at else '-' }}
+                                </span>
+                                                        </div>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Attachments Card -->
+                    <div class="card">
+                        <div class="card-header bg-light py-3 d-flex align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-attachment-line me-2"></i> Attachments
+                                {% if task.attachments|length > 0 %}
+                                    <span class="badge bg-soft-primary text-primary rounded-pill ms-2">{{ task.attachments|length }}</span>
+                                {% endif %}
+                            </h5>
+                            
+                            <div class="ms-auto">
+                                <button type="button" class="btn btn-sm btn-soft-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#addAttachmentModal">
+                                    <i class="ri-add-line align-bottom"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if task.attachments|length == 0 %}
+                                <div class="text-center p-3">
+                                    <i class="ri-attachment-line fs-2 text-muted"></i>
+                                    <p class="mt-2">No attachments yet</p>
+                                </div>
+                            {% else %}
+                                <div class="vstack gap-3">
+                                    {% for attachment in task.attachments %}
+                                    <div class="p-2 border rounded">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-3">
+                                                <div class="avatar-sm">
+                                                    <div class="avatar-title bg-light text-primary rounded fs-24">
+                                                        <i class="ri-file-text-line"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h5 class="fs-13 mb-1">
+                                                    <a href="{{ url_for('tasks.download_attachment', attachment_id=attachment.id) }}" class="text-body">
+                                                        {{ attachment.file_name }}
+                                                    </a>
+                                                </h5>
+                                                <div>
+                                                    <p class="text-muted mb-0 fs-11">
+                                                        <span>Uploaded by {{ attachment.uploader.name if attachment.uploader.name else 'Unknown' }}</span>
+                                                        <span class="ms-2 utc-date" data-utc-date="{{ attachment.uploaded_at.isoformat() if attachment.uploaded_at else 'None' }}">
+                                                            {{ attachment.uploaded_at.strftime('%b %d, %Y') if attachment.uploaded_at else 'Unknown date' }}
+                                                        </span>
+                                                                                                        </p>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0 ms-2">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-ghost-secondary btn-icon btn-sm fs-16" 
+                                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="ri-more-2-fill"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ url_for('tasks.download_attachment', attachment_id=attachment.id) }}">
+                                                                <i class="ri-download-2-line me-2 align-bottom text-muted"></i>Download
+                                                            </a>
+                                                        </li>
+                                                        <!-- <li>
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="deleteAttachment({{ attachment.id }})">
+                                                                <i class="ri-delete-bin-line me-2 align-bottom text-muted"></i>Delete
+                                                            </a>
+                                                        </li> -->
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+<!-- Add Attachment Modal -->
+<div class="modal fade" id="addAttachmentModal" tabindex="-1" aria-labelledby="addAttachmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAttachmentModalLabel">
+                    <i class="ri-attachment-line me-1"></i> Add Attachment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadAttachmentForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="attachmentFile" class="form-label">File</label>
+                        <input type="file" class="form-control" id="attachmentFile" name="file" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="uploadAttachmentBtn">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+
+<script>
+
+function saveReferrer() {
+  // Only save if coming from a known source page and it's not already saved
+  if (document.referrer && !sessionStorage.getItem('taskDetailReferrer')) {
+    const referringUrl = document.referrer;
+    console.log("Saving referrer URL:", referringUrl);
+    
+    // Check if the referrer is one of our known task list pages
+    if (referringUrl.includes('/tasks_list_view') || 
+        (referringUrl.includes('/project/') && referringUrl.includes('/tasks')) ||
+        referringUrl.includes('/kanban_board')) {
+      
+      // Save the referring URL
+      sessionStorage.setItem('taskDetailReferrer', referringUrl);
+      
+      // Extract taskView parameter from the referrer URL
+      try {
+        const urlObj = new URL(referringUrl);
+        const taskView = urlObj.searchParams.get('taskView');
+        
+        // Save the filter preference, defaulting to 'my_tasks' if not found
+        const filterToSave = (taskView === 'connected_tasks') ? 'connected_tasks' : 'my_tasks';
+        
+        console.log("Saving task view filter:", filterToSave);
+        sessionStorage.setItem('taskViewFilter', filterToSave);
+        
+      } catch (e) {
+        console.error('Error extracting filter state from referrer:', e);
+        
+        // Fallback to current URL's taskView parameter if available
+        try {
+          const currentUrl = new URL(window.location.href);
+          const currentTaskView = currentUrl.searchParams.get('taskView');
+          
+          const filterToSave = (currentTaskView === 'connected_tasks') ? 'connected_tasks' : 'my_tasks';
+          console.log("Saving task view filter from current URL:", filterToSave);
+          sessionStorage.setItem('taskViewFilter', filterToSave);
+        } catch (e2) {
+          console.error('Error extracting filter state from current URL:', e2);
+          // Default to "my_tasks" on error
+          sessionStorage.setItem('taskViewFilter', 'my_tasks');
+        }
+      }
+    }
+  }
+}
+
+
+function handleBackNavigation() {
+  // Check if we have a saved referrer and task view filter
+  const savedReferrer = sessionStorage.getItem('taskDetailReferrer');
+  const savedFilter = sessionStorage.getItem('taskViewFilter');
+  
+  console.log("Retrieved saved referrer:", savedReferrer);
+  console.log("Retrieved saved filter:", savedFilter);
+  
+  // Ensure the filter is valid, default to 'my_tasks' if not
+  const validFilter = (savedFilter === 'my_tasks' || savedFilter === 'connected_tasks') 
+    ? savedFilter 
+    : 'my_tasks';
+  
+  // If we have a referrer
+  if (savedReferrer) {
+    try {
+      // Attempt to construct URL and navigate
+      const targetUrl = new URL(savedReferrer, window.location.origin);
+      
+      // Always set the taskView parameter to ensure correct filter
+      targetUrl.searchParams.set('taskView', validFilter);
+      
+      // Remove stored items to prevent reusing
+      sessionStorage.removeItem('taskDetailReferrer');
+      sessionStorage.removeItem('taskViewFilter');
+      
+      console.log("Navigating to URL with filter:", targetUrl.toString());
+      window.location.href = targetUrl.toString();
+      return;
+    } catch (e) {
+      console.error('Error building URL:', e);
+    }
+  }
+  
+  // Fallback navigation logic
+  const pathParts = window.location.pathname.split('/');
+  const projectId = pathParts[pathParts.indexOf('project') + 1] || pathParts[pathParts.length - 2];
+  
+  // Always include the saved filter in the fallback URL
+  if (projectId) {
+    window.location.href = `/tasks/project/${projectId}/tasks?taskView=${validFilter}`;
+  } else {
+    window.location.href = `/tasks/projects?taskView=${validFilter}`;
+  }
+}
+
+// Call saveReferrer when the page loads
+document.addEventListener('DOMContentLoaded', saveReferrer);
+
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', saveReferrer);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const taskId = getTaskIdFromUrl();
+    const projectId = getTaskIdFromUrl();
+
+    const uploadAttachmentBtn = document.getElementById('uploadAttachmentBtn');
+    if (uploadAttachmentBtn) {
+        uploadAttachmentBtn.addEventListener('click', uploadAttachment);
+    }
+    
+    // Initialize field handlers
+    initializeStatusHandler();
+    initializeAssigneeHandler();
+    initializePriorityHandler();
+    
+    // Load initial data
+    loadTaskDetails(taskId);
+    
+    // Initialize comment functionality
+    initializeComments(taskId);
+
+    checkIfUserIsReviewer(projectId);
+    initializeReviewStatusHandler();
+});
+
+// Function to check if current user is a reviewer
+async function checkIfUserIsReviewer(projectId) {
+    try {
+        const response = await fetch(`/tasks/api/projects/${projectId}/check-reviewer`);
+        const data = await response.json();
+        
+        if (data.is_reviewer) {
+            // Show review status dropdown if user is a reviewer
+            document.querySelector('.review-status-container').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error checking reviewer status:', error);
+    }
+}
+
+// Initialize review status change handler
+function initializeReviewStatusHandler() {
+    const reviewSelect = document.getElementById('reviewStatus');
+    if (!reviewSelect) return;
+    
+    reviewSelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const taskId = getTaskIdFromUrl();
+        const newReviewStatus = this.value;
+        
+        try {
+            const response = await fetch(`/tasks/api/tasks/${taskId}/review-status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_reviewed: parseInt(newReviewStatus, 10)
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update review status');
+            }
+            
+            // Show success message
+            showSuccessAlert('Review status updated successfully');
+            
+            // If task was marked as reviewed (value = 1), apply locked UI
+            if (parseInt(newReviewStatus, 10) === 1) {
+                // Apply locked UI - will disable everything
+                updateUIForLockedTask();
+                
+                // Keep review status container visible but make it read-only
+                const reviewStatusContainer = document.querySelector('.review-status-container');
+                if (reviewStatusContainer) {
+                    reviewStatusContainer.style.display = 'block';
+                    // But keep the select disabled to match the locked state
+                    reviewSelect.disabled = true;
+                }
+            } else {
+                // Reload task details for non-locked case
+                loadTaskDetails(taskId);
+            }
+            
+        } catch (error) {
+            console.error('Error updating review status:', error);
+            showErrorAlert(error.message || 'Failed to update review status');
+        }
+    });
+}
+
+function updateUIForCompletedTask(task) {
+    // Check if the task has a completed status
+    const isCompleted = task.status && task.status.is_done;
+    
+    if (isCompleted) {
+        // Disable form inputs but not navigation controls
+        document.querySelectorAll('.card-body input, .card-body select, .card-body textarea').forEach(element => {
+            element.disabled = true;
+        });
+        
+        // Disable buttons inside card body except for back and activity buttons
+        document.querySelectorAll('.card-body button').forEach(button => {
+            // Don't disable back button or activity button
+            if (!button.classList.contains('btn-soft-primary') && 
+                !button.classList.contains('btn-soft-warning') &&
+                !button.innerText.includes('Back') &&
+                !button.innerText.includes('Activity')) {
+                button.disabled = true;
+            }
+        });
+
+        // Explicitly disable attachment button and functionality
+        const attachmentButton = document.querySelector('button[data-bs-toggle="modal"][data-bs-target="#addAttachmentModal"]');
+        if (attachmentButton) {
+            attachmentButton.disabled = true;
+        }
+        
+        // Disable the upload button in the attachment modal
+        const uploadAttachmentBtn = document.getElementById('uploadAttachmentBtn');
+        if (uploadAttachmentBtn) {
+            uploadAttachmentBtn.disabled = true;
+        }
+        
+        // Add a message to the attachment modal
+        const attachmentModal = document.getElementById('addAttachmentModal');
+        if (attachmentModal) {
+            const modalBody = attachmentModal.querySelector('.modal-body');
+            if (modalBody) {
+                const warningMessage = document.createElement('div');
+                warningMessage.className = 'alert alert-warning';
+                warningMessage.innerHTML = '<i class="ri-information-line me-2"></i> This task is completed and attachments cannot be added.';
+                modalBody.prepend(warningMessage);
+            }
+        }
+        
+        // Explicitly enable the back and activity buttons
+        const backButton = document.querySelector('button[onclick="handleBackNavigation()"]');
+        if (backButton) backButton.disabled = false;
+        
+        const activityButton = document.querySelector('button[data-bs-toggle="modal"][data-bs-target="#activityModal"]');
+        if (activityButton) activityButton.disabled = false;
+        
+        // Make sure the activity modal is not disabled
+        const activityModal = document.getElementById('activityModal');
+        if (activityModal) {
+            // Enable all elements within the activity modal
+            activityModal.querySelectorAll('button, input, select, textarea').forEach(element => {
+                element.disabled = false;
+            });
+        }
+        
+        // Add a visual indicator that the task is completed
+        const taskHeader = document.querySelector('.card-header');
+        if (taskHeader) {
+            // Check if the badge doesn't already exist to avoid duplicates
+            if (!taskHeader.querySelector('.badge.bg-success')) {
+                const completedBadge = document.createElement('span');
+                completedBadge.className = 'badge bg-success ms-2';
+                completedBadge.textContent = 'Completed';
+                taskHeader.appendChild(completedBadge);
+            }
+        }
+        
+        // Show a message to the user (avoid duplicates)
+        const existingAlert = document.querySelector('.alert.alert-warning');
+        if (!existingAlert) {
+            const warningAlert = document.createElement('div');
+            warningAlert.className = 'alert alert-warning';  // Removed mb-4
+            warningAlert.style.marginBottom = '12px';  // Add controlled margin
+            warningAlert.innerHTML = '<i class="ri-information-line me-2"></i> This task is marked as completed and cannot be modified.';
+            
+            // Better placement - directly inside the description card body
+            const descriptionCard = document.querySelector('.col-lg-8 .card:first-child .card-body');
+            if (descriptionCard) {
+                // Insert right after the title, not at the very top
+                const titleElement = descriptionCard.querySelector('.d-flex.align-items-center.mb-3');
+                if (titleElement) {
+                    titleElement.insertAdjacentElement('afterend', warningAlert);
+                } else {
+                    descriptionCard.insertBefore(warningAlert, descriptionCard.firstChild);
+                }
+            } else {
+                // Fallback to a different placement if needed
+                const mainContent = document.querySelector('.col-lg-8');
+                if (mainContent) {
+                    const firstChild = mainContent.firstChild;
+                    mainContent.insertBefore(warningAlert, firstChild);
+                }
+            }
+        }
+        document.querySelectorAll('.page-content > div:empty, .main-content > div:empty').forEach(div => {
+            div.remove();
+        });
+    }
+}
+
+// Get task ID from URL
+function getTaskIdFromUrl() {
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 1];
+}
+
+function getProjectIdFromUrl() {
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 2];
+}
+
+function initializeStatusHandler() {
+    const statusSelect = document.getElementById('taskStatus');
+    if (!statusSelect) return;
+    
+    statusSelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const taskId = getTaskIdFromUrl();
+        const newStatus = this.value;
+        
+        // Get the selected option to check if it's a completed status
+        const selectedOption = statusSelect.options[statusSelect.selectedIndex];
+        const isCompletedStatus = selectedOption.getAttribute('data-is-done') === '1';
+        
+        if (isCompletedStatus) {
+            try {
+                // First, get full task details to check category and attachments
+                const taskResponse = await fetch(`/tasks/api/tasks/${taskId}`);
+                const taskData = await taskResponse.json();
+                
+                console.log('Full Task Data:', taskData);
+                console.log('Category:', taskData.category);
+                
+                // Robust logging and checking
+                console.log('Task Category Details:', {
+                    id: taskData.category?.id,
+                    name: taskData.category?.name,
+                    attachment_required: taskData.category?.attachment_required
+                });
+                
+                // Extra careful checking of attachment requirement
+                const attachmentRequired = taskData.category && 
+                    (taskData.category.attachment_required === true || 
+                     taskData.category.attachment_required === 1);
+                
+                console.log('Attachment Required (Careful Check):', attachmentRequired);
+                
+                // Check attachment count
+                const attachmentCount = taskData.attachments ? taskData.attachments.length : 0;
+                console.log('Attachment Count:', attachmentCount);
+                
+                // Validation logic with more detailed logging
+                if (attachmentRequired === true && attachmentCount === 0) {
+                    console.warn('Blocking task completion due to missing attachment');
+                    Swal.fire({
+                        title: 'Attachment Required',
+                        text: `This task category (${taskData.category.name}) requires at least one attachment before marking as completed.`,
+                        icon: 'warning',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                    
+                    // Reset the dropdown to the previous selection
+                    loadTaskDetails(taskId);
+                    return;
+                }
+                
+                // If not required or attachments exist, proceed with completion confirmation
+                Swal.fire({
+                    title: 'Mark as Completed?',
+                    text: "Are you sure this task is completed? After submitting, you won't be able to make any changes to this task.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, mark as completed!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // User confirmed, proceed with status update
+                        updateTaskStatus(taskId, newStatus);
+                    } else {
+                        // User cancelled, revert the dropdown to previous selection
+                        loadTaskDetails(taskId); // This will reset the dropdown
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error checking task details:', error);
+                showErrorAlert('Error checking task details. Please try again.');
+                loadTaskDetails(taskId);
+            }
+        } else {
+            // For non-completed statuses, proceed normally
+            updateTaskStatus(taskId, newStatus);
+        }
+    });
+}
+
+
+// Separated function to handle the actual status update
+async function updateTaskStatus(taskId, newStatus) {
+    try {
+        // First get the task to check permissions
+        const taskResponse = await fetch(`/tasks/api/tasks/${taskId}`);
+        const task = await taskResponse.json();
+        
+        // Check user permissions - make sure to await the result if it's async
+        const permissions = await checkUserPermissions(task);
+        
+        if (!permissions.canEdit) {
+            showErrorAlert(permissions.message);
+            loadTaskDetails(taskId); // Reset form
+            return;
+        }
+
+        const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status_id: parseInt(newStatus, 10)
+            })
+        });
+        
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+            // Check if this is a completed task error
+            if (responseData.error && responseData.error.includes('completed task')) {
+                showErrorAlert('You cannot modify a completed task. The task has been marked as done.');
+            } else {
+                throw new Error(responseData.error || 'Failed to update status');
+            }
+            
+            // Reload the task details to refresh the form
+            loadTaskDetails(taskId);
+            return;
+        }
+        
+        showSuccessAlert('Status updated successfully');
+        loadTaskDetails(taskId);
+        
+    } catch (error) {
+        console.error('Error updating status:', error);
+        showErrorAlert(error.message || 'Failed to update status');
+        // Reload the task details to reset the form
+        loadTaskDetails(taskId);
+    }
+}
+
+// Corrected function to check if current user has permissions to edit a task
+async function checkUserPermissions(task) {
+    // Get current user ID from the page
+    const currentUserId = {{ current_user.id }};
+    
+    // Check if user is admin
+    const isAdmin = {{ 'true' if current_user.role.role_name == 'admin' else 'false' }};
+    
+    // Check if user is the task assignee
+    const isAssignee = task.assignee && task.assignee.id === currentUserId;
+    
+    // Check if user is the project lead
+    const isProjectLead = task.project && task.project.lead_id === currentUserId;
+    
+    // Check if user is a project reviewer
+    let isReviewer = false;
+    try {
+        const projectId = task.project.id;
+        const reviewerResponse = await fetch(`/tasks/api/projects/${projectId}/check-reviewer`);
+        const reviewerData = await reviewerResponse.json();
+        isReviewer = reviewerData.is_reviewer;
+    } catch (error) {
+        console.error('Error checking reviewer status:', error);
+    }
+    
+    // Check if the task is completed
+    const isTaskCompleted = task.is_done === 1 || (task.status && task.status.is_done === 1);
+    
+    // Determine permission - only project reviewers can edit tasks
+    // Plus we keep admin and project lead permissions for backup access
+    let canEdit = isReviewer || isAssignee || isAdmin;
+    let message = "";
+    
+    // If task is completed, only reviewer, admin lead can modify
+    if (isTaskCompleted) {
+        canEdit = isReviewer || isAdmin;
+        message = "This task is completed and can only be modified by a project reviewer.";
+    } else if (!canEdit) {
+        message = "Only project reviewers can edit tasks.";
+    }
+    
+    return {
+        canEdit: canEdit,
+        message: message
+    };
+}
+
+// Initialize assignee change handler
+function initializeAssigneeHandler() {
+    const assigneeSelect = document.getElementById('taskAssignee');
+    if (!assigneeSelect) return;
+    
+    assigneeSelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const taskId = getTaskIdFromUrl();
+        const newAssignee = this.value;
+        
+        try {
+            const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    assignee_id: newAssignee ? parseInt(newAssignee, 10) : null
+                })
+            });
+            
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                // Check if this is a completed task error
+                if (responseData.error && responseData.error.includes('completed task')) {
+                    showErrorAlert('You cannot change the assignee of a completed task.');
+                } else {
+                    throw new Error(responseData.error || 'Failed to update assignee');
+                }
+                
+                // Reload the task details to refresh the form
+                loadTaskDetails(taskId);
+                return;
+            }
+            
+            showSuccessAlert('Assignee updated successfully');
+            loadTaskDetails(taskId);
+            
+        } catch (error) {
+            console.error('Error updating assignee:', error);
+            showErrorAlert(error.message || 'Failed to update assignee');
+            // Reload the task details to reset the form
+            loadTaskDetails(taskId);
+        }
+    });
+}
+
+
+// Initialize priority change handler
+function initializePriorityHandler() {
+    const prioritySelect = document.getElementById('taskPriority');
+    if (!prioritySelect) return;
+    
+    prioritySelect.addEventListener('change', async function(e) {
+        e.preventDefault();
+        const taskId = getTaskIdFromUrl();
+        const newPriority = this.value;
+        
+        try {
+            const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    priority_id: parseInt(newPriority)
+                })
+            });
+            
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                // Check if this is a completed task error
+                if (responseData.error && responseData.error.includes('completed task')) {
+                    showErrorAlert('You cannot change the priority of a completed task.');
+                } else {
+                    throw new Error(responseData.error || 'Failed to update priority');
+                }
+                
+                // Reload the task details to refresh the form
+                loadTaskDetails(taskId);
+                return;
+            }
+            
+            showSuccessAlert('Priority updated successfully');
+            loadTaskDetails(taskId);
+            
+        } catch (error) {
+            console.error('Error updating priority:', error);
+            showErrorAlert(error.message || 'Failed to update priority');
+            // Reload the task details to reset the form
+            loadTaskDetails(taskId);
+        }
+    });
+}
+
+
+
+// Helper function to get CSRF token
+function getCsrfToken() {
+    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    return tokenMeta ? tokenMeta.getAttribute('content') : '';
+}
+
+// Updated loadTaskDetails function to handle locked tasks
+async function loadTaskDetails(taskId) {
+    try {
+        const response = await fetch(`/tasks/api/tasks/${taskId}`);
+        if (!response.ok) throw new Error('Failed to load task details');
+        
+        const task = await response.json();
+        
+        // Update task details in the form
+        updateTaskDetails(task);
+        
+        // Get project ID from the task
+        const projectId = task.project.id;
+        
+        // Check if user is a reviewer for this project
+        const reviewerResponse = await fetch(`/tasks/api/projects/${projectId}/check-reviewer`);
+        const reviewerData = await reviewerResponse.json();
+        
+        // Check if user is the assignee
+        const isAssignee = task.assignee && task.assignee.id === {{ current_user.id }};
+        const isAdmin = {{ 'true' if current_user.role.role_name == 'admin' else 'false' }};
+        const isProjectLead = task.project && task.project.lead_id === {{ current_user.id }};
+        
+        // Always show review status container for reviewers, regardless of task status
+        if (reviewerData.is_reviewer) {
+            document.querySelector('.review-status-container').style.display = 'block';
+        }
+        
+        // Check for locked task
+        if (task.is_reviewed == 1) {
+            // Task is locked - disable all inputs and show a notification
+            updateUIForLockedTask();
+            
+            // IMPORTANT: Keep review status container visible for reviewers when task is locked
+            if (reviewerData.is_reviewer) {
+                const reviewStatusContainer = document.querySelector('.review-status-container');
+                if (reviewStatusContainer) {
+                    reviewStatusContainer.style.display = 'block';
+                    // BUT keep the review status select disabled to match locked state
+                    const reviewStatusSelect = document.getElementById('reviewStatus');
+                    if (reviewStatusSelect) {
+                        reviewStatusSelect.disabled = true;
+                    }
+                }
+            }
+            return;
+        }
+        
+        // If not locked, check user permissions
+        const hasEditPermission = isAdmin || isProjectLead || isAssignee || reviewerData.is_reviewer;
+        
+        if (!hasEditPermission) {
+            // User doesn't have permission to edit
+            updateUIForReadOnlyTask();
+        } else if (reviewerData.is_reviewer) {
+            // User is a reviewer - ensure review status container is visible
+            document.querySelector('.review-status-container').style.display = 'block';
+            
+            if (task.is_done == 1) {
+                // Display a notification that this task is completed
+                const notificationDiv = document.createElement('div');
+                notificationDiv.className = 'alert alert-info';
+                notificationDiv.innerHTML = '<i class="ri-information-line"></i> This task is marked as completed and is pending your review.';
+                
+                // Better placement to avoid causing a large gap
+                const firstCard = document.querySelector('.col-lg-8 .card:first-child .card-body');
+                if (firstCard) {
+                    firstCard.insertBefore(notificationDiv, firstCard.firstChild);
+                } else {
+                    // Fallback to main content with controlled positioning
+                    const mainContent = document.querySelector('.main-content .page-content .container-fluid');
+                    if (mainContent) {
+                        const firstElement = mainContent.querySelector('.row:first-child');
+                        mainContent.insertBefore(notificationDiv, firstElement ? firstElement.nextSibling : mainContent.firstChild);
+                    }
+                }
+            }
+        } else if (task.is_done == 1) {
+            // Regular user - if task is done, disable editing
+            updateUIForCompletedTask(task);
+        }
+    } catch (error) {
+        console.error('Error loading task details:', error);
+        showErrorAlert('Failed to load task details');
+    }
+}
+
+
+// Function to update UI for locked tasks - fixed to prevent gap at the top
+function updateUIForLockedTask() {
+    // Only disable form elements within the task detail content area
+    // Use more specific selectors to avoid affecting navigation and other UI elements
+    document.querySelectorAll('.page-content input, .page-content select, .page-content textarea').forEach(element => {
+        element.disabled = true;
+    });
+    
+    // Disable buttons in the task detail area, except back and activity buttons
+    document.querySelectorAll('.page-content button').forEach(button => {
+        // Skip back navigation button and activity modal button
+        if (!(button.onclick && button.onclick.toString().includes('handleBackNavigation')) && 
+            !(button.getAttribute('data-bs-target') === '#activityModal')) {
+            button.disabled = true;
+        }
+    });
+    
+    // Add notification at the top of the task content, not the entire page
+    const lockNotification = document.createElement('div');
+    lockNotification.className = 'alert alert-danger mb-3';
+    lockNotification.innerHTML = '<i class="ri-lock-line me-2"></i> This task is locked and cannot be modified.';
+    
+    // Better placement for the notification - find the first card with task details
+    const firstCard = document.querySelector('.row .col-lg-8 .card:first-child .card-body');
+    if (firstCard) {
+        // Insert at the top of the description card
+        firstCard.insertBefore(lockNotification, firstCard.firstChild);
+    } else {
+        // Fallback to task header card if description card not found
+        const headerCard = document.querySelector('.card.mb-4 .card-body');
+        if (headerCard) {
+            headerCard.insertBefore(lockNotification, headerCard.firstChild);
+        }
+    }
+    
+    // Disable add comment UI specifically
+    const commentForm = document.getElementById('newComment');
+    if (commentForm) {
+        commentForm.disabled = true;
+        commentForm.placeholder = 'Comments are disabled for locked tasks';
+    }
+    
+    const addCommentBtn = document.getElementById('addCommentBtn');
+    if (addCommentBtn) {
+        addCommentBtn.disabled = true;
+    }
+    
+    // Make sure the activity modal is not disabled
+    const activityModal = document.getElementById('activityModal');
+    if (activityModal) {
+        // Enable all elements within the activity modal
+        activityModal.querySelectorAll('button, input, select, textarea').forEach(element => {
+            element.disabled = false;
+        });
+    }
+    
+    // Ensure that we're not adding extra spacing/gaps by removing any unwanted elements
+    // Remove any empty divs that might be creating gaps
+    document.querySelectorAll('.page-content > div:empty, .main-content > div:empty').forEach(div => {
+        div.remove();
+    });
+    
+    // Check for existing notifications that might be creating duplicates
+    const existingNotifications = document.querySelectorAll('.alert.alert-danger');
+    if (existingNotifications.length > 1) {
+        // Keep only the first notification, remove any others
+        for (let i = 1; i < existingNotifications.length; i++) {
+            existingNotifications[i].remove();
+        }
+    }
+}
+
+// Function to update UI for read-only tasks (when user doesn't have edit permission)
+function updateUIForReadOnlyTask() {
+    // Disable form fields but allow viewing
+    document.querySelectorAll('.card-body input, .card-body select, .card-body textarea').forEach(element => {
+        if (!element.classList.contains('form-control-plaintext')) {
+            element.disabled = true;
+        }
+    });
+    
+    // Disable buttons that modify the task
+    document.querySelectorAll('.card-body button:not(.btn-soft-primary):not(.btn-soft-warning)').forEach(button => {
+        button.disabled = true;
+    });
+    
+    // Add notification
+    const permissionNotification = document.createElement('div');
+    permissionNotification.className = 'alert alert-warning mt-1 px-2';
+    permissionNotification.innerHTML = '<i class="ri-information-line me-2"></i> You are viewing this task in read-only mode.';
+    
+    // Find the most appropriate location to insert the notification
+    const insertionTargets = [
+        document.querySelector('.card.mb-4'), // First task card
+        document.querySelector('.main-content > .page-content > .container-fluid > .row > .col-lg-8'), // Main content column
+        document.querySelector('.main-content')
+    ];
+    
+    // Find the first valid target and insert the notification
+    for (const target of insertionTargets) {
+        if (target) {
+            // Check if notification is not already present
+            if (!target.querySelector('.alert-warning')) {
+                target.insertBefore(permissionNotification, target.firstChild);
+                break;
+            }
+        }
+    }
+    
+    // Disable add comment UI
+    const commentForm = document.getElementById('newComment');
+    if (commentForm) {
+        commentForm.disabled = true;
+        commentForm.placeholder = 'You do not have permission to add comments';
+    }
+    
+    const addCommentBtn = document.getElementById('addCommentBtn');
+    if (addCommentBtn) {
+        addCommentBtn.disabled = true;
+    }
+    
+    // Remove any potential empty divs or unwanted spacing
+    const emptyDivs = document.querySelectorAll('.main-content > div:empty, .page-content > div:empty');
+    emptyDivs.forEach(div => div.remove());
+}
+
+
+// Update task details in the UI
+function updateTaskDetails(task) {
+    // Update status dropdown
+    const statusSelect = document.getElementById('taskStatus');
+    if (statusSelect) {
+        const statusId = task.status_id?.toString() || task.status?.id?.toString();
+        if (statusId) {
+            statusSelect.value = statusId;
+        }
+    }
+    
+    // Update assignee dropdown
+    const assigneeSelect = document.getElementById('taskAssignee');
+    if (assigneeSelect) {
+        const assigneeId = task.assignee_id?.toString() || task.assignee?.id?.toString();
+        if (assigneeId) {
+            assigneeSelect.value = assigneeId;
+        }
+    }
+    
+    // Update priority dropdown
+    const prioritySelect = document.getElementById('taskPriority');
+    if (prioritySelect) {
+        const priorityId = task.priority_id?.toString() || task.priority?.id?.toString();
+        if (priorityId) {
+            prioritySelect.value = priorityId;
+        }
+    }
+    
+    // Update activity list
+    if (task.history) {
+        updateActivityList(task.history);
+    }
+}
+
+// Update activity list
+function updateActivityList(history) {
+    const activityList = document.getElementById('activityList');
+    if (!activityList) return;
+
+    // Clear existing activity items
+    activityList.innerHTML = '';
+
+    history.forEach(activity => {
+        const activityItem = document.createElement('div');
+        activityItem.className = 'activity-item mb-3 pb-3 border-bottom';
+
+        // Format the change description
+        const formattedChange = formatActivityChange(activity.field_name, activity.old_value, activity.new_value);
+
+        activityItem.innerHTML = `
+            <div class="d-flex align-items-center mb-2">
+                <div class="flex-shrink-0">
+                    <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                         class="rounded-circle avatar-xs">
+                </div>
+                <div class="flex-grow-1 ms-2">
+                    <h6 class="mb-0">${activity.user.name}</h6>
+                    <small class="text-muted">
+                        ${new Date(activity.changed_at).toLocaleString()}
+                    </small>
+                </div>
+            </div>
+            <div class="ms-4 ps-1">
+                <p class="text-muted mb-0">
+                    Changed ${formattedChange.fieldName} from 
+                    <span class="fw-medium">${formattedChange.oldValue}</span> to 
+                    <span class="fw-medium text-primary">${formattedChange.newValue}</span>
+                </p>
+            </div>
+        `;
+
+        activityList.appendChild(activityItem);
+    });
+}
+
+// Format activity change
+function formatActivityChange(fieldName, oldValue, newValue) {
+    let displayOldValue = oldValue;
+    let displayNewValue = newValue;
+    
+    switch(fieldName) {
+        case 'status_id':
+        case 'status':
+            displayOldValue = getDisplayNameFromSelect('taskStatus', oldValue);
+            displayNewValue = getDisplayNameFromSelect('taskStatus', newValue);
+            fieldName = 'status';
+            break;
+        case 'priority_id':
+            displayOldValue = getDisplayNameFromSelect('taskPriority', oldValue);
+            displayNewValue = getDisplayNameFromSelect('taskPriority', newValue);
+            fieldName = 'priority';
+            break;
+        case 'assignee_id':
+            displayOldValue = getDisplayNameFromSelect('taskAssignee', oldValue);
+            displayNewValue = getDisplayNameFromSelect('taskAssignee', newValue);
+            fieldName = 'assignee';
+            break;
+    }
+    
+    // Handle null/None values
+    displayOldValue = displayOldValue || 'None';
+    displayNewValue = displayNewValue || 'None';
+    
+    return {
+        fieldName: fieldName.replace('_id', '').replace('_', ' '),
+        oldValue: displayOldValue,
+        newValue: displayNewValue
+    };
+}
+
+// Helper function to get display names from select options
+function getDisplayNameFromSelect(selectId, value) {
+    const select = document.getElementById(selectId);
+    if (!select) return value;
+    
+    const option = Array.from(select.options).find(opt => 
+        String(opt.value) === String(value)
+    );
+    return option ? option.text : value;
+}
+
+// Initialize comments functionality
+function initializeComments(taskId) {
+    const commentForm = document.getElementById('newComment');
+    const addCommentBtn = document.getElementById('addCommentBtn');
+    
+    if (!commentForm || !addCommentBtn) return;
+    
+    addCommentBtn.addEventListener('click', async function() {
+        const commentText = commentForm.value.trim();
+        if (!commentText) {
+            showErrorAlert('Please enter a comment');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/tasks/api/tasks/${taskId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    comment: commentText
+                })
+            });
+            
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                // Check if this is a completed task error
+                if (responseData.error && responseData.error.includes('completed task')) {
+                    showErrorAlert('You cannot add comments to a completed task.');
+                } else {
+                    throw new Error(responseData.error || 'Failed to add comment');
+                }
+                
+                // Reload the task details to refresh the form
+                loadTaskDetails(taskId);
+                return;
+            }
+            
+            // Show success message
+            showSuccessAlert('Comment added successfully');
+            
+            // Reload the entire page
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000); // Delay for 2 seconds so user can see the success message
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            showErrorAlert(error.message || 'Failed to add comment');
+            // Reload the task details
+            loadTaskDetails(taskId);
+        }
+    });
+}
+
+// Utility functions for alerts
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'Success!',
+        text: message,
+        icon: 'success',
+        customClass: {
+            confirmButton: 'btn btn-primary w-xs mt-2'
+        },
+        buttonsStyling: false
+    });
+}
+
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'Error!',
+        text: message,
+        icon: 'error',
+        customClass: {
+            confirmButton: 'btn btn-primary w-xs mt-2'
+        },
+        buttonsStyling: false
+    });
+}
+
+
+async function uploadAttachment() {
+    const taskId = getTaskIdFromUrl();
+    const fileInput = document.getElementById('attachmentFile');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showErrorAlert('Please select a file to upload');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    try {
+        const response = await fetch(`/tasks/api/tasks/${taskId}/attachments`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to upload attachment');
+        }
+        
+        const result = await response.json();
+        
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addAttachmentModal'));
+        modal.hide();
+        document.getElementById('uploadAttachmentForm').reset();
+        
+        showSuccessAlert('Attachment uploaded successfully');
+        
+        // Reload the page to show the new attachment
+        window.location.reload();
+        
+    } catch (error) {
+        console.error('Error uploading attachment:', error);
+        showErrorAlert(error.message || 'Failed to upload attachment');
+    }
+}
+
+// Function to delete an attachment
+async function deleteAttachment(attachmentId) {
+    const taskId = getTaskIdFromUrl();
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonClass: 'btn btn-primary w-xs me-2 mt-2',
+        cancelButtonClass: 'btn btn-danger w-xs mt-2',
+        confirmButtonText: 'Yes, delete it!',
+        buttonsStyling: false,
+        showCloseButton: true
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/tasks/api/tasks/${taskId}/attachments/${attachmentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete attachment');
+                }
+                
+                showSuccessAlert('Attachment deleted successfully');
+                
+                // Reload the page to update the attachments list
+                window.location.reload();
+                
+            } catch (error) {
+                console.error('Error deleting attachment:', error);
+                showErrorAlert(error.message || 'Failed to delete attachment');
+            }
+        }
+    });
+}
+
+
+
+</script>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "partials/base.html" %}
+
+{% block title %}View Workflow - {{ workflow.workflow_name }}{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">View Workflow Details</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.container_deposit_workflows') }}">Workflows</a></li>
+                                <li class="breadcrumb-item active">{{ workflow.workflow_name }}</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <a href="{{ url_for('masters.edit_container_deposit_workflow', workflow_id=workflow.id) }}" class="btn btn-primary me-2">
+                            <i class="ri-pencil-line me-1"></i> Edit Workflow
+                        </a>
+                        <a href="{{ url_for('masters.container_deposit_workflows') }}" class="btn btn-light">
+                            <i class="ri-arrow-left-line me-1"></i> Back to List
+                        </a>
+                    </div>
+
+                    <!-- Workflow Details Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-workflow-line me-1"></i>
+                                Workflow Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Workflow Code</label>
+                                        <div>
+                                            <span class="badge badge-soft-info fs-6">{{ workflow.workflow_code }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Workflow Name</label>
+                                        <div class="fw-semibold">{{ workflow.workflow_name }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Status</label>
+                                        <div>
+                                            <span class="badge badge-soft-{{ 'success' if workflow.is_active else 'danger' }}">
+                                                {{ 'Active' if workflow.is_active else 'Inactive' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Created Date</label>
+                                        <div>{{ workflow.created_at.strftime('%B %d, %Y at %I:%M %p') if workflow.created_at else 'N/A' }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Last Updated</label>
+                                        <div>{{ workflow.updated_at.strftime('%B %d, %Y at %I:%M %p') if workflow.updated_at else 'N/A' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workflow Steps Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-list-ordered me-1"></i>
+                                Workflow Steps
+                            </h5>
+                            <span class="badge badge-soft-primary">
+                                {{ workflow_steps|length }} step(s)
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            {% if workflow_steps %}
+                                {% for step_data in workflow_steps %}
+                                <div class="card shadow-none border mb-3">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">
+                                            <i class="ri-number-{{ step_data.step.step_number if step_data.step.step_number <= 9 else '' }} me-1"></i>
+                                            Step {{ step_data.step.step_number }}: {{ step_data.step.step_name }}
+                                        </h6>
+                                        {% if step_data.step.description %}
+                                        <p class="text-muted mb-0 mt-1 small">{{ step_data.step.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        {% if step_data.documents %}
+                                        <div class="table-responsive">
+                                            <table class="table table-sm mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Document Code</th>
+                                                        <th>Document Name</th>
+                                                        <th>Sample File</th>
+                                                        <th>Mandatory</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for doc_data in step_data.documents %}
+                                                    <tr>
+                                                        <td>
+                                                            <span class="badge badge-soft-info">{{ doc_data.document.document_code }}</span>
+                                                        </td>
+                                                        <td>{{ doc_data.document.document_name }}</td>
+                                                        <td>
+                                                            {% if doc_data.document.sample_file_path %}
+                                                                <a href="{{ url_for('masters.download_container_document', document_id=doc_data.document.id) }}" 
+                                                                   class="btn btn-sm btn-outline-primary" target="_blank"
+                                                                   data-bs-toggle="tooltip" title="View Sample File">
+                                                                    <i class="ri-download-line"></i>
+                                                                </a>
+                                                            {% else %}
+                                                                <span class="text-muted">No file</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if doc_data.step_document.is_mandatory %}
+                                                                <span class="badge badge-soft-danger">
+                                                                    <i class="ri-error-warning-line me-1"></i>Mandatory
+                                                                </span>
+                                                            {% else %}
+                                                                <span class="badge badge-soft-secondary">
+                                                                    <i class="ri-information-line me-1"></i>Optional
+                                                                </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge badge-soft-{{ 'success' if doc_data.document.is_active else 'danger' }}">
+                                                                {{ 'Active' if doc_data.document.is_active else 'Inactive' }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center py-3">
+                                            <i class="ri-file-list-2-line fs-4 text-muted mb-1"></i>
+                                            <p class="text-muted mb-0 small">No documents in this step</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="ri-list-ordered fs-1 text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No steps found in this workflow</p>
+                                <a href="{{ url_for('masters.edit_container_deposit_workflow', workflow_id=workflow.id) }}" 
+                                   class="btn btn-primary btn-sm mt-2">
+                                    <i class="ri-add-line me-1"></i>Add Steps
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+             
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock extra_js %}

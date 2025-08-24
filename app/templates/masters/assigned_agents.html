@@ -1,0 +1,1065 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Clearing Agent Orders{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Clearing Agent Orders</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Clearing Agent</a></li>
+                                <li class="breadcrumb-item active">My Assigned Orders</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Filters Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-shield-user-line text-primary me-2"></i>
+                                Orders Assigned to Me
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Status Filter Tabs -->
+                            <ul class="nav nav-tabs mb-3" id="statusTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-status="all" type="button" role="tab">
+                                        All <span class="badge bg-secondary">{{ entries|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-status="open" type="button" role="tab">
+                                        Open <span class="badge bg-primary">{{ entries|selectattr('document_status.docStatusName', 'equalto', 'Open')|list|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-status="new" type="button" role="tab">
+                                        New <span class="badge bg-info">{{ entries|selectattr('document_status.docStatusName', 'equalto', 'New')|list|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-status="ongoing" type="button" role="tab">
+                                        Ongoing <span class="badge bg-warning">{{ entries|selectattr('document_status.docStatusName', 'equalto', 'Ongoing')|list|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-status="completed" type="button" role="tab">
+                                        Completed <span class="badge bg-success">{{ entries|selectattr('document_status.docStatusName', 'equalto', 'Completed')|list|length }}</span>
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <form method="GET" class="row g-3">
+                                <div class="col-md-2">
+                                    <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                    <select class="form-select" id="entriesPerPage" name="per_page" onchange="updateEntriesPerPage(this.value)">
+                                        <option value="5" {% if request.args.get('per_page')=='5' %}selected{% endif %}>5</option>
+                                        <option value="10" {% if request.args.get('per_page')=='10' %}selected{% endif %}>10</option>
+                                        <option value="25" {% if request.args.get('per_page')=='25' %}selected{% endif %}>25</option>
+                                        <option value="50" {% if request.args.get('per_page')=='50' %}selected{% endif %}>50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="shipTypeFilter" class="form-label">Ship Type</label>
+                                    <select class="form-select w-100" id="shipTypeFilter" name="ship_type">
+                                        <option value="">All Types</option>
+                                        {% for ship_type in shipment_types %}
+                                        <option value="{{ ship_type.id }}" {% if request.args.get('ship_type')==ship_type.id|string %}selected{% endif %}>{{ ship_type.shipment_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="searchInput" class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="searchInput" name="search"
+                                        value="{{ request.args.get('search', '') }}" placeholder="Search orders...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-filter-3-line me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Orders Table Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-list-check-2 text-success me-2"></i>
+                                My Clearing Agent Assignments
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                {% if entries %}
+                                <table class="table table-nowrap align-middle table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Job No</th>
+                                            <th>Customer</th>
+                                            <th>Assigned User</th>
+                                            <th>Submitted Date</th>
+                                            <th>Ship Type</th>
+                                            <th>Category</th>
+                                            <th>Doc Level</th>
+                                            <th>Required Docs</th>
+                                            <th>Approved Docs</th>
+                                            <th>Deadline</th>
+                                            <th>Status</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for entry in entries %}
+                                        <tr>
+                                            <td>{{ entry.docserial }}</td>
+                                            <td>{{ entry.customer.customer_name if entry.customer else '-' }}</td>
+                                            <td>
+                                                {% if entry.assigned_user_name %}
+                                                    <span class="badge badge-soft-info">
+                                                        <i class="ri-user-line me-1"></i>
+                                                        {{ entry.assigned_user_name }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge badge-soft-danger">
+                                                    <i class="ri-user-unfollow-line me-1"></i>Not Assigned
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <td>
+                                                <span class="badge badge-soft-secondary">
+                                                    {{ entry.dateSubmitted }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if 'sea' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-info">
+                                                    <i class="ri-ship-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% elif 'air' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-warning">
+                                                    <i class="ri-plane-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% elif 'road' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-success">
+                                                    <i class="ri-truck-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% elif 'rail' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-danger">
+                                                    <i class="ri-train-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% else %}
+                                                <span class="badge badge-soft-secondary">
+                                                    <i class="ri-box-3-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ entry.ship_category_rel.catname }}</td>
+                                            <td>
+                                                {% set level_map = {
+                                                0: 'Draft',
+                                                1: 'Submitted',
+                                                2: 'Referred Back',
+                                                3: 'Closed',
+                                                4: 'Deleted',
+                                                5: 'Resubmitted'
+                                                } %}
+                                                {% set level = entry.docLevel|default(0)|int %}
+                                                {% set level_text = level_map.get(level, 'Unknown') %}
+                                                <span class="badge {% if level == 0 %}badge-soft-secondary{% elif level == 1 %}badge-soft-success{% elif level == 2 %}badge-soft-warning blink-badge{% elif level == 3 %}badge-soft-info{% elif level == 4 %}badge-soft-danger{% elif level == 5 %}badge-soft-danger{% else %}badge-soft-secondary{% endif %}">
+                                                    {{ level_text }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                        <span class="badge badge-soft-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Required">
+                                                            <i class="ri-file-list-line text-warning me-1"></i>
+                                                            {{ entry.mandatory_docs_count }}
+                                                        </span>
+                                                        <span class="badge badge-soft-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Received">
+                                                            <i class="ri-send-plane-line text-primary me-1"></i>
+                                                            {{ entry.attached_docs_count }}
+                                                        </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                        <span class="badge badge-soft-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Approved">
+                                                            <i class="ri-thumb-up-line text-success me-1"></i>
+                                                            {{ entry.accepted_docs_count }}
+                                                        </span>
+                                                        <span class="badge badge-soft-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Rejected">
+                                                            <i class="ri-thumb-down-line text-danger me-1"></i>
+                                                            {{ entry.rejected_docs_count }}
+                                                        </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% set days_remaining = ((entry.dealineDate - now.date()).days if entry.dealineDate and now else 0) %}
+                                                <span class="badge {% if days_remaining < 3 and days_remaining >= 0 %}badge-soft-danger{% elif days_remaining < 7 and days_remaining >= 0 %}badge-soft-warning{% else %}badge-soft-info{% endif %}">
+                                                    {{ entry.dealineDate.strftime('%Y-%m-%d') if entry.dealineDate else 'Not Set' }}
+                                        
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-soft-{{ 'warning' if entry.document_status.docStatusName.lower() == 'new' else ('info' if entry.document_status.docStatusName.lower() == 'ongoing' else ('success' if entry.document_status.docStatusName.lower() == 'completed' else 'secondary')) }}">
+                                                    {{ entry.document_status.docStatusName }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="actionDropdown{{ entry.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Actions
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="actionDropdown{{ entry.id }}">
+                                                        <li>
+                                                            <a class="dropdown-item text-primary" href="javascript:void(0)" onclick="editEntry('{{ entry.id }}')">
+                                                                <i class="ri-pencil-line me-2"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-warning" href="javascript:void(0)" onclick="openDocumentModal('{{ entry.id }}', '{{ entry.ship_category_rel.id }}', '{{ entry.shipment_type.id }}')">
+                                                                <i class="ri-attachment-line me-2"></i> Documents
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-secondary" href="{{ url_for('masters.order_shipment', entry_id=entry.id) }}">
+                                                                <i class="ri-send-plane-line me-2"></i> Shipment
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-info position-relative" href="javascript:void(0)" 
+                                                            onclick="openChat('assigned_agents', '{{ entry.id }}')" 
+                                                            data-entry-id="{{ entry.id }}" 
+                                                            data-module-name="assigned_agents">
+                                                                <i class="ri-message-2-line me-2"></i> Chat
+                                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none chat-notification-badge" style="z-index: 1;">
+                                                                    0
+                                                                </span>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+
+                                <!-- Pagination -->
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <div>
+                                        Showing {{ entries|length }} of {{ total_entries }} entries
+                                    </div>
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination mb-0">
+                                            {% if has_prev %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('masters.assigned_agents', page=prev_num) }}">Previous</a>
+                                            </li>
+                                            {% endif %}
+
+                                            {% for page_num in page_nums %}
+                                            {% if page_num %}
+                                            <li class="page-item {% if page_num == current_page %}active{% endif %}">
+                                                <a class="page-link" href="{{ url_for('masters.assigned_agents', page=page_num) }}">{{ page_num }}</a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                            {% endif %}
+                                            {% endfor %}
+
+                                            {% if has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('masters.assigned_agents', page=next_num) }}">Next</a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                                {% else %}
+                                <div class="text-center p-4">
+                                    <i class="ri-shield-user-line display-4 text-muted"></i>
+                                    <p class="mt-3">No orders assigned to you as clearing agent</p>
+                                    <small class="text-muted">Orders will appear here when you are assigned as a clearing agent for shipments.</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+<!-- Attachments Modal -->
+<div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attachmentsModalLabel">
+                    <i class="ri-attachment-line text-primary me-1"></i>
+                    Document Attachments
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Documents Section -->
+                <div class="documents-section">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 20%">Document Type</th>
+                                    <th style="width: 15%">Note</th>
+                                    <th style="width: 15%">Date</th>
+                                    <th style="width: 15%">AI Validation</th>
+                                    <th style="width: 10%">Status</th>
+                                    <th style="width: 25%">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attachmentsTableBody">
+                                <!-- Documents will be loaded here dynamically -->
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 mb-0">Loading documents...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Status Modal -->
+<div class="modal fade" id="documentStatusModal" tabindex="-1" aria-labelledby="documentStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentStatusModalLabel">
+                    <i class="ri-file-check-line text-primary me-1"></i>
+                    <span id="statusActionText">Update Document Status</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="documentStatusForm">
+                    <input type="hidden" id="documentId">
+                    <input type="hidden" id="actionType">
+                    
+                    <div class="mb-3">
+                        <label for="statusComments" class="form-label">Comments</label>
+                        <textarea class="form-control" id="statusComments" rows="3" placeholder="Enter comments here..."></textarea>
+                        <div id="commentsHelp" class="form-text text-danger d-none">
+                            Comments are required when rejecting a document.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusBtn">
+                    <i class="ri-check-line me-1"></i> Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    {% include 'chat/chat_modal.html' %}
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+<script>
+    // Global variables
+    let currentDocId = null;
+    let currentEntryId = null;
+    let replyToMessageId = null;
+    let currentVoiceNotePath = null;
+    let currentAttachmentPath = null;
+    let currentDocumentId = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips
+        initTooltips();
+        
+        // Status filter functionality
+        const statusTabs = document.querySelectorAll('#statusTabs .nav-link');
+        const tableRows = document.querySelectorAll('.table-nowrap tbody tr');
+
+        console.log('Total Tabs:', statusTabs.length);
+        console.log('Total Rows:', tableRows.length);
+
+        statusTabs.forEach(tab => {
+            tab.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Log the selected tab details
+                const status = this.getAttribute('data-status');
+                console.log('Selected Tab Status:', status);
+
+                // Update active tab
+                statusTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Keep track of visible and hidden rows
+                let visibleRowCount = 0;
+                let hiddenRowCount = 0;
+
+                // Show/hide rows based on status
+                tableRows.forEach((row, index) => {
+                    if (status === 'all') {
+                        row.style.display = '';
+                        visibleRowCount++;
+                    } else {
+                        // Find the shipment status badge more specifically
+                        const shipmentStatusCell = row.querySelector('td:nth-last-child(2)');
+                        
+                        if (shipmentStatusCell) {
+                            const statusBadge = shipmentStatusCell.querySelector('.badge');
+                            
+                            if (statusBadge) {
+                                const rowStatus = statusBadge.textContent.trim().toLowerCase();
+                                const normalizedStatus = status.toLowerCase();
+                                
+                                console.log(`Row ${index} Status Check:`, {
+                                    rowStatus: rowStatus,
+                                    expectedStatus: normalizedStatus,
+                                    match: rowStatus === normalizedStatus
+                                });
+
+                                if (rowStatus === normalizedStatus) {
+                                    row.style.display = '';
+                                    visibleRowCount++;
+                                } else {
+                                    row.style.display = 'none';
+                                    hiddenRowCount++;
+                                }
+                            } else {
+                                console.warn(`No status badge found for row ${index}`);
+                                row.style.display = 'none';
+                                hiddenRowCount++;
+                            }
+                        } else {
+                            console.warn(`No status cell found for row ${index}`);
+                            row.style.display = 'none';
+                            hiddenRowCount++;
+                        }
+                    }
+                });
+
+                console.log('Filtering Summary:', {
+                    totalRows: tableRows.length,
+                    visibleRows: visibleRowCount,
+                    hiddenRows: hiddenRowCount
+                });
+            });
+        });
+        
+        // Document status confirmation button handling
+        const confirmBtn = document.getElementById('confirmStatusBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                const documentId = document.getElementById('documentId').value;
+                const status = document.getElementById('actionType').value;
+                const comments = document.getElementById('statusComments').value;
+                
+                // Validate: If rejecting, comments are required
+                if (status === 'rejected' && !comments.trim()) {
+                    document.getElementById('commentsHelp').classList.remove('d-none');
+                    return;
+                }
+                
+                // Disable button and show loading
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Processing...';
+                
+                // Safely access CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                const csrfTokenValue = csrfToken ? csrfToken.content : '';
+                
+                // Send request to update document status
+                fetch(`/masters/orders/document/${documentId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfTokenValue
+                    },
+                    body: JSON.stringify({
+                        status: status,
+                        comments: comments
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    // Hide status modal
+                    const statusModal = bootstrap.Modal.getInstance(document.getElementById('documentStatusModal'));
+                    statusModal.hide();
+                    
+                    // Enable button
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="ri-check-line me-1"></i> Confirm';
+                    
+                    if (data.success) {
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        // Refresh the document list
+                        openDocumentModal(currentEntryId);
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'An error occurred while updating document status'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Enable button
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="ri-check-line me-1"></i> Confirm';
+                    
+                    // Show error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while updating document status'
+                    });
+                });
+            });
+        }
+    });
+    
+    // Function to update entries per page
+    function updateEntriesPerPage(value) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('per_page', value);
+        window.location.href = currentUrl.toString();
+    }
+
+    function updateNotificationBadge(entryId, count) {
+        const badge = document.getElementById(`chat-notification-${entryId}`);
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count > 9 ? '9+' : count;
+                badge.classList.remove('d-none');
+            } else {
+                badge.textContent = '';
+                badge.classList.add('d-none');
+            }
+            // Store the count in memory
+            unreadMessages[entryId] = count;
+        }
+    }
+
+    function editEntry(entryId) {
+        window.location.href = `/masters/orders/${entryId}/edit`;
+    }
+
+    function openDocumentModal(entryId, categoryId, shipmentTypeId) {
+        currentEntryId = entryId;
+
+        // Show loading state
+        const tbody = document.getElementById('attachmentsTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Loading documents...</p>
+                </td>
+            </tr>
+        `;
+
+        // Show the attachments modal
+        const modal = new bootstrap.Modal(document.getElementById('attachmentsModal'));
+        modal.show();
+
+        // Fetch existing attachments
+        fetch(`/masters/orders/${entryId}/get-attachments`)
+            .then(res => res.json())
+            .then(data => {
+                const attachments = data.attachments || [];
+
+                if (attachments.length > 0) {
+                    tbody.innerHTML = attachments.map(att => {
+                        // Determine status display
+                        let statusHtml = '';
+                        if (att.docAccepted === 'accepted') {
+                            statusHtml = `<span class="badge badge-soft-success">Accepted</span>
+                                <div class="small text-muted mt-1">
+                                    ${new Date(att.docAccepteDate || Date.now()).toLocaleDateString()}
+                                </div>`;
+                        } else if (att.docAccepted === 'rejected') {
+                            statusHtml = `<span class="badge badge-soft-danger">Rejected</span>
+                                <div class="small text-muted mt-1">
+                                    ${new Date(att.docAccepteDate || Date.now()).toLocaleDateString()}
+                                </div>`;
+                        } else {
+                            statusHtml = `<span class="badge badge-soft-secondary">Pending</span>`;
+                        }
+
+                        let aiValidationHtml = '';
+                        if (att.ai_validated === 1) {
+                            aiValidationHtml = `<span class="badge badge-soft-success">AI Approved</span>
+                                <div class="small text-muted mt-1">
+                                    Match: ${att.validation_percentage ? att.validation_percentage.toFixed(1) + '%' : 'N/A'}
+                                </div>`;
+                        } else if (att.ai_validated === 2) {
+                            aiValidationHtml = `<span class="badge badge-soft-danger">AI Rejected</span>
+                                <div class="small text-muted mt-1">
+                                    Match: ${att.validation_percentage ? att.validation_percentage.toFixed(1) + '%' : 'N/A'}
+                                </div>`;
+                        } else {
+                            aiValidationHtml = `<span class="badge badge-soft-secondary">Not Validated</span>`;
+                        }
+                        
+                        // Determine action buttons
+                        let actionButtons = `
+                            <a href="#" onclick="viewDocument('${att.attachement_path}'); return false;" 
+                                class="btn btn-sm btn-info me-1" title="View Document">
+                                <i class="ri-eye-line"></i>
+                            </a>`;
+
+                            if (att.ai_validated === 1 || att.ai_validated === 2) {
+                                actionButtons += `
+                                    <button class="btn btn-sm btn-secondary me-1" onclick="viewAIValidationResults(${att.id})" 
+                                        title="View AI Validation Results">
+                                        <i class="ri-focus-line"></i>
+                                    </button>`;
+                            }
+                        
+                        // Only show accept/reject buttons if document is still pending
+                        if (!att.docAccepted) {
+                            actionButtons += `
+                                <button class="btn btn-sm btn-success me-1" onclick="updateDocumentStatus(${att.id}, 'accepted')" 
+                                    title="Accept Document">
+                                    <i class="ri-check-line"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="updateDocumentStatus(${att.id}, 'rejected')" 
+                                    title="Reject Document">
+                                    <i class="ri-close-line"></i>
+                                </button>`;
+                        } else {
+                            // Show document comments as tooltip if it exists
+                            if (att.docAccepteComments) {
+                                actionButtons += `
+                                    <button class="btn btn-sm btn-secondary" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        title="${att.docAccepteComments}">
+                                        <i class="ri-information-line"></i>
+                                    </button>`;
+                            }
+                        }
+                        
+                        return `
+                            <tr>
+                                <td>
+                                    <span class="fw-medium">${att.description || 'No Description'}</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">${att.note || '-'}</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        ${new Date(att.created_at || Date.now()).toLocaleDateString()}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${aiValidationHtml}
+                                </td>
+                                <td>
+                                    ${statusHtml}
+                                </td>
+                                <td>
+                                    <div class="d-flex">
+                                        ${actionButtons}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                    
+                    // Reinitialize tooltips
+                    initTooltips();
+                    
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="p-3">
+                                    <i class="ri-folder-open-line fs-2 text-muted"></i>
+                                    <p class="mt-2 mb-0">No documents attached</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="p-3">
+                                <i class="ri-error-warning-line fs-2 text-danger"></i>
+                                <p class="mt-2 mb-0">Error loading documents</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function viewAIValidationResults(docId) {
+        // First, close the document modal if it's open
+        const documentModal = bootstrap.Modal.getInstance(document.getElementById('attachmentsModal'));
+        if (documentModal) {
+            documentModal.hide();
+        }
+        
+        // Add a small delay to ensure the modal is fully closed before showing the SweetAlert
+        setTimeout(() => {
+            // Show loading state
+            Swal.fire({
+                title: 'Loading validation results...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Fetch validation results
+            fetch(`/masters/get-document-validation/${docId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to load validation results'
+                        });
+                        return;
+                    }
+
+                    // Extract validation data
+                    const results = data.results;
+                    const validationResults = results.validation_results || {};
+                    const matchPercentage = results.match_percentage || 0;
+                    const hasError = results.error || false;
+                    const errorMessage = results.error_message || '';
+                    
+                    // Calculate document similarity based on the field similarities
+                    let documentSimilarity = 0;
+                    
+                    // If document_similarity is available in results and is not zero, use it
+                    if (results.document_similarity && results.document_similarity > 0) {
+                        documentSimilarity = results.document_similarity * 100;
+                    } 
+                    // Otherwise calculate it from field similarities (avg of all field similarities)
+                    else {
+                        let totalSimilarity = 0;
+                        let fieldCount = 0;
+                        
+                        // Sum up all field similarities
+                        for (const fieldName in validationResults) {
+                            const field = validationResults[fieldName];
+                            if (field && typeof field === 'object' && typeof field.similarity === 'number') {
+                                totalSimilarity += field.similarity;
+                                fieldCount++;
+                            }
+                        }
+                        
+                        // Calculate average if there are fields
+                        if (fieldCount > 0) {
+                            documentSimilarity = (totalSimilarity / fieldCount) * 100;
+                        }
+                    }
+                    
+                    // Determine colors for progress bars
+                    const docSimilarityColor = documentSimilarity >= 70 ? 'success' : 
+                                             documentSimilarity >= 50 ? 'warning' : 'danger';
+                    const matchPercentageColor = matchPercentage >= 80 ? 'success' : 
+                                               matchPercentage >= 50 ? 'warning' : 'danger';
+
+                    // Build the HTML content for detailed field validation
+                    let fieldValidationHtml = '';
+                    
+                    if (Object.keys(validationResults).length > 0) {
+                        fieldValidationHtml = `
+                        <div class="table-responsive mt-3">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Field Name</th>
+                                        <th>Status</th>
+                                        <th>Similarity Score</th>
+                                        <th>Matched With</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        
+                        for (const [fieldName, field] of Object.entries(validationResults)) {
+                            // Skip if not a valid field object
+                            if (!field || typeof field !== 'object' || field.matched === undefined) continue;
+                            
+                            const matched = field.matched || false;
+                            const similarity = (field.similarity || 0) * 100;
+                            const matchedWith = field.matched_with || 'N/A';
+                            
+                            fieldValidationHtml += `
+                                <tr>
+                                    <td>${fieldName}</td>
+                                    <td>
+                                        ${matched ? 
+                                        '<span class="badge bg-success">Matched</span>' : 
+                                        '<span class="badge bg-danger">Not Matched</span>'}
+                                    </td>
+                                    <td>${similarity.toFixed(2)}%</td>
+                                    <td>${matchedWith}</td>
+                                </tr>
+                            `;
+                        }
+                        
+                        fieldValidationHtml += `
+                                </tbody>
+                            </table>
+                        </div>`;
+                    } else {
+                        fieldValidationHtml = `
+                        <div class="alert alert-info mt-3">
+                            <i class="ri-information-line me-2"></i>
+                            No detailed field validation results available.
+                        </div>`;
+                    }
+
+                    // Build the HTML content for the modal
+                    let swalContent = `
+                    <div class="validation-results">
+                        ${hasError ? 
+                        `<div class="alert alert-danger">
+                            <h5>Document Type Mismatch</h5>
+                            <p>${errorMessage}</p>
+                        </div>` : ''}
+                        
+                        <h5>Document Type Similarity</h5>
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar bg-${docSimilarityColor}" 
+                                 role="progressbar" 
+                                 style="width: ${documentSimilarity.toFixed(2)}%;" 
+                                 aria-valuenow="${documentSimilarity.toFixed(2)}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                ${documentSimilarity.toFixed(2)}%
+                            </div>
+                        </div>
+                        
+                        <h5 class="mt-4">Field Match Percentage</h5>
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar bg-${matchPercentageColor}" 
+                                 role="progressbar" 
+                                 style="width: ${matchPercentage.toFixed(2)}%;" 
+                                 aria-valuenow="${matchPercentage.toFixed(2)}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                ${matchPercentage.toFixed(2)}%
+                            </div>
+                        </div>
+                        
+                        <h5 class="mt-4">Field Validation Details</h5>
+                        ${fieldValidationHtml}
+                    </div>
+                    `;
+
+                    // Show the validation results
+                    Swal.fire({
+                        title: 'AI Validation Results',
+                        html: swalContent,
+                        icon: 'info',
+                        width: '800px',
+                        heightAuto: true,
+                        scrollbarPadding: true,
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#3085d6',
+                        allowOutsideClick: true,
+                        didClose: () => {
+                            // Reopen the document modal when this is closed
+                            setTimeout(() => {
+                                openDocumentModal(currentEntryId);
+                            }, 100);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching validation results:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to load validation results: ' + error.message
+                    });
+                });
+        }, 300); // Short delay to ensure modal is closed
+    }
+
+    function viewDocument(path) {
+        if (!path) {
+            console.error('No path provided for document');
+            return;
+        }
+        window.open(`/masters/view-document/${path}`, '_blank');
+    }
+
+    function updateDocumentStatus(documentId, status) {
+        currentDocumentId = documentId;
+        
+        // Set modal title based on action
+        const actionText = status === 'accepted' ? 'Accept Document' : 'Reject Document';
+        document.getElementById('statusActionText').textContent = actionText;
+        
+        // Set hidden input values
+        document.getElementById('documentId').value = documentId;
+        document.getElementById('actionType').value = status;
+        
+        // Clear previous comments
+        document.getElementById('statusComments').value = '';
+        document.getElementById('commentsHelp').classList.add('d-none');
+        
+        // If accepting, comments are optional
+        // If rejecting, comments are required
+        const commentsField = document.getElementById('statusComments');
+        if (status === 'accepted') {
+            commentsField.setAttribute('placeholder', 'Comments (optional)');
+            commentsField.removeAttribute('required');
+        } else {
+            commentsField.setAttribute('placeholder', 'Comments (required)');
+            commentsField.setAttribute('required', 'required');
+        }
+        
+        // Show the status modal
+        const modal = new bootstrap.Modal(document.getElementById('documentStatusModal'));
+        modal.show();
+    }
+
+    function initTooltips() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    // Add this to check for new messages on page load and at regular intervals
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check for new messages on page load and at regular intervals
+        checkNewMessages();
+        setInterval(checkNewMessages, 30000);
+    });
+
+</script>
+
+<style>
+    .swal2-popup {
+        font-size: 1rem !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+
+    .swal2-container {
+        z-index: 2000 !important;  /* Higher than the document modal */
+    }
+
+    .swal2-html-container {
+        overflow-x: hidden !important;
+    }
+
+    .validation-results .progress {
+        margin-bottom: 1rem;
+    }
+
+    .validation-results .table {
+        font-size: 0.9rem;
+    }
+
+    .validation-results h5 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+</style>
+
+<style>
+    .blink-badge {
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.2; }
+    }
+</style>
+{% endblock extra_js %}

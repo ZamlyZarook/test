@@ -1,0 +1,694 @@
+{% extends "partials/base.html" %}
+{% block title %}Manage {{ project.name }}{% endblock title %}
+
+{% block extra_css %}
+<!-- Sweet Alert css-->
+<link href="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Manage Project: {{ project.name }}</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                                <li class="breadcrumb-item active">Manage</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs-custom rounded card-header-tabs border-bottom-0" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#epicsTab" role="tab">
+                                        <i class="fas fa-layer-group me-1 align-middle"></i> Epics
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#storiesTab" role="tab">
+                                        <i class="fas fa-book me-1 align-middle"></i> Stories
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#tasksTab" role="tab">
+                                        <i class="fas fa-tasks me-1 align-middle"></i> Tasks
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content">
+                                <!-- Epics Tab -->
+                                <div class="tab-pane active" id="epicsTab" role="tabpanel">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <h5 class="card-title flex-grow-1 mb-0">Project Epics</h5>
+                                        <div class="flex-shrink-0">
+                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createEpicModal">
+                                                <i class="ri-add-line align-middle me-1"></i> Add Epic
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-nowrap align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col">Epic</th>
+                                                    <th scope="col">Status</th>
+                                                    <th scope="col">Progress</th>
+                                                    <th scope="col">Stories</th>
+                                                    <th scope="col">Due Date</th>
+                                                    <th scope="col">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="epicsList">
+                                                <!-- Epics will be loaded here via JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Stories Tab -->
+                                <div class="tab-pane" id="storiesTab" role="tabpanel">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <h5 class="card-title flex-grow-1 mb-0">User Stories</h5>
+                                        <div class="flex-shrink-0">
+                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createStoryModal">
+                                                <i class="ri-add-line align-middle me-1"></i> Add Story
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-nowrap align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col">Story</th>
+                                                    <th scope="col">Epic</th>
+                                                    <th scope="col">Status</th>
+                                                    <th scope="col">Points</th>
+                                                    <th scope="col">Assignee</th>
+                                                    <th scope="col">Due Date</th>
+                                                    <th scope="col">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="storiesList">
+                                                <!-- Stories will be loaded here via JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Tasks Tab -->
+                                <div class="tab-pane" id="tasksTab" role="tabpanel">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <h5 class="card-title flex-grow-1 mb-0">Tasks</h5>
+                                        <div class="flex-shrink-0">
+                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+                                                <i class="ri-add-line align-middle me-1"></i> Add Task
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-nowrap align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col">Task</th>
+                                                    <th scope="col">Parent</th>
+                                                    <th scope="col">Status</th>
+                                                    <th scope="col">Priority</th>
+                                                    <th scope="col">Assignee</th>
+                                                    <th scope="col">Due Date</th>
+                                                    <th scope="col">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tasksList">
+                                                <!-- Tasks will be loaded here via JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+
+<!-- Modals -->
+<!-- Create Epic Modal -->
+<div class="modal fade" id="createEpicModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title">Create Epic</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createEpicForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="epicTitle" class="form-label">Epic Title</label>
+                        <input type="text" class="form-control" id="epicTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epicDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="epicDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="epicStartDate" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="epicStartDate">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="epicEndDate" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="epicEndDate">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="hstack gap-2 justify-content-end">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success" id="addEpicBtn">Create Epic</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Story Modal -->
+<div class="modal fade" id="createStoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title">Create User Story</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createStoryForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="storyTitle" class="form-label">Story Title</label>
+                        <input type="text" class="form-control" id="storyTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epicId" class="form-label">Epic</label>
+                        <select class="form-control" id="epicId">
+                            <option value="">Select Epic</option>
+                            <!-- Epics will be loaded here -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="storyPoints" class="form-label">Story Points</label>
+                        <input type="number" class="form-control" id="storyPoints">
+                    </div>
+                    <div class="mb-3">
+                        <label for="storyAssignee" class="form-label">Assignee</label>
+                        <select class="form-control" id="storyAssignee">
+                            <option value="">Select Assignee</option>
+                            {% for member in project.team %}
+                            <option value="{{ member.id }}">{{ member.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="storyDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="storyDescription" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="hstack gap-2 justify-content-end">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success" id="addStoryBtn">Create Story</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title">Create Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createTaskForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="taskTitle" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="taskEpic" class="form-label">Epic</label>
+                                <select class="form-control" id="taskEpic">
+                                    <option value="">Select Epic</option>
+                                    <!-- Epics will be loaded here -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="taskStory" class="form-label">Story</label>
+                                <select class="form-control" id="taskStory">
+                                    <option value="">Select Story</option>
+                                    <!-- Stories will be loaded here -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label for="taskStatus" class="form-label">Status</label>
+                            <select class="form-control" id="taskStatus" required>
+                                <option value="New">New</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label for="taskPriority" class="form-label">Priority</label>
+                            <select class="form-control" id="taskPriority" required>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label for="taskAssignee" class="form-label">Assignee</label>
+                            <select class="form-control" id="taskAssignee">
+                                <option value="">Select Assignee</option>
+                                {% for member in project.team %}
+                                <option value="{{ member.id }}">{{ member.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label for="taskDueDate" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="taskDueDate">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="taskDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="estimatedHours" class="form-label">Estimated Hours</label>
+                    <input type="number" class="form-control" id="estimatedHours" step="0.5">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="hstack gap-2 justify-content-end">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success" id="addTaskBtn">Create Task</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- Sweet Alerts js -->
+<script src="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const projectId = window.location.pathname.split('/').slice(-2)[0];
+    
+    // Load initial data
+    loadEpics();
+    loadStories();
+    loadTasks();
+    
+    // Form submissions
+    document.getElementById('createEpicForm').addEventListener('submit', createEpic);
+    document.getElementById('createStoryForm').addEventListener('submit', createStory);
+    document.getElementById('createTaskForm').addEventListener('submit', createTask);
+    
+    // Epic story dependency
+    document.getElementById('taskEpic').addEventListener('change', function() {
+        loadStoriesForEpic(this.value);
+    });
+
+    // Load Functions
+    function loadEpics() {
+        fetch(`/tasks/api/projects/${projectId}/epics`)
+            .then(response => response.json())
+            .then(data => {
+                const epicsList = document.getElementById('epicsList');
+                const epicSelect = document.getElementById('taskEpic');
+                
+                // Clear existing options except the first one
+                epicSelect.innerHTML = '<option value="">Select Epic</option>';
+                
+                // Update table and dropdown
+                epicsList.innerHTML = data.epics.map(epic => `
+                    <tr>
+                        <td>
+                            <h5 class="fs-14 mb-1"><a href="javascript:void(0);" class="text-dark">${epic.title}</a></h5>
+                        </td>
+                        <td><span class="badge badge-soft-${getStatusColor(epic.status)}">${epic.status}</span></td>
+                        <td>
+                            <div class="progress progress-sm">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: ${epic.progress}%" 
+                                     aria-valuenow="${epic.progress}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </td>
+                        <td>${epic.story_count}</td>
+                        <td>${epic.due_date || '-'}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="ri-more-fill align-middle"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><button class="dropdown-item" onclick="editEpic(${epic.id})">
+                                        <i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
+                                    </button></li>
+                                    <li><button class="dropdown-item" onclick="deleteEpic(${epic.id})">
+                                        <i class="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
+                                    </button></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Add options to epic select
+                data.epics.forEach(epic => {
+                    epicSelect.add(new Option(epic.title, epic.id));
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function loadStories() {
+        fetch(`/tasks/api/projects/${projectId}/stories`)
+            .then(response => response.json())
+            .then(data => {
+                const storiesList = document.getElementById('storiesList');
+                storiesList.innerHTML = data.stories.map(story => `
+                    <tr>
+                        <td>
+                            <h5 class="fs-14 mb-1"><a href="javascript:void(0);" class="text-dark">${story.title}</a></h5>
+                        </td>
+                        <td>${story.epic || '-'}</td>
+                        <td><span class="badge badge-soft-${getStatusColor(story.status)}">${story.status}</span></td>
+                        <td>${story.points || '-'}</td>
+                        <td>
+                            ${story.assignee ? `
+                                <div class="d-flex align-items-center">
+                                    <img src="/static/images/users/user-dummy-img.jpg" alt="" class="rounded-circle avatar-xxs">
+                                    <span class="ms-2">${story.assignee}</span>
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td>${story.due_date || '-'}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="ri-more-fill align-middle"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><button class="dropdown-item" onclick="editStory(${story.id})">
+                                        <i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
+                                    </button></li>
+                                    <li><button class="dropdown-item" onclick="deleteStory(${story.id})">
+                                        <i class="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
+                                    </button></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function loadTasks() {
+        fetch(`/tasks/api/projects/${projectId}/tasks`)
+            .then(response => response.json())
+            .then(data => {
+                const tasksList = document.getElementById('tasksList');
+                tasksList.innerHTML = data.tasks.map(task => `
+                    <tr>
+                        <td>
+                            <h5 class="fs-14 mb-1"><a href="javascript:void(0);" class="text-dark">${task.title}</a></h5>
+                        </td>
+                        <td>${task.parent || '-'}</td>
+                        <td><span class="badge badge-soft-${getStatusColor(task.status)}">${task.status}</span></td>
+                        <td><span class="badge bg-${getPriorityColor(task.priority)}">${task.priority}</span></td>
+                        <td>
+                            ${task.assignee ? `
+                                <div class="d-flex align-items-center">
+                                    <img src="/static/images/users/user-dummy-img.jpg" alt="" class="rounded-circle avatar-xxs">
+                                    <span class="ms-2">${task.assignee}</span>
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td>${task.due_date || '-'}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="ri-more-fill align-middle"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><button class="dropdown-item" onclick="editTask(${task.id})">
+                                        <i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
+                                    </button></li>
+                                    <li><button class="dropdown-item" onclick="deleteTask(${task.id})">
+                                        <i class="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete
+                                    </button></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Create Functions
+    async function createEpic(e) {
+        e.preventDefault();
+        const formData = {
+            title: document.getElementById('epicTitle').value,
+            description: document.getElementById('epicDescription').value,
+            start_date: document.getElementById('epicStartDate').value,
+            end_date: document.getElementById('epicEndDate').value
+        };
+
+        try {
+            const response = await fetch(`/tasks/api/projects/${projectId}/epics`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Epic created successfully',
+                    icon: 'success',
+                    confirmButtonClass: 'btn btn-primary w-xs mt-2'
+                });
+                
+                document.getElementById('createEpicForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('createEpicModal')).hide();
+                loadEpics();
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Error!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonClass: 'btn btn-danger w-xs mt-2'
+            });
+        }
+    }
+
+    async function createStory(e) {
+        e.preventDefault();
+        const formData = {
+            title: document.getElementById('storyTitle').value,
+            epic_id: document.getElementById('epicId').value,
+            story_points: document.getElementById('storyPoints').value,
+            assigned_to: document.getElementById('storyAssignee').value,
+            description: document.getElementById('storyDescription').value
+        };
+
+        try {
+            const response = await fetch(`/tasks/api/projects/${projectId}/stories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Story created successfully',
+                    icon: 'success',
+                    confirmButtonClass: 'btn btn-primary w-xs mt-2'
+                });
+                
+                document.getElementById('createStoryForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('createStoryModal')).hide();
+                loadStories();
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Error!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonClass: 'btn btn-danger w-xs mt-2'
+            });
+        }
+    }
+
+    async function createTask(e) {
+        e.preventDefault();
+        const formData = {
+            title: document.getElementById('taskTitle').value,
+            epic_id: document.getElementById('taskEpic').value,
+            story_id: document.getElementById('taskStory').value,
+            status: document.getElementById('taskStatus').value,
+            priority: document.getElementById('taskPriority').value,
+            assigned_to: document.getElementById('taskAssignee').value,
+            due_date: document.getElementById('taskDueDate').value,
+            description: document.getElementById('taskDescription').value,
+            estimated_hours: document.getElementById('estimatedHours').value
+        };
+
+        try {
+            const response = await fetch(`/tasks/api/projects/${projectId}/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Task created successfully',
+                    icon: 'success',
+                    confirmButtonClass: 'btn btn-primary w-xs mt-2'
+                });
+                
+                document.getElementById('createTaskForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+                loadTasks();
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Error!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonClass: 'btn btn-danger w-xs mt-2'
+            });
+        }
+    }
+
+    // Helper Functions
+    function getStatusColor(status) {
+        const colors = {
+            'New': 'info',
+            'In Progress': 'warning',
+            'Completed': 'success',
+            'Pending': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function getPriorityColor(priority) {
+        const colors = {
+            'High': 'danger',
+            'Medium': 'warning',
+            'Low': 'success'
+        };
+        return colors[priority] || 'secondary';
+    }
+
+    async function loadStoriesForEpic(epicId) {
+        if (!epicId) {
+            document.getElementById('taskStory').innerHTML = '<option value="">Select Story</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/tasks/api/epics/${epicId}/stories`);
+            const data = await response.json();
+            
+            const storySelect = document.getElementById('taskStory');
+            storySelect.innerHTML = '<option value="">Select Story</option>';
+            
+            data.stories.forEach(story => {
+                storySelect.add(new Option(story.title, story.id));
+            });
+        } catch (error) {
+            console.error('Error loading stories:', error);
+        }
+    }
+});
+</script>
+{% endblock extra_js %}

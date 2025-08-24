@@ -1,0 +1,1087 @@
+{% extends "partials/base.html" %}
+{% block title %}Project Issues - {{ project.name }}{% endblock title %}
+
+{% block extra_css %}
+<!-- Sweet Alert css-->
+<link href="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+<style>
+    .truncate-text {
+        max-width: 250px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{{ project.name }} - Issues</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                                <li class="breadcrumb-item active">Issues</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <div class="d-flex align-items-center">
+                                <h5 class="card-title mb-0 flex-grow-1">All Issues</h5>
+                                <div class="flex-shrink-0">
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createIssueModal">
+                                        <i class="ri-add-line align-bottom me-1"></i> Create Issue
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body border border-dashed border-end-0 border-start-0">
+                            <form>
+                                <div class="row g-3">
+                                    <div class="col-xxl-4 col-sm-4">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" id="searchInput" 
+                                                   placeholder="Search for issues...">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <select class="form-control" id="issueTypeFilter">
+                                            <option value="">All Types</option>
+                                            {% for type in issue_types %}
+                                            <option value="{{ type.id }}">{{ type.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <select class="form-control" id="statusFilter">
+                                            <option value="">All Statuses</option>
+                                            {% for status in statuses %}
+                                            <option value="{{ status.id }}">{{ status.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <select class="form-control" id="assigneeFilter">
+                                            <option value="">All Assignees</option>
+                                            {% for member in project_members %}
+                                            <option value="{{ member.id }}">{{ member.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">
+                                            <i class="ri-equalizer-fill me-1 align-bottom"></i> Apply Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive table-card">
+                                <table class="table table-nowrap table-centered align-middle">
+                                    <thead class="bg-light text-muted">
+                                        <tr>
+                                            <th scope="col">Key</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Summary</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Priority</th>
+                                            <th scope="col">Assignee</th>
+                                            <th scope="col">Created</th>
+                                            <th scope="col">Due Date</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="issuesList">
+                                        <!-- Issues will be loaded here via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+
+<!-- Create Issue Modal -->
+<div class="modal fade" id="createIssueModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title">Create Issue</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createIssueForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="issueType" class="form-label">Issue Type</label>
+                        <select class="form-select" id="issueType" required>
+                            {% for type in issue_types %}
+                            <option value="{{ type.id }}">{{ type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="issueSummary" class="form-label">Summary</label>
+                        <input type="text" class="form-control" id="issueSummary" required>
+                    </div>
+                    <div class="mb-3" id="epicSelectDiv" style="display: none;">
+                        <label for="epicId" class="form-label">Epic</label>
+                        <select class="form-select" id="epicId">
+                            <option value="">Select Epic</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="storySelectDiv" style="display: none;">
+                        <label for="storyId" class="form-label">Story</label>
+                        <select class="form-select" id="storyId">
+                            <option value="">Select Story</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="taskSelectDiv" style="display: none;">
+                        <label for="parentTaskId" class="form-label">Parent Task</label>
+                        <select class="form-select" id="parentTaskId">
+                            <option value="">Select Task</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="issueStatus" class="form-label">Status</label>
+                                <select class="form-select" id="issueStatus" required>
+                                    {% for status in statuses %}
+                                    <option value="{{ status.id }}">{{ status.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="issuePriority" class="form-label">Priority</label>
+                                <select class="form-select" id="issuePriority">
+                                    {% for priority in priorities %}
+                                    <option value="{{ priority.id }}">{{ priority.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="issueAssignee" class="form-label">Assignee</label>
+                                <select class="form-select" id="issueAssignee">
+                                    <option value="">Unassigned</option>
+                                    {% for member in project_members %}
+                                    <option value="{{ member.id }}">{{ member.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="issueDueDate" class="form-label">Due Date</label>
+                                <input type="date" class="form-control" id="issueDueDate">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="issueDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="issueDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6" id="storyPointsDiv" style="display: none;">
+                            <div class="mb-3">
+                                <label for="storyPoints" class="form-label">Story Points</label>
+                                <input type="number" class="form-control" id="storyPoints">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="originalEstimate" class="form-label">Original Estimate (hours)</label>
+                                <input type="number" class="form-control" id="originalEstimate" step="0.5">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="issueAttachments" class="form-label">Attachments</label>
+                        <input type="file" class="form-control" id="issueAttachments" multiple>
+                        <div id="attachmentList" class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="hstack gap-2 justify-content-end">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success" id="createIssueBtn">Create Issue</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Sweet Alerts js -->
+<script src="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const projectId = {{ project.id }};
+    
+    // Load initial data
+    loadIssues();
+    loadEpics();
+    
+    // Form submission
+    document.getElementById('createIssueForm').addEventListener('submit', createIssue);
+    
+    // Issue type change handler
+    document.getElementById('issueType').addEventListener('change', handleIssueTypeChange);
+    
+    // File input change handler
+    document.getElementById('issueAttachments').addEventListener('change', handleFileSelect);
+    
+    // Epic -> Story -> Task cascade listeners
+    document.getElementById('epicId').addEventListener('change', function() {
+        loadStoriesForEpic(this.value);
+        // Clear story and task selections
+        document.getElementById('storyId').innerHTML = '<option value="">Select Story</option>';
+        document.getElementById('parentTaskId').innerHTML = '<option value="">Select Task</option>';
+    });
+
+    document.getElementById('storyId').addEventListener('change', function() {
+        loadTasksForStory(this.value);
+        // Clear task selection
+        document.getElementById('parentTaskId').innerHTML = '<option value="">Select Task</option>';
+    });
+
+    // Modal reset handler
+    document.getElementById('createIssueModal').addEventListener('hidden.bs.modal', function () {
+        const form = document.getElementById('createIssueForm');
+        form.reset();
+        delete form.dataset.issueId; // Remove the issue ID if it was an edit
+        
+        // Clear attachments
+        document.getElementById('attachmentList').innerHTML = '';
+        
+        // Reset modal title and button
+        document.querySelector('#createIssueModal .modal-title').textContent = 'Create Issue';
+        const submitButton = document.getElementById('createIssueBtn');
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Create Issue';
+        
+        // Reset select fields to their default state
+        const selectFields = ['issueType', 'issueStatus', 'issuePriority', 'issueAssignee', 'epicId', 'storyId', 'parentTaskId'];
+        selectFields.forEach(fieldId => {
+            const select = document.getElementById(fieldId);
+            if (select) {
+                select.value = select.options[0].value;
+            }
+        });
+
+        // Reset any dependency fields
+        const storySelect = document.getElementById('storyId');
+        const parentTaskSelect = document.getElementById('parentTaskId');
+        if (storySelect) storySelect.innerHTML = '<option value="">Select Story</option>';
+        if (parentTaskSelect) parentTaskSelect.innerHTML = '<option value="">Select Task</option>';
+        
+        // Clear any validation states or error messages
+        const formInputs = form.querySelectorAll('.form-control');
+        formInputs.forEach(input => {
+            input.classList.remove('is-invalid', 'is-valid');
+            const feedbackElement = input.nextElementSibling;
+            if (feedbackElement && feedbackElement.classList.contains('invalid-feedback')) {
+                feedbackElement.textContent = '';
+            }
+        });
+    });
+
+    function handleIssueTypeChange() {
+        const issueType = document.getElementById('issueType').value;
+        const epicSelectDiv = document.getElementById('epicSelectDiv');
+        const storySelectDiv = document.getElementById('storySelectDiv');
+        const taskSelectDiv = document.getElementById('taskSelectDiv');
+        const storyPointsDiv = document.getElementById('storyPointsDiv');
+        
+        // Reset all to hidden first
+        epicSelectDiv.style.display = 'none';
+        storySelectDiv.style.display = 'none';
+        taskSelectDiv.style.display = 'none';
+        storyPointsDiv.style.display = 'none';
+
+        clearTaskDropdown();
+        
+        // Show relevant fields based on issue type
+        switch(issueType) {
+            case '2': // Story
+                epicSelectDiv.style.display = 'block';
+                storyPointsDiv.style.display = 'block';
+                break;
+            case '3': // Task
+                epicSelectDiv.style.display = 'block';
+                storySelectDiv.style.display = 'block';
+                break;
+            case '4': // Bug
+                epicSelectDiv.style.display = 'block';
+                storySelectDiv.style.display = 'block';
+                break;
+            case '5': // Sub-task
+                taskSelectDiv.style.display = 'block';
+                const projectId = {{ project.id }};  // This uses Jinja2 template variable
+                loadAllTasksForProject(projectId);
+                break;
+        }
+    }
+
+    // new-function
+    // Function to show/configure bug creation modal
+    function openBugCreationModal(parentType, parentId) {
+        // Reset the form
+        document.getElementById('createIssueForm').reset();
+        
+        // Set issue type to Bug
+        document.getElementById('issueType').value = '4';
+        
+        // Hide all conditional sections first
+        document.getElementById('epicSelectDiv').style.display = 'none';
+        document.getElementById('storySelectDiv').style.display = 'none';
+        document.getElementById('taskSelectDiv').style.display = 'none';
+        document.getElementById('parentBugDiv').style.display = 'none';
+        
+        // Add a hidden input to track the parent type and ID
+        let parentTypeInput = document.getElementById('parentTypeInput');
+        if (!parentTypeInput) {
+            parentTypeInput = document.createElement('input');
+            parentTypeInput.type = 'hidden';
+            parentTypeInput.id = 'parentTypeInput';
+            parentTypeInput.name = 'parent_type';
+            document.getElementById('createIssueForm').appendChild(parentTypeInput);
+        }
+        parentTypeInput.value = parentType;
+        
+        let parentIdInput = document.getElementById('parentIdInput');
+        if (!parentIdInput) {
+            parentIdInput = document.createElement('input');
+            parentIdInput.type = 'hidden';
+            parentIdInput.id = 'parentIdInput';
+            parentIdInput.name = 'parent_id';
+            document.getElementById('createIssueForm').appendChild(parentIdInput);
+        }
+        parentIdInput.value = parentId;
+        
+        // Update modal title
+        document.querySelector('#createIssueModal .modal-title').textContent = 
+            `Create Bug for ${parentType.charAt(0).toUpperCase() + parentType.slice(1)} #${parentId}`;
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('createIssueModal'));
+        modal.show();
+    }
+
+    // Function to show subtask creation modal
+    function openSubtaskCreationModal(parentId) {
+        // Reset the form
+        document.getElementById('createIssueForm').reset();
+        
+        // Set issue type to Subtask
+        document.getElementById('issueType').value = '5';
+        
+        // Hide all parent selection divs
+        document.getElementById('epicSelectDiv').style.display = 'none';
+        document.getElementById('storySelectDiv').style.display = 'none';
+        
+        // Set the parent task ID (hidden)
+        let parentIdInput = document.getElementById('parentTaskIdHidden');
+        if (!parentIdInput) {
+            parentIdInput = document.createElement('input');
+            parentIdInput.type = 'hidden';
+            parentIdInput.id = 'parentTaskIdHidden';
+            parentIdInput.name = 'parent_id';
+            document.getElementById('createIssueForm').appendChild(parentIdInput);
+        }
+        parentIdInput.value = parentId;
+        
+        // Update modal title
+        document.querySelector('#createIssueModal .modal-title').textContent = `Create Subtask for #${parentId}`;
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('createIssueModal'));
+        modal.show();
+    }
+
+    // Add context menu to task view
+    function addContextMenuToTasks() {
+        document.querySelectorAll('.task-item').forEach(task => {
+            const taskId = task.dataset.taskId;
+            const taskType = task.dataset.taskType;
+            
+            const contextMenu = task.querySelector('.task-context-menu');
+            if (contextMenu) {
+                // Clear existing items
+                contextMenu.innerHTML = '';
+                
+                // Add standard options
+                contextMenu.innerHTML += `
+                    <li><a class="dropdown-item" href="/tasks/issues/${taskId}">View Details</a></li>
+                    <li><a class="dropdown-item edit-task" href="#" onclick="editIssue(${taskId})">Edit</a></li>
+                `;
+                
+                // Add type-specific options
+                if (taskType !== '5') { // Not a subtask
+                    contextMenu.innerHTML += `
+                        <li><a class="dropdown-item" href="#" onclick="openSubtaskCreationModal(${taskId})">
+                            Add Subtask
+                        </a></li>
+                    `;
+                }
+                
+                // Add bug option for all issue types except epics
+                if (taskType !== '1') {
+                    contextMenu.innerHTML += `
+                        <li><a class="dropdown-item" href="#" onclick="openBugCreationModal('${
+                            taskType === '2' ? 'story' : 
+                            taskType === '3' ? 'task' : 
+                            taskType === '4' ? 'bug' : 'subtask'
+                        }', ${taskId})">Report Bug</a></li>
+                    `;
+                }
+                
+                // Add delete option
+                contextMenu.innerHTML += `
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteIssue(${taskId})">
+                        Delete
+                    </a></li>
+                `;
+            }
+        });
+    }
+
+    
+    function clearTaskDropdown() {
+        const parentTaskSelect = document.getElementById('parentTaskId');
+        if (parentTaskSelect) {
+            parentTaskSelect.innerHTML = '<option value="">Select Task</option>';
+        }
+    }
+
+     // Create issue function with attachment handling
+     async function createIssue(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const issueId = form.dataset.issueId;
+        const isEdit = !!issueId;
+        
+        const submitButton = document.getElementById('createIssueBtn');
+        submitButton.disabled = true;
+        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> ${isEdit ? 'Updating...' : 'Creating...'}`;
+        
+        const formData = new FormData();
+        
+        // Add form fields
+        const formFields = {
+            'issue_type_id': 'issueType',
+            'summary': 'issueSummary',
+            'description': 'issueDescription',
+            'status_id': 'issueStatus',
+            'priority_id': 'issuePriority',
+            'assignee_id': 'issueAssignee',
+            'due_date': 'issueDueDate',
+            'epic_id': 'epicId',
+            'story_id': 'storyId',
+            'parent_id': 'parentTaskId',
+            'story_points': 'storyPoints',
+            'original_estimate': 'originalEstimate'
+        };
+
+        Object.entries(formFields).forEach(([key, elementId]) => {
+            const element = document.getElementById(elementId);
+            if (element && element.value) {
+                formData.append(key, element.value);
+            }
+        });
+
+        // Add files
+        const fileInput = document.getElementById('issueAttachments');
+        if (fileInput.files.length > 0) {
+            Array.from(fileInput.files).forEach((file, index) => {
+                formData.append(`attachment_${index}`, file);
+            });
+        }
+        
+        try {
+            const url = isEdit ? 
+                `/tasks/api/issues/${issueId}` : 
+                `/tasks/api/projects/${projectId}/issues`;
+                    
+            let response;
+            if (isEdit) {
+                // For updates, send JSON
+                const jsonData = {};
+                Object.entries(formFields).forEach(([key, elementId]) => {
+                    const element = document.getElementById(elementId);
+                    if (element && element.value) {
+                        jsonData[key] = element.value;
+                    }
+                });
+
+                response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+            } else {
+                // For new issues, keep using FormData
+                response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createIssueModal'));
+                modal.hide();
+                
+                // Reset form
+                form.reset();
+                document.getElementById('attachmentList').innerHTML = '';
+                delete form.dataset.issueId;
+                
+                // Show success message and reload page
+                await Swal.fire({
+                    title: 'Success!',
+                    text: `Issue ${isEdit ? 'updated' : 'created'} successfully`,
+                    icon: 'success',
+                    customClass: {
+                        confirmButton: 'btn btn-primary w-xs mt-2'
+                    },
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+
+                // Reload the page
+                window.location.reload();
+            } else {
+                throw new Error(result.error || 'Failed to process issue');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'An error occurred while processing the issue',
+                icon: 'error',
+                confirmButtonClass: 'btn btn-danger w-xs mt-2'
+            });
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = isEdit ? 'Update Issue' : 'Create Issue';
+        }
+    }
+
+
+    async function deleteIssue(issueId) {
+        try {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+                confirmButtonClass: 'btn btn-danger mt-2',
+                cancelButtonClass: 'btn btn-secondary ms-2 mt-2',
+                buttonsStyling: false
+            });
+            
+            if (result.isConfirmed) {
+                const response = await fetch(`/tasks/api/issues/${issueId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: 'Issue has been deleted.',
+                        icon: 'success',
+                        confirmButtonClass: 'btn btn-primary w-xs mt-2'
+                    });
+                    loadIssues(); // Reload the issues list
+                } else {
+                    throw new Error(data.error || 'Failed to delete issue');
+                }
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Error!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonClass: 'btn btn-danger w-xs mt-2'
+            });
+        }
+    }
+
+    async function editIssue(issueId) {
+        try {
+            const response = await fetch(`/tasks/api/issues/${issueId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Populate modal with issue data
+                document.getElementById('issueType').value = data.issue.type.id;
+                document.getElementById('issueSummary').value = data.issue.summary;
+                document.getElementById('issueDescription').value = data.issue.description;
+                document.getElementById('issueStatus').value = data.issue.status.id;
+                document.getElementById('issuePriority').value = data.issue.priority?.id || '';
+                document.getElementById('issueAssignee').value = data.issue.assignee?.id || '';
+                document.getElementById('issueDueDate').value = data.issue.due_date || '';
+                
+                // Handle parent relationships
+                if (data.issue.epic) {
+                    document.getElementById('epicId').value = data.issue.epic.id;
+                    await loadStoriesForEpic(data.issue.epic.id);
+                }
+                if (data.issue.story) {
+                    document.getElementById('storyId').value = data.issue.story.id;
+                    await loadTasksForStory(data.issue.story.id);
+                }
+                
+                // Update modal title and button
+                document.querySelector('#createIssueModal .modal-title').textContent = 'Edit Issue';
+                document.getElementById('createIssueBtn').textContent = 'Update Issue';
+                
+                // Store issue ID for update
+                document.getElementById('createIssueForm').dataset.issueId = issueId;
+                
+                // Handle issue type specific fields
+                handleIssueTypeChange();
+                
+                // Show modal
+                new bootstrap.Modal(document.getElementById('createIssueModal')).show();
+            } else {
+                throw new Error(data.error || 'Failed to load issue details');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonClass: 'btn btn-danger w-xs mt-2'
+            });
+        }
+    }
+
+
+
+    // Load Functions
+
+    function loadIssues() {
+        const projectId = {{ project.id }};
+        const typeFilter = document.getElementById('issueTypeFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        const assigneeFilter = document.getElementById('assigneeFilter').value;
+        const searchTerm = document.getElementById('searchInput').value;
+        
+        console.log('Filter values:');
+        console.log('- Type filter:', typeFilter);
+        console.log('- Status filter:', statusFilter);
+        console.log('- Assignee filter:', assigneeFilter);
+        console.log('- Search term:', searchTerm);
+        
+        let url = `/tasks/api/projects/${projectId}/issues?`;
+        if (typeFilter) url += `type=${typeFilter}&`;
+        if (statusFilter) url += `status=${statusFilter}&`;
+        if (assigneeFilter) url += `assignee=${assigneeFilter}&`;
+        if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}`;
+        
+        console.log('Fetching issues with URL:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                console.log('Number of issues:', data.issues ? data.issues.length : 0);
+                
+                const issuesList = document.getElementById('issuesList');
+                
+                if (!data.issues || data.issues.length === 0) {
+                    console.log('No issues found, showing empty state');
+                    issuesList.innerHTML = `
+                        <tr>
+                            <td colspan="9" class="text-center">
+                                <p class="text-muted mb-0">No issues found matching your filters</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                console.log('Rendering issues to the list');
+                issuesList.innerHTML = data.issues.map(issue => `
+                    <tr>
+                        <td><a href="/tasks/issues/${issue.id}" class="text-body fw-medium">${issue.key}</a></td>
+                        <td><i class="${issue.type_icon}"></i> ${issue.type}</td>
+                        <td>${issue.summary}</td>
+                        <td>
+                            <span class="badge" style="
+                                ${issue.status === 'To Do' ? 'color: rgb(66, 133, 244); background-color: rgb(232, 240, 254)' : ''}
+                                ${issue.status === 'In Progress' ? 'color: rgb(251, 188, 5); background-color: rgb(254, 247, 224)' : ''}
+                                ${issue.status === 'Review' ? 'color: rgb(66, 133, 244); background-color: rgb(232, 240, 254)' : ''}
+                                ${issue.status === 'Done' ? 'color: rgb(52, 168, 83); background-color: rgb(230, 244, 234)' : ''}
+                            ">
+                                ${issue.status}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge" style="
+                                ${issue.priority === 'Highest' ? 'color: rgb(234, 67, 53); background-color: rgb(253, 232, 230)' : ''}
+                                ${issue.priority === 'High' ? 'color: rgb(234, 67, 53); background-color: rgb(253, 232, 230)' : ''}
+                                ${issue.priority === 'Medium' ? 'color: rgb(66, 133, 244); background-color: rgb(232, 240, 254)' : ''}
+                                ${issue.priority === 'Low' ? 'color: rgb(52, 168, 83); background-color: rgb(230, 244, 234)' : ''}
+                                ${issue.priority === 'Lowest' ? 'color: rgb(66, 133, 244); background-color: rgb(232, 240, 254)' : ''}
+                            ">
+                                ${issue.priority}
+                            </span>
+                        </td>
+                        <td>
+                            ${issue.assignee ? `
+                                <div class="d-flex align-items-center">
+                                    ${issue.assignee.profile_picture_base64 ? 
+                                        `<img src="data:image;base64,${issue.assignee.profile_picture_base64}" class="rounded-circle avatar-xxs" onerror="this.src='/static/images/users/user-dummy-img.jpg'">` : 
+                                        `<img src="/static/images/users/user-dummy-img.jpg" class="rounded-circle avatar-xxs">`
+                                    }
+                                    <span class="ms-2">${issue.assignee.name}</span>
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td><span class="utc-date" data-utc-date="${issue.created_at}">${issue.created_at}</span></td>
+                        <td>${issue.due_date ? `<span class="utc-date" data-utc-date="${issue.due_date}">${issue.due_date}</span>` : '-'}</td>
+
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="ri-more-fill align-middle"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="/tasks/issues/${issue.id}">
+                                            <i class="ri-eye-fill align-bottom me-2 text-primary"></i> View
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="editIssue(${issue.id})">
+                                            <i class="ri-pencil-fill align-bottom me-2 text-info"></i> Edit
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="deleteIssue(${issue.id})">
+                                            <i class="ri-delete-bin-fill align-bottom me-2 text-danger"></i> Delete
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                console.log('Issues rendering complete');
+
+                // Trigger timezone conversion after rendering issues
+                if (typeof window.convertDatesToLocalTimezone === 'function') {
+                    setTimeout(window.convertDatesToLocalTimezone, 100);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching issues:', error);
+            });
+    }
+
+    // File handling functions
+    function handleFileSelect(event) {
+        const files = event.target.files;
+        const attachmentList = document.getElementById('attachmentList');
+        attachmentList.innerHTML = '';
+        
+        Array.from(files).forEach(file => {
+            const fileSize = (file.size / 1024).toFixed(2);
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            let iconClass = 'ri-file-text-line';
+            
+            // Set icon based on file type
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                iconClass = 'ri-image-line';
+            } else if (['pdf'].includes(fileExtension)) {
+                iconClass = 'ri-file-pdf-line';
+            } else if (['doc', 'docx'].includes(fileExtension)) {
+                iconClass = 'ri-file-word-line';
+            } else if (['xls', 'xlsx'].includes(fileExtension)) {
+                iconClass = 'ri-file-excel-line';
+            }
+
+            attachmentList.innerHTML += `
+                <div class="d-flex align-items-center mt-2 border rounded p-2">
+                    <i class="${iconClass} fs-20 me-2"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-medium">${file.name}</div>
+                        <small class="text-muted">${fileSize} KB</small>
+                    </div>
+                    <button type="button" class="btn btn-ghost-danger btn-icon btn-sm" onclick="removeAttachment(this)">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                </div>
+            `;
+        });
+    }
+
+    function removeAttachment(button) {
+        const attachmentDiv = button.closest('.d-flex');
+        attachmentDiv.remove();
+        
+        // Clear the file input if all attachments are removed
+        if (document.getElementById('attachmentList').children.length === 0) {
+            document.getElementById('issueAttachments').value = '';
+        }
+    }
+
+    async function loadEpics() {
+        try {
+            const response = await fetch(`/tasks/api/projects/${projectId}/issues?type=1`);
+            const data = await response.json();
+            
+            const epicSelect = document.getElementById('epicId');
+            epicSelect.innerHTML = '<option value="">Select Epic</option>';
+            data.issues.forEach(epic => {
+                epicSelect.add(new Option(epic.summary, epic.id));
+            });
+        } catch (error) {
+            console.error('Error loading epics:', error);
+        }
+    }
+
+    async function loadStoriesForEpic(epicId) {
+        if (!epicId) {
+            document.getElementById('storyId').innerHTML = '<option value="">Select Story</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/tasks/api/epics/${epicId}/stories`);
+            const data = await response.json();
+            
+            const storySelect = document.getElementById('storyId');
+            storySelect.innerHTML = '<option value="">Select Story</option>';
+            
+            data.stories.forEach(story => {
+                storySelect.add(new Option(story.summary, story.id));
+            });
+        } catch (error) {
+            console.error('Error loading stories:', error);
+        }
+    }
+
+    async function loadTasksForStory(storyId) {
+        if (!storyId) {
+            document.getElementById('parentTaskId').innerHTML = '<option value="">Select Task</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/tasks/api/stories/${storyId}/tasks`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            const taskSelect = document.getElementById('parentTaskId');
+            taskSelect.innerHTML = '<option value="">Select Task</option>';
+            
+            if (data.tasks && data.tasks.length > 0) {
+                data.tasks.forEach(task => {
+                    taskSelect.add(new Option(task.summary, task.id));
+                });
+            } else {
+                taskSelect.innerHTML = '<option value="">No tasks available</option>';
+            }
+        } catch (error) {
+            console.error('Error loading tasks:', error);
+            document.getElementById('parentTaskId').innerHTML = 
+                '<option value="">Error loading tasks. Please try again.</option>';
+            
+            // Show error to user
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to load tasks. Please try again.',
+                icon: 'error',
+                confirmButtonClass: 'btn btn-primary w-xs mt-2'
+            });
+        }
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'To Do': 'secondary',
+            'In Progress': 'warning',
+            'Review': 'info',
+            'Done': 'success'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function getPriorityColor(priority) {
+        const colors = {
+            'Highest': 'danger',
+            'High': 'warning',
+            'Medium': 'info',
+            'Low': 'success',
+            'Lowest': 'secondary'
+        };
+        return colors[priority] || 'secondary';
+    }
+
+
+    async function loadAllTasksForProject(projectId) {
+    try {
+        const response = await fetch(`/tasks/api/projects/${projectId}/all_tasks`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        const taskSelect = document.getElementById('parentTaskId');
+        taskSelect.innerHTML = '<option value="">Select Task</option>';
+        
+        if (data.success && data.tasks && data.tasks.length > 0) {
+            data.tasks.forEach(task => {
+                // Include the issue key in the option text for better identification
+                taskSelect.add(new Option(`${task.key}: ${task.summary}`, task.id));
+            });
+        } else {
+            taskSelect.innerHTML = '<option value="">No tasks available</option>';
+        }
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+        document.getElementById('parentTaskId').innerHTML = 
+            '<option value="">Error loading tasks. Please try again.</option>';
+        
+        // Show error to user
+        Swal.fire({
+            title: 'Error!',
+            text: 'Failed to load tasks. Please try again.',
+            icon: 'error',
+            confirmButtonClass: 'btn btn-primary w-xs mt-2'
+        });
+    }
+}
+
+    function updateIssuesList(issues) {
+        const issuesList = document.getElementById('issuesList');
+        issuesList.innerHTML = issues.map(issue => `
+            <tr>
+                <td><a href="/tasks/issues/${issue.id}" class="text-body fw-medium">${issue.key}</a></td>
+                <td><i class="${issue.type_icon}"></i> ${issue.type}</td>
+                <td>${issue.summary}</td>
+                <td><span class="badge bg-${getStatusColor(issue.status)}">${issue.status}</span></td>
+                <td><span class="badge bg-${getPriorityColor(issue.priority)}">${issue.priority}</span></td>
+                <td>${issue.assignee || '-'}</td>
+                <td><span class="utc-date" data-utc-date="${issue.created_at}">${formatDate(issue.created_at)}</span></td>
+                <td>${issue.due_date ? `<span class="utc-date" data-utc-date="${issue.due_date}">${formatDate(issue.due_date)}</span>` : '-'}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="ri-more-fill align-middle"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/tasks/issues/${issue.id}">
+                                <i class="ri-eye-fill align-bottom me-2 text-muted"></i> View</a></li>
+                            <li><button class="dropdown-item" onclick="editIssue(${issue.id})">
+                                <i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit</button></li>
+                            <li><button class="dropdown-item" onclick="deleteIssue(${issue.id})">
+                                <i class="ri-delete-bin-fill align-bottom me-2 text-muted"></i> Delete</button></li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // Trigger timezone conversion after rendering issues
+        if (typeof window.convertDatesToLocalTimezone === 'function') {
+            setTimeout(window.convertDatesToLocalTimezone, 100);
+        }
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        // Only format for display, original date string is preserved in data-utc-date
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    // Search handling
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadIssues();
+        }, 500);
+    });
+
+    window.applyFilters = function() {
+        loadIssues();
+    };
+    
+    window.editIssue = editIssue;
+    window.deleteIssue = deleteIssue;
+    window.removeAttachment = removeAttachment;
+});
+</script>
+{% endblock %}

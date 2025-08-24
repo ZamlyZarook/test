@@ -1,0 +1,587 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if runner %}Edit{% else %}New{% endif %} Runner{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if runner %}Edit{% else %}New{% endif %} Runner</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.runners') }}">Runners</a></li>
+                                <li class="breadcrumb-item active">{% if runner %}Edit{% else %}Add{% endif %} Runner</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Runner Form Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if runner %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Runner Details
+                            </h5>
+                            {% if runner and not runner.user_id %}
+                            <button type="button" class="btn btn-soft-success" onclick="createLogin({{ runner.id }})">
+                                <i class="ri-user-add-line me-1"></i>
+                                Create Login
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" enctype="multipart/form-data">
+                                {{ form.hidden_tag() }}
+
+                                <!-- Runner Profile -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12 mb-4 text-center">
+                                        <div class="position-relative d-inline-block">
+                                            <img id="profile-preview"
+                                                src="{{ url_for('static', filename='profile_pics/' + runner.profile_image) if runner and runner.profile_image else url_for('static', filename='profile_pics/default.jpg') }}"
+                                                class="avatar-xl rounded-circle" alt="Profile Image">
+                                            <div class="avatar-xs position-absolute bottom-0 end-0">
+                                                <div class="avatar-title rounded-circle bg-light text-primary">
+                                                    <label for="profile_image" class="mb-0 cursor-pointer">
+                                                        <i class="ri-camera-line"></i>
+                                                    </label>
+                                                    {{ form.profile_image(class="d-none") }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Runner Information -->
+                                    <div class="col-lg-6">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Runner Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    {{ form.runner_id.label(class="form-label") }}
+                                                    {{ form.runner_id(class="form-control" + (" is-invalid" if form.runner_id.errors else "")) }}
+                                                    {% if form.runner_id.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.runner_id.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            {{ form.first_name.label(class="form-label") }}
+                                                            {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                                                            {% if form.first_name.errors %}
+                                                            <div class="invalid-feedback">
+                                                                {% for error in form.first_name.errors %}
+                                                                {{ error }}
+                                                                {% endfor %}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            {{ form.last_name.label(class="form-label") }}
+                                                            {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                                                            {% if form.last_name.errors %}
+                                                            <div class="invalid-feedback">
+                                                                {% for error in form.last_name.errors %}
+                                                                {{ error }}
+                                                                {% endfor %}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.nic_no.label(class="form-label") }}
+                                                    {{ form.nic_no(class="form-control" + (" is-invalid" if form.nic_no.errors else "")) }}
+                                                    {% if form.nic_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.nic_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.email.label(class="form-label") }}
+                                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                                    {% if form.email.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.email.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.mobile.label(class="form-label") }}
+                                                    {{ form.mobile(class="form-control" + (" is-invalid" if form.mobile.errors else "")) }}
+                                                    {% if form.mobile.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.mobile.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.date_of_birth.label(class="form-label") }}
+                                                    {{ form.date_of_birth(class="form-control" + (" is-invalid" if form.date_of_birth.errors else ""), type="date") }}
+                                                    {% if form.date_of_birth.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.date_of_birth.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.assigned_area.label(class="form-label") }}
+                                                    {{ form.assigned_area(class="form-control" + (" is-invalid" if form.assigned_area.errors else "")) }}
+                                                    {% if form.assigned_area.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.assigned_area.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="form-check form-switch mb-3">
+                                                    {{ form.is_active(class="form-check-input") }}
+                                                    {{ form.is_active.label(class="form-check-label") }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Medical Profile -->
+                                        <div class="card shadow-none border mt-4">
+                                            <div class="card-header bg-soft-warning">
+                                                <h6 class="card-title mb-0">Medical Profile</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    {{ form.blood_group.label(class="form-label") }}
+                                                    {{ form.blood_group(class="form-select" + (" is-invalid" if form.blood_group.errors else "")) }}
+                                                    {% if form.blood_group.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.blood_group.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.allergies.label(class="form-label") }}
+                                                    {{ form.allergies(class="form-control" + (" is-invalid" if form.allergies.errors else "")) }}
+                                                    {% if form.allergies.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.allergies.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="form-check form-switch mb-3">
+                                                    {{ form.medical_insurance(class="form-check-input") }}
+                                                    {{ form.medical_insurance.label(class="form-check-label") }}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.medical_insurance_company.label(class="form-label") }}
+                                                    {{ form.medical_insurance_company(class="form-control" + (" is-invalid" if form.medical_insurance_company.errors else "")) }}
+                                                    {% if form.medical_insurance_company.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.medical_insurance_company.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.medical_insurance_no.label(class="form-label") }}
+                                                    {{ form.medical_insurance_no(class="form-control" + (" is-invalid" if form.medical_insurance_no.errors else "")) }}
+                                                    {% if form.medical_insurance_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.medical_insurance_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.medical_insurance_expiry.label(class="form-label") }}
+                                                    {{ form.medical_insurance_expiry(class="form-control" + (" is-invalid" if form.medical_insurance_expiry.errors else ""), type="date") }}
+                                                    {% if form.medical_insurance_expiry.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.medical_insurance_expiry.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <!-- License Information -->
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-info">
+                                                <h6 class="card-title mb-0">License Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    {{ form.driving_license_no.label(class="form-label") }}
+                                                    {{ form.driving_license_no(class="form-control" + (" is-invalid" if form.driving_license_no.errors else "")) }}
+                                                    {% if form.driving_license_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.driving_license_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.driving_license_expiry.label(class="form-label") }}
+                                                    {{ form.driving_license_expiry(class="form-control" + (" is-invalid" if form.driving_license_expiry.errors else ""), type="date") }}
+                                                    {% if form.driving_license_expiry.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.driving_license_expiry.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Vehicle Details -->
+                                        <div class="card shadow-none border mt-4">
+                                            <div class="card-header bg-soft-success">
+                                                <h6 class="card-title mb-0">Vehicle Details</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    {{ form.registration_no.label(class="form-label") }}
+                                                    {{ form.registration_no(class="form-control" + (" is-invalid" if form.registration_no.errors else "")) }}
+                                                    {% if form.registration_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.registration_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.vehicle_type.label(class="form-label") }}
+                                                    {{ form.vehicle_type(class="form-select" + (" is-invalid" if form.vehicle_type.errors else "")) }}
+                                                    {% if form.vehicle_type.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.vehicle_type.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.vehicle_model.label(class="form-label") }}
+                                                    {{ form.vehicle_model(class="form-control" + (" is-invalid" if form.vehicle_model.errors else "")) }}
+                                                    {% if form.vehicle_model.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.vehicle_model.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.vehicle_color.label(class="form-label") }}
+                                                    {{ form.vehicle_color(class="form-control" + (" is-invalid" if form.vehicle_color.errors else "")) }}
+                                                    {% if form.vehicle_color.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.vehicle_color.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.engine_no.label(class="form-label") }}
+                                                    {{ form.engine_no(class="form-control" + (" is-invalid" if form.engine_no.errors else "")) }}
+                                                    {% if form.engine_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.engine_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.chassis_no.label(class="form-label") }}
+                                                    {{ form.chassis_no(class="form-control" + (" is-invalid" if form.chassis_no.errors else "")) }}
+                                                    {% if form.chassis_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.chassis_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.insurance_no.label(class="form-label") }}
+                                                    {{ form.insurance_no(class="form-control" + (" is-invalid" if form.insurance_no.errors else "")) }}
+                                                    {% if form.insurance_no.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.insurance_no.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.insurance_company.label(class="form-label") }}
+                                                    {{ form.insurance_company(class="form-control" + (" is-invalid" if form.insurance_company.errors else "")) }}
+                                                    {% if form.insurance_company.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.insurance_company.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    {{ form.insurance_expiry.label(class="form-label") }}
+                                                    {{ form.insurance_expiry(class="form-control" + (" is-invalid" if form.insurance_expiry.errors else ""), type="date") }}
+                                                    {% if form.insurance_expiry.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.insurance_expiry.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Emergency Contact -->
+                                <div class="card shadow-none border mt-4 mb-4">
+                                    <div class="card-header bg-soft-danger">
+                                        <h6 class="card-title mb-0">Emergency Contact Details</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.emergency_contact_name.label(class="form-label") }}
+                                                    {{ form.emergency_contact_name(class="form-control" + (" is-invalid" if form.emergency_contact_name.errors else "")) }}
+                                                    {% if form.emergency_contact_name.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.emergency_contact_name.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.emergency_contact_relationship.label(class="form-label") }}
+                                                    {{ form.emergency_contact_relationship(class="form-control" + (" is-invalid" if form.emergency_contact_relationship.errors else "")) }}
+                                                    {% if form.emergency_contact_relationship.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.emergency_contact_relationship.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.emergency_contact_telephone.label(class="form-label") }}
+                                                    {{ form.emergency_contact_telephone(class="form-control" + (" is-invalid" if form.emergency_contact_telephone.errors else "")) }}
+                                                    {% if form.emergency_contact_telephone.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.emergency_contact_telephone.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    {{ form.emergency_contact_mobile.label(class="form-label") }}
+                                                    {{ form.emergency_contact_mobile(class="form-control" + (" is-invalid" if form.emergency_contact_mobile.errors else "")) }}
+                                                    {% if form.emergency_contact_mobile.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.emergency_contact_mobile.errors %}
+                                                        {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('masters.runners') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    {{ form.submit(class="btn btn-primary") }}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+
+        // Image preview functionality
+        document.getElementById('profile_image').onchange = function (evt) {
+            const [file] = this.files;
+            if (file) {
+                const preview = document.getElementById('profile-preview');
+                preview.src = URL.createObjectURL(file);
+                preview.onload = function () {
+                    URL.revokeObjectURL(preview.src); // free memory
+                }
+            }
+        };
+    });
+
+    function createLogin(runnerId) {
+        Swal.fire({
+            title: 'Create Login',
+            text: 'Are you sure you want to create a login for this runner?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, create login',
+            cancelButtonText: 'No, cancel',
+            confirmButtonColor: '#0ab39c',
+            cancelButtonColor: '#f06548'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/runner/${runnerId}/create-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Login has been created successfully!',
+                            icon: 'success',
+                            confirmButtonColor: '#0ab39c'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.error || 'Failed to create login. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#f06548'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred while creating the login.',
+                        icon: 'error',
+                        confirmButtonColor: '#f06548'
+                    });
+                });
+            }
+        });
+    }
+</script>
+{% endblock extra_js %}

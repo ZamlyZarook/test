@@ -1,0 +1,487 @@
+<!-- TEMPLATE SOURCE: PLEASE CHECK THIS TEXT IS VISIBLE -->
+<!-- BASE TEMPLATE V2 -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gift Card System{% endblock %}</title>
+
+    <!-- Favicons -->
+    <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
+    <link href="{{ url_for('static', filename='img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.gstatic.com" rel="preconnect">
+    <link
+        href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+        rel="stylesheet">
+
+    <!-- Vendor CSS Files -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet">
+
+    <!-- Template Main CSS File -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+    <!-- Add SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Add this line -->
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+
+    <!-- Make sure Bootstrap is loaded before Chart.js -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Add Chart.js before your custom scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Add these if not already present -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Add this in the head section or in a separate CSS file -->
+    <style>
+        /* DataTable Header Styling */
+        .table thead th {
+            background-color: #F8F9FA !important;
+            border-bottom: 2px solid #e3e6f0 !important;
+            color: #4e73df !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.5px !important;
+            padding: 15px !important;
+        }
+
+        /* DataTable Header Border Styling */
+        .table-bordered thead th {
+            border: 1px solid #e3e6f0 !important;
+        }
+
+        /* DataTable Responsive Header */
+        table.dataTable.dtr-inline.collapsed>tbody>tr>td:first-child:before,
+        table.dataTable.dtr-inline.collapsed>tbody>tr>th:first-child:before {
+            background-color: #F8F9FA !important;
+            color: #4e73df !important;
+        }
+
+        /* DataTable Filter and Length Menu Background */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            background-color: #F8F9FA !important;
+            padding: 8px !important;
+            border-radius: 4px !important;
+        }
+
+        /* DataTable Sorting Icons */
+        table.dataTable thead .sorting:before,
+        table.dataTable thead .sorting:after,
+        table.dataTable thead .sorting_asc:before,
+        table.dataTable thead .sorting_asc:after,
+        table.dataTable thead .sorting_desc:before,
+        table.dataTable thead .sorting_desc:after {
+            opacity: 0.5 !important;
+        }
+
+        /* Modern Top Navbar Styling */
+        .topbar {
+            background: #1e1e2d !important;
+            height: 60px !important;
+            padding: 0 1rem !important;
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            left: 0 !important;
+            z-index: 1030 !important;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-form {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-form input {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: none !important;
+            color: #fff !important;
+            padding-left: 40px !important;
+            border-radius: 6px !important;
+            height: 40px !important;
+        }
+
+        .search-form input::placeholder {
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .search-form .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4e73df;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .user-info {
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* Dark mode toggle styling */
+        .dark-mode-toggle {
+            position: relative;
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Layout structure */
+        #wrapper {
+            display: flex;
+        }
+
+        #content-wrapper {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Adjust content padding to account for fixed navbar */
+        #content {
+            padding-top: 60px !important;
+            /* Same as topbar height */
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body id="page-top">
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-dark topbar mb-4 static-top">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <!-- Left side -->
+            <div class="topbar-brand">
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none">
+                    <i class="fa fa-bars" style="color: rgba(255,255,255,0.7)"></i>
+                </button>
+
+                <!-- Search Bar -->
+                <form class="search-form d-none d-md-block">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" placeholder="Search...">
+                </form>
+            </div>
+
+            <!-- Right side -->
+            <div class="topbar-actions">
+                <!-- Fullscreen Toggle -->
+                <button class="action-btn" id="fullscreenToggle">
+                    <i class="fas fa-expand"></i>
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button class="action-btn" id="darkModeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <!-- Notifications -->
+                <button class="action-btn position-relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        3
+                    </span>
+                </button>
+
+                <!-- User Profile -->
+                <div class="user-profile dropdown no-arrow">
+                    <div class="d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <div class="user-avatar">
+                            {% if current_user.is_authenticated %}
+                                {{ current_user.username[0]|upper }}
+                            {% else %}
+                                <!-- You can display something else if the user is not authenticated, e.g. a default letter or text -->
+                                <span>Guest</span>
+                            {% endif %}
+                        </div>
+                        <div class="user-info d-none d-md-block">
+                            <div class="user-name">
+                                {% if current_user.is_authenticated %}
+                                    {{ current_user.username[0]|upper }}
+                                {% else %}
+                                    <!-- You can display something else if the user is not authenticated, e.g. a default letter or text -->
+                                    <span>Guest</span>
+                                {% endif %}
+                            </div>
+                            <div class="user-role">Super Administrator</div>
+                        </div>
+                    </div>
+                    <!-- Dropdown - User Information -->
+                    <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in"
+                        aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Profile
+                        </a>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Settings
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+                    {% include 'includes/sidebar.html' %}
+                </div>
+
+                <!-- Main Content -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+                    {% block content %}{% endblock %}
+                </main>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>&copy; {{ year }} Navitrax</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        $(document).ready(function () {
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('active');
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #343a40 !important;
+        }
+
+        .sidebar .nav-link {
+            color: #fff;
+            padding: 0.5rem 1rem;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #007bff;
+        }
+
+        main {
+            padding-top: 75px;
+        }
+
+        @media (max-width: 767.98px) {
+            .sidebar {
+                position: static;
+                padding-top: 0;
+            }
+
+            main {
+                padding-top: 0;
+            }
+        }
+    </style>
+
+    <!-- In the head section or before closing body -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Update the topbar section -->
+    <nav class="navbar navbar-expand navbar-dark topbar mb-4 static-top">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <!-- Left side -->
+            <div class="topbar-brand">
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none">
+                    <i class="fa fa-bars" style="color: rgba(255,255,255,0.7)"></i>
+                </button>
+
+                <!-- Search Bar -->
+                <form class="search-form d-none d-md-block">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" placeholder="Search...">
+                </form>
+            </div>
+
+            <!-- Right side -->
+            <div class="topbar-actions">
+                <!-- Fullscreen Toggle -->
+                <button class="action-btn" id="fullscreenToggle">
+                    <i class="fas fa-expand"></i>
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button class="action-btn" id="darkModeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <!-- Notifications -->
+                <button class="action-btn position-relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        3
+                    </span>
+                </button>
+
+                <!-- User Profile -->
+                <div class="user-profile dropdown no-arrow">
+                    <div class="d-flex align-items-center" id="userDropdown" role="button" data-bs-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <div class="user-avatar">
+                            {% if current_user.is_authenticated %}
+                            {{ current_user.username[0]|upper }}
+                        {% else %}
+                            <!-- You can display something else if the user is not authenticated, e.g. a default letter or text -->
+                            <span>Guest</span>
+                        {% endif %}
+                        </div>
+                        <div class="user-info d-none d-md-block">
+                            <div class="user-name">{{ current_user.username }}</div>
+                            <div class="user-role">Super Administrator</div>
+                        </div>
+                    </div>
+                    <!-- Dropdown - User Information -->
+                    <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in"
+                        aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Profile
+                        </a>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Settings
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+</body>
+
+</html>

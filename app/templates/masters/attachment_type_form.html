@@ -1,0 +1,227 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if attachment_type %}Edit{% else %}New{% endif %} Attachment Type{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if attachment_type %}Edit{% else %}New{% endif %} Attachment Type</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.attachment_types') }}">Attachment Types</a></li>
+                                <li class="breadcrumb-item active">{% if attachment_type %}Edit{% else %}Add{% endif %} Attachment Type</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Attachment Type Form Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if attachment_type %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Attachment Type Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" id="attachmentTypeForm">
+                                <div class="card shadow-none border mb-4">
+                                    <div class="card-header bg-soft-primary">
+                                        <h6 class="card-title mb-0">Attachment Type Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="attachment_code" class="form-label">Attachment Code <span class="text-danger">*</span></label>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="attachment_code" 
+                                                           name="attachment_code" 
+                                                           placeholder="Enter attachment code"
+                                                           value="{% if attachment_type %}{{ attachment_type.attachment_code }}{% endif %}"
+                                                           required>
+                                                    <div class="invalid-feedback">
+                                                        Please provide a valid attachment code.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="attachment_name" class="form-label">Attachment Name <span class="text-danger">*</span></label>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="attachment_name" 
+                                                           name="attachment_name" 
+                                                           placeholder="Enter attachment name"
+                                                           value="{% if attachment_type %}{{ attachment_type.attachment_name }}{% endif %}"
+                                                           required>
+                                                    <div class="invalid-feedback">
+                                                        Please provide a valid attachment name.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="role_id" class="form-label">Role <span class="text-danger">*</span></label>
+                                                    <select class="form-select" id="role_id" name="role_id" required>
+                                                        <option value="">Select Role</option>
+                                                        {% for role in available_roles %}
+                                                        <option value="{{ role.id }}" 
+                                                                {% if attachment_type and attachment_type.role_id == role.id %}selected{% endif %}>
+                                                            {{ role.role_name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <div class="invalid-feedback">
+                                                        Please select a role.
+                                                    </div>
+                                                    {% if not available_roles %}
+                                                    <div class="form-text text-warning">
+                                                        <i class="ri-information-line"></i> All available roles have been assigned to attachment types.
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" 
+                                                               type="checkbox" 
+                                                               id="is_active" 
+                                                               name="is_active"
+                                                               {% if not attachment_type or attachment_type.is_active %}checked{% endif %}>
+                                                        <label class="form-check-label" for="is_active">
+                                                            Active Status
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('masters.attachment_types') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>
+                                        {% if attachment_type %}Update{% else %}Save{% endif %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+
+        // Form validation
+        const form = document.getElementById('attachmentTypeForm');
+        
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Custom validation
+            let isValid = true;
+            
+            // Validate attachment code
+            const attachmentCode = document.getElementById('attachment_code');
+            if (!attachmentCode.value.trim()) {
+                attachmentCode.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                attachmentCode.classList.remove('is-invalid');
+            }
+            
+            // Validate attachment name
+            const attachmentName = document.getElementById('attachment_name');
+            if (!attachmentName.value.trim()) {
+                attachmentName.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                attachmentName.classList.remove('is-invalid');
+            }
+            
+            // Validate role selection
+            const roleId = document.getElementById('role_id');
+            if (!roleId.value) {
+                roleId.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                roleId.classList.remove('is-invalid');
+            }
+            
+            if (isValid) {
+                // If all validations pass, submit the form
+                form.submit();
+            }
+        });
+        
+        // Remove validation errors on input
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+            
+            input.addEventListener('change', function() {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    });
+</script>
+{% endblock extra_js %}

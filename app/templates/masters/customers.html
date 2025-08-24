@@ -1,0 +1,548 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Customer Management{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Customer Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item active">Customer Management</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    {% if current_user.role == 'super_admin' and current_customer_type == 1 %}
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <a href="{{ url_for('masters.new_customer') }}" class="btn btn-primary">
+                            <i class="ri-user-add-line me-1"></i> Add New Customer
+                        </a>
+                    </div>
+                    {% endif %}
+                
+                    <!-- Main Card with Tabs -->
+                    <div class="card">
+                        <!-- Customer Type Tabs -->
+                        <div class="card-header">
+                            <ul class="nav nav-tabs nav-tabs-custom nav-primary mb-0" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link {% if current_customer_type == 1 %}active{% endif %}" 
+                                       href="{{ url_for('masters.customers', customer_type=1) }}">
+                                        <i class="ri-building-line me-1"></i>
+                                        Customers
+                                        <span class="badge bg-primary-subtle text-primary ms-1">{{ counts.company }}</span>
+                                    </a>
+                                </li>
+                                {% if current_user.role == 'super_admin' %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if current_customer_type == 2 %}active{% endif %}" 
+                                       href="{{ url_for('masters.customers', customer_type=2) }}">
+                                        <i class="ri-user-settings-line me-1"></i>
+                                        CHA Users
+                                        <span class="badge bg-warning-subtle text-warning ms-1">{{ counts.cha }}</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Filters -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <form method="GET" class="row g-3">
+                                        <!-- Hidden field for customer type -->
+                                        <input type="hidden" id="customerTypeFilter" name="customer_type" value="{{ current_customer_type }}">
+                                        
+                                        <div class="col-md-2">
+                                            <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                            <select class="form-select" id="entriesPerPage" name="per_page" onchange="updateEntriesPerPage(this.value)">
+                                                <option value="5" {% if customers.per_page==5 %}selected{% endif %}>5</option>
+                                                <option value="10" {% if customers.per_page==10 %}selected{% endif %}>10</option>
+                                                <option value="25" {% if customers.per_page==25 %}selected{% endif %}>25</option>
+                                                <option value="50" {% if customers.per_page==50 %}selected{% endif %}>50</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="statusFilter" class="form-label">Status</label>
+                                            <select class="form-select w-100" id="statusFilter" name="status" onchange="filterByStatus(this.value)">
+                                                <option value="">All Status</option>
+                                                <option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>Active</option>
+                                                <option value="inactive" {% if request.args.get('status')=='inactive' %}selected{% endif %}>Inactive</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="searchInput" class="form-label">Search</label>
+                                            <input type="text" class="form-control" id="searchInput" name="search"
+                                                value="{{ request.args.get('search', '') }}" placeholder="Search...">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="ri-filter-3-line me-1"></i> Apply
+                                            </button>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                                            <button type="button" class="btn btn-secondary w-100" onclick="clearFilters()">
+                                                <i class="ri-refresh-line me-1"></i> Clear
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Customers Table (customer_type == 1) -->
+                            {% if current_customer_type == 1 %}
+                            <div id="main-table-container">
+                                <div class="table-responsive">
+                                    <table class="table table-nowrap align-middle table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Customer ID</th>
+                                                <th>Customer Name</th>
+                                                <th>Company Name</th>
+                                                <th>Address</th>
+                                                <th>Email</th>
+                                                <th>Telephone No</th>
+                                                <th>LOGIN</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="customers-table-body">
+                                            {% for customer in customers.items %}
+                                            <tr>
+                                                <td>{{ loop.index + (customers.page - 1) * customers.per_page }}</td>
+                                                <td>{{ customer[0].customer_id }}</td>
+                                                <td>{{ customer[0].customer_name }}</td>
+                                                <td>{{ customer[2].company_name if customer[2] else 'N/A' }}</td>
+                                                <td>{{ customer[0].address }}</td>
+                                                <td>{{ customer[0].email }}</td>
+                                                <td>{{ customer[0].telephone }}</td>
+                                                <td>
+                                                    {% if customer[0].user_id %}
+                                                    <span class="badge badge-soft-success">
+                                                        <i class="ri-user-follow-line me-1"></i> Created
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="badge badge-soft-danger">
+                                                        <i class="ri-user-unfollow-line me-1"></i> Not Created
+                                                    </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if customer[1] %}  <!-- customer[1] is the User object -->
+                                                        <span class="badge badge-soft-{{ 'success' if customer[1].is_active else 'danger' }}">
+                                                            {{ 'Active' if customer[1].is_active else 'Inactive' }}
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge badge-soft-warning">No User</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        {% if current_user.role == 'super_admin' %}
+                                                        <a href="{{ url_for('masters.edit_customer', id=customer[0].id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+                                                            <i class="ri-pencil-line"></i>
+                                                        </a>
+                                                        <button class="btn btn-sm btn-danger" onclick="confirmDelete('{{ customer[0].id }}')" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                            <i class="ri-delete-bin-line"></i>
+                                                        </button>
+                                                        {% if customer[0].user_id %}
+                                                        <button class="btn btn-sm btn-{{ 'warning' if customer[1].is_active else 'success' }}" 
+                                                                onclick="toggleCustomerStatus('{{ customer[0].id }}')" 
+                                                                data-bs-toggle="tooltip" 
+                                                                data-bs-placement="top" 
+                                                                title="{{ 'Deactivate' if customer[1].is_active else 'Activate' }} User">
+                                                            <i class="ri-{{ 'pause' if customer[1].is_active else 'play' }}-line"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                        {% endif %}
+                                                        <a href="{{ url_for('masters.view_customer', id=customer[0].id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+                                                            <i class="ri-eye-line"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- CHA Users Table (customer_type == 2) -->
+                            {% if current_customer_type == 2 %}
+                            <div id="cha-table-container">
+                                <div class="table-responsive">
+                                    <table class="table table-nowrap align-middle table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Username</th>
+                                                <th>Full Name</th>
+                                                <th>Company Name</th>
+                                                <th>Email</th>
+                                                <th>Contact Number</th>
+                                                <th>Address</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cha-table-body">
+                                            {% for cha_user in customers.items %}
+                                            <tr>
+                                                <td>{{ loop.index + (customers.page - 1) * customers.per_page }}</td>
+                                                <td>{{ cha_user[0].username }}</td>
+                                                <td>{{ cha_user[0].name }}</td>
+                                                <td>{{ cha_user[1].company_name if cha_user[1] else 'N/A' }}</td>
+                                                <td>{{ cha_user[0].email }}</td>
+                                                <td>{{ cha_user[0].contact_number }}</td>
+                                                <td>{{ cha_user[0].address }}</td>
+                                                <td>
+                                                    <span class="badge badge-soft-{{ 'success' if cha_user[0].is_active else 'danger' }}">
+                                                        {{ 'Active' if cha_user[0].is_active else 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <button class="btn btn-sm btn-{{ 'warning' if cha_user[0].is_active else 'success' }}" 
+                                                                onclick="toggleCHAStatus('{{ cha_user[0].id }}')" 
+                                                                data-bs-toggle="tooltip" 
+                                                                data-bs-placement="top" 
+                                                                title="{{ 'Deactivate' if cha_user[0].is_active else 'Activate' }} CHA User">
+                                                            <i class="ri-{{ 'pause' if cha_user[0].is_active else 'play' }}-line"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <div id="entries-info">
+                                    Showing {{ customers.items|length }} of {{ customers.total }} entries
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination mb-0">
+                                        {% if customers.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('masters.customers', 
+                                                page=customers.prev_num, 
+                                                customer_type=current_customer_type,
+                                                status=request.args.get('status'),
+                                                search=request.args.get('search'),
+                                                per_page=request.args.get('per_page', 5)
+                                            ) }}">Previous</a>
+                                        </li>
+                                        {% endif %}
+
+                                        {% for page_num in customers.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                        {% if page_num %}
+                                        <li class="page-item {% if page_num == customers.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('masters.customers', 
+                                                page=page_num,
+                                                customer_type=current_customer_type,
+                                                status=request.args.get('status'),
+                                                search=request.args.get('search'),
+                                                per_page=request.args.get('per_page', 5)
+                                            ) }}">{{ page_num }}</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                        {% endif %}
+                                        {% endfor %}
+
+                                        {% if customers.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('masters.customers', 
+                                                page=customers.next_num,
+                                                customer_type=current_customer_type,
+                                                status=request.args.get('status'),
+                                                search=request.args.get('search'),
+                                                per_page=request.args.get('per_page', 5)
+                                            ) }}">Next</a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this customer?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Set initial values from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Set status filter
+        const status = urlParams.get('status');
+        if (status) {
+            document.getElementById('statusFilter').value = status;
+        }
+
+        // Set search input
+        const search = urlParams.get('search');
+        if (search) {
+            document.getElementById('searchInput').value = search;
+        }
+
+        // Set entries per page
+        const perPage = urlParams.get('per_page');
+        if (perPage) {
+            document.getElementById('entriesPerPage').value = perPage;
+        }
+
+        // Set customer type in hidden field
+        const customerType = urlParams.get('customer_type') || '1';
+        document.getElementById('customerTypeFilter').value = customerType;
+    });
+
+    function toggleCustomerStatus(customerId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This will change the customer\'s login status',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, toggle it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Get CSRF token - handle if meta tag doesn't exist
+                const csrfToken = document.querySelector('meta[name=csrf-token]');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                // Only add CSRF token if it exists
+                if (csrfToken) {
+                    headers['X-CSRFToken'] = csrfToken.getAttribute('content');
+                }
+                
+                fetch(`{{ url_for('masters.toggle_customer_status', customer_id=0) }}`.replace('0', customerId), {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', data.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error!', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'An error occurred: ' + error.message, 'error');
+                });
+            }
+        });
+    }
+
+    function toggleCHAStatus(userId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This will change the CHA user\'s login status',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, toggle it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Get CSRF token - handle if meta tag doesn't exist
+                const csrfToken = document.querySelector('meta[name=csrf-token]');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                // Only add CSRF token if it exists
+                if (csrfToken) {
+                    headers['X-CSRFToken'] = csrfToken.getAttribute('content');
+                }
+                
+                fetch(`{{ url_for('masters.toggle_cha_status', user_id=0) }}`.replace('0', userId), {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', data.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error!', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'An error occurred: ' + error.message, 'error');
+                });
+            }
+        });
+    }
+
+    function confirmDelete(id) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = "{{ url_for('masters.delete_customer', id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // Function to update entries per page
+    function updateEntriesPerPage(value) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('per_page', value);
+        currentUrl.searchParams.set('page', '1'); // Reset to first page
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to filter by status
+    function filterByStatus(status) {
+        const currentUrl = new URL(window.location.href);
+        if (status) {
+            currentUrl.searchParams.set('status', status);
+        } else {
+            currentUrl.searchParams.delete('status');
+        }
+        currentUrl.searchParams.set('page', '1'); // Reset to first page
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to clear all filters
+    function clearFilters() {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('status');
+        currentUrl.searchParams.delete('search');
+        currentUrl.searchParams.delete('per_page');
+        currentUrl.searchParams.set('page', '1'); // Reset to first page
+        // Keep customer_type to maintain current tab
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to handle search
+    let searchTimeout;
+    function searchTable(query) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const currentUrl = new URL(window.location.href);
+            if (query) {
+                currentUrl.searchParams.set('search', query);
+            } else {
+                currentUrl.searchParams.delete('search');
+            }
+            currentUrl.searchParams.set('page', '1'); // Reset to first page
+            window.location.href = currentUrl.toString();
+        }, 500);
+    }
+
+    // Add search event listener
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        searchTable(e.target.value);
+    });
+
+    // Handle form submission to preserve customer type
+    document.querySelector('form[method="GET"]').addEventListener('submit', function(e) {
+        // Ensure customer_type is preserved in form submission
+        const customerType = new URLSearchParams(window.location.search).get('customer_type') || '1';
+        document.getElementById('customerTypeFilter').value = customerType;
+    });
+</script>
+{% endblock extra_js %}

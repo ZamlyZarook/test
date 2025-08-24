@@ -1,0 +1,1904 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Purchase Order Management{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .bulk-actions {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: none;
+    }
+    
+    .bulk-actions.show {
+        display: block;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .checkbox-column {
+        width: 40px;
+    }
+    
+    .delete-option-card {
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+    
+    .delete-option-card:hover {
+        border-color: #ced4da;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .delete-option-card.critical {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .delete-option-card.warning {
+        border-left: 4px solid #fd7e14;
+    }
+    
+    .delete-option-card h6 {
+        color: #495057;
+        margin-bottom: 0.75rem;
+    }
+    
+    .delete-option-card .text-muted {
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    
+    .delete-option-card .btn {
+        width: 100%;
+        font-weight: 500;
+    }
+    
+    .modal-danger-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Purchase Order Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item active">Purchase Orders</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Filters Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Filters</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="GET" class="row g-3" id="filterForm">
+                                <div class="col-md-2">
+                                    <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                    <select class="form-select" id="entriesPerPage" name="per_page">
+                                        <option value="5" {% if pagination.per_page == 5 %}selected{% endif %}>5</option>
+                                        <option value="10" {% if pagination.per_page == 10 %}selected{% endif %}>10</option>
+                                        <option value="25" {% if pagination.per_page == 25 %}selected{% endif %}>25</option>
+                                        <option value="50" {% if pagination.per_page == 50 %}selected{% endif %}>50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="statusFilter" class="form-label">Status</label>
+                                    <select class="form-select w-100" id="statusFilter" name="status">
+                                        <option value="">All Status</option>
+                                        <option value="pending" {% if request.args.get('status')=='pending' %}selected{% endif %}>Pending</option>
+                                        <option value="partial" {% if request.args.get('status')=='partial' %}selected{% endif %}>Partial</option>
+                                        <option value="completed" {% if request.args.get('status')=='completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="searchInput" class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="searchInput" name="search"
+                                        value="{{ request.args.get('search', '') }}" placeholder="Search PO Number, System Doc, Supplier...">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-filter-3-line me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                                <!-- <div class="col-md-2">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="button" class="btn btn-danger w-100" onclick="showBulkDeleteModal()">
+                                        <i class="ri-delete-bin-line me-1"></i> Bulk Delete
+                                    </button>
+                                </div> -->
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions Panel -->
+                    <div class="bulk-actions" id="bulkActionsPanel">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-semibold">Bulk Actions:</span>
+                                <span id="selectedCount" class="text-primary ms-2">0 selected</span>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllVisible()">
+                                    <i class="ri-checkbox-multiple-line me-1"></i>Select Page
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="selectAllPages()">
+                                    <i class="ri-file-list-3-line me-1"></i>Select All Pages
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="clearSelection()">
+                                    <i class="ri-close-line me-1"></i>Clear Selection
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteSelected()">
+                                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Purchase Orders Table Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Purchase Orders List</h5>
+                            {% if current_user.role == 'customer' %}
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="ri-file-excel-2-line me-1"></i> Upload Excel File
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-nowrap align-middle table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="checkbox-column">
+                                                <input type="checkbox" class="form-check-input" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                            </th>
+                                            <th>#</th>
+                                            {% if current_user.role == 'user' %}
+                                            <th>Customer</th>
+                                            {% endif %}
+                                            <th>System Doc No</th>
+                                            <th>PO Number</th>
+                                            <th>PO Date</th>
+                                            <th>PO Terms</th>
+                                            <th>Supplier</th>
+                                            <th>Item - Delivery Date - Qty</th>
+                                            <th>Total Value</th>
+                                            <th>Total Qty</th>
+                                            <th>Documents</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if po_data %}
+                                        {% for po_item in po_data %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="form-check-input po-checkbox" 
+                                                       value="{{ po_item.po_header.id }}" 
+                                                       onchange="updateSelectedCount()">
+                                            </td>
+                                            <td>{{ pagination.start_index + loop.index0 }}</td>
+                                            {% if current_user.role == 'user' %}
+                                            <td>{{ po_item.po_header.creator.name}}</td>
+                                            {% endif %}
+                                            <td>
+                                                <span class="badge badge-soft-primary fs-6">{{ po_item.po_header.sysdocnum }}</span>
+                                            </td>
+                                            <td><span class="badge badge-soft-warning fs-6">{{ po_item.po_header.po_number }}</span></td>
+                                            <td>{{ po_item.po_header.po_date.strftime('%Y-%m-%d') }}</td>
+                                            <td class="text-center"> {{ po_item.po_header.payment_term }} </td>
+                                            <td>
+                                                <div>
+                                                    <span class="fw-medium">{{ po_item.po_header.supplier.supplier_name }}</span>
+                                                    <br>
+                                                    <small class="text-muted">{{ po_item.po_header.supplier.supplier_code }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="max-width: 500px; max-height: 200px; overflow-y: auto; font-size: 0.85rem;">
+                                                    {% if po_item.all_materials %}
+                                                        <table class="table table-sm table-borderless mb-0">
+                                                            {% for material in po_item.all_materials %}
+                                                            <tr>
+                                                                <td class="fw-medium text-dark" style="width: 65%;">{{ material.material_name }}</td>
+                                                                <td class="text-muted" style="width: 25%;">
+                                                                    {% if material.delivery_date %}
+                                                                        {{ material.delivery_date.strftime('%Y-%m-%d') }}
+                                                                    {% else %}
+                                                                        <span class="text-warning">No date</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td class="text-end" style="width: 10%;">
+                                                                    <span class="fw-medium">{{ "{:,.0f}".format(material.order_quantity) }}</span>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </table>
+                                                    {% else %}
+                                                        <span class="text-muted">No materials found</span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold text-success">{{ po_item.po_header.currency }} {{ "{:,.2f}".format(po_item.po_header.total_value) }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="text-center">
+                                                    <span class="fw-medium">{{ "{:,.0f}".format(po_item.total_quantity) }}</span>
+                                                </div>
+                                            </td>
+                                            <!-- Add this in the table body, before the Status column -->
+                                            <td>
+                                                {% if po_item.shipment_info.has_shipment %}
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <span class="badge badge-soft-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Required Documents">
+                                                        <i class="ri-file-list-line me-1"></i>
+                                                        {{ po_item.shipment_info.total_required }}
+                                                    </span>
+                                                    <span class="badge badge-soft-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Uploaded Documents">
+                                                        <i class="ri-send-plane-line me-1"></i>
+                                                        {{ po_item.shipment_info.total_uploaded }}
+                                                    </span>
+                                                    <span class="badge badge-soft-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Approved Documents">
+                                                        <i class="ri-thumb-up-line me-1"></i>
+                                                        {{ po_item.shipment_info.approved_docs }}
+                                                    </span>
+                                                    <span class="badge badge-soft-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Rejected Documents">
+                                                        <i class="ri-thumb-down-line me-1"></i>
+                                                        {{ po_item.shipment_info.rejected_docs }}
+                                                    </span>
+                                                    <button class="btn btn-sm btn-outline-info" 
+                                                            onclick="openPODocumentModal('{{ po_item.po_header.id }}', '{{ po_item.shipment_info.shipment_id }}', '{{ po_item.shipment_info.ship_category_id }}', '{{ po_item.shipment_info.shipment_type_id }}')"
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="View Documents">
+                                                        <i class="ri-eye-line"></i>
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted d-block mt-1">Job: {{ po_item.shipment_info.shipment_job_no }}</small>
+                                                {% else %}
+                                                <div class="text-center">
+                                                    <span class="badge badge-soft-secondary">
+                                                        <i class="ri-close-line me-1"></i>{{ po_item.shipment_info.message }}
+                                                    </span>
+                                                </div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-soft-{{ po_item.status_class }} fs-6">
+                                                    <i class="{{ po_item.status_icon }} me-1"></i>
+                                                    {{ po_item.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    <a href="{{ url_for('po.view_po', po_id=po_item.po_header.id, 
+                                                        **{
+                                                            'return_page': pagination.page,
+                                                            'return_per_page': pagination.per_page,
+                                                            'return_search': request.args.get('search', ''),
+                                                            'return_status': request.args.get('status', '')
+                                                        }) }}" 
+                                                        class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top" title="View Details">
+                                                        <i class="ri-eye-line"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-warning" onclick="openRemarksModal({{ po_item.po_header.id }})" data-bs-toggle="tooltip" data-bs-placement="top" title="Add/Edit Remarks">
+                                                        <i class="ri-chat-3-line"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger" onclick="confirmDelete('{{ po_item.po_header.id }}')" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="13" class="text-center py-4">
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <i class="ri-file-list-3-line fs-1 text-muted mb-2"></i>
+                                                    <p class="text-muted mb-0">No purchase orders found</p>
+                                                    <small class="text-muted">Upload an Excel file to get started</small>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if po_data %}
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <div>
+                                    Showing {{ pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total }} entries
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination mb-0">
+                                        {% if pagination.page > 1 %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('po.purchase_orders', page=pagination.page-1, per_page=pagination.per_page, search=request.args.get('search'), status=request.args.get('status')) }}">Previous</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for page_num in range(1, pagination.pages + 1) %}
+                                            {% if page_num == pagination.page %}
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">{{ page_num }}</a>
+                                            </li>
+                                            {% elif page_num <= 3 or page_num > pagination.pages - 3 or (page_num >= pagination.page - 1 and page_num <= pagination.page + 1) %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('po.purchase_orders', page=page_num, per_page=pagination.per_page, search=request.args.get('search'), status=request.args.get('status')) }}">{{ page_num }}</a>
+                                            </li>
+                                            {% elif page_num == 4 or page_num == pagination.pages - 3 %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if pagination.page < pagination.pages %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('po.purchase_orders', page=pagination.page+1, per_page=pagination.per_page, search=request.args.get('search'), status=request.args.get('status')) }}">Next</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Status Summary Cards -->
+                    <!-- Status Summary Cards -->
+                    {% if po_data %}
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="ri-time-line fs-1 text-warning mb-2"></i>
+                                    <h5 class="mb-1">{{ summary_stats.pending_orders if summary_stats else 0 }}</h5>
+                                    <p class="text-muted mb-0">Pending Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="ri-truck-line fs-1 text-primary mb-2"></i>
+                                    <h5 class="mb-1">{{ summary_stats.partial_orders if summary_stats else 0 }}</h5>
+                                    <p class="text-muted mb-0">Partial Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="ri-check-double-line fs-1 text-success mb-2"></i>
+                                    <h5 class="mb-1">{{ summary_stats.completed_orders if summary_stats else 0 }}</h5>
+                                    <p class="text-muted mb-0">Completed Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="ri-file-list-3-line fs-1 text-info mb-2"></i>
+                                    <h5 class="mb-1">{{ summary_stats.total_orders if summary_stats else pagination.total }}</h5>
+                                    <p class="text-muted mb-0">Total Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">Upload Excel File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('po.upload_excel') }}" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">Select Excel File</label>
+                            <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx,.xls" required>
+                            <div class="form-text">Please upload Excel files (.xlsx or .xls) with purchase order data.</div>
+                        </div>
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">Expected Excel Format:</h6>
+                            <small>
+                                The Excel file should contain columns: Purchasing Document, Document Date, Supplier/Supplying Plant, Material, Short Text, Order Unit, Order Quantity, Net Price, Item, Delivery Date.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="ri-upload-cloud-2-line me-1"></i>Upload & Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Delete Modal -->
+    <div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkDeleteModalLabel">
+                        <i class="ri-delete-bin-line me-2"></i>Bulk Delete Purchase Orders
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning border-0">
+                        <i class="ri-alert-line me-2"></i>
+                        <strong>Warning:</strong> These actions will permanently delete purchase orders and cannot be undone. Please review your selection carefully.
+                    </div>
+                    
+                    <div class="row g-4">
+                        <!-- Delete All -->
+                        <div class="col-md-6">
+                            <div class="delete-option-card critical">
+                                <h6>
+                                    <i class="ri-delete-bin-2-line me-2 text-danger"></i>Delete All Purchase Orders
+                                </h6>
+                                <p class="text-muted">
+                                    Permanently removes ALL purchase orders from your account across all pages and filters.
+                                </p>
+                                <button type="button" class="btn btn-danger" onclick="confirmBulkDelete('all')">
+                                    <i class="ri-delete-bin-line me-1"></i>Delete All POs
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Delete by Date Range -->
+                        <div class="col-md-6">
+                            <div class="delete-option-card warning">
+                                <h6>
+                                    <i class="ri-calendar-line me-2 text-warning"></i>Delete by Date Range
+                                </h6>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label small text-muted">From Date</label>
+                                        <input type="date" class="form-control form-control-sm" id="dateRangeStart">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small text-muted">To Date</label>
+                                        <input type="date" class="form-control form-control-sm" id="dateRangeEnd">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-warning" onclick="confirmBulkDelete('date_range')">
+                                    <i class="ri-calendar-event-line me-1"></i>Delete by Date Range
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Delete Filtered -->
+                        <div class="col-md-6">
+                            <div class="delete-option-card warning">
+                                <h6>
+                                    <i class="ri-filter-line me-2 text-info"></i>Delete Filtered Results
+                                </h6>
+                                <p class="text-muted">
+                                    Delete all POs matching your current search and filter criteria across all pages.
+                                </p>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">
+                                        <strong>Search:</strong> {{ request.args.get('search', 'None') }}
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <strong>Status:</strong> {{ request.args.get('status', 'All Status') }}
+                                    </small>
+                                </div>
+                                <button type="button" class="btn btn-info" onclick="confirmBulkDelete('filtered')">
+                                    <i class="ri-filter-3-line me-1"></i>Delete Filtered POs
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Delete Selected -->
+                        <div class="col-md-6">
+                            <div class="delete-option-card warning">
+                                <h6>
+                                    <i class="ri-checkbox-multiple-line me-2 text-success"></i>Delete Selected
+                                </h6>
+                                <p class="text-muted">
+                                    Delete only the purchase orders you have selected using checkboxes.
+                                </p>
+                                <div class="mb-3">
+                                    <span class="badge bg-primary">
+                                        <span id="modalSelectedCount">0</span> POs selected
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-success" onclick="confirmBulkDelete('selected')" id="deleteSelectedBtn" disabled>
+                                    <i class="ri-checkbox-line me-1"></i>Delete Selected POs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Delete Confirmation Modal -->
+    <div class="modal fade" id="bulkDeleteConfirmModal" tabindex="-1" aria-labelledby="bulkDeleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkDeleteConfirmModalLabel">
+                        <i class="ri-alert-line me-2"></i>Confirm Bulk Deletion
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-error-warning-line fs-1 text-danger"></i>
+                        <h5 class="mt-3 text-danger">⚠️ DANGER ZONE ⚠️</h5>
+                        <p class="text-muted mb-3" id="confirmDeleteText">This action cannot be undone!</p>
+                        
+                        <!-- Loading indicator -->
+                        <div id="deleteLoadingIndicator" style="display: none;">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Processing...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Deleting purchase orders...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirmation Input -->
+                    <div id="confirmationSection">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Type <strong>DELETE</strong> to confirm:</label>
+                            <input type="text" class="form-control" id="confirmationInput" placeholder="Type DELETE">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="confirmModalFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="finalDeleteBtn" onclick="executeBulkDelete()" disabled>
+                        <i class="ri-delete-bin-line me-1"></i>DELETE PERMANENTLY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remarks Modal -->
+    <div class="modal fade" id="remarksModal" tabindex="-1" aria-labelledby="remarksModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="remarksModalLabel">
+                            <i class="ri-chat-3-line me-2"></i>Remarks
+                        </h5>
+                        <small class="text-muted" id="remarksModalSubtitle">Loading...</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="remarksLoadingSpinner" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading remarks...</p>
+                    </div>
+                    
+                    <div id="remarksContent" style="display: none;">
+                        <div class="mb-3">
+                            <label for="remarksTextarea" class="form-label fw-medium">
+                                <i class="ri-pencil-line me-1"></i>Remarks
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="remarksTextarea" 
+                                rows="6" 
+                                placeholder="Enter your remarks here..."
+                                maxlength="2000"></textarea>
+                            <div class="form-text d-flex justify-content-between">
+                                <span>Add any important notes or comments about this purchase order</span>
+                                <span><span id="remarksCounter">0</span>/2000</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Remarks History Info -->
+                        <div class="bg-light p-3 rounded" id="remarksHistory" style="display: none;">
+                            <h6 class="mb-2"><i class="ri-history-line me-1"></i>Last Updated</h6>
+                            <small class="text-muted" id="remarksLastUpdated"></small>
+                        </div>
+                    </div>
+                    
+                    <div id="remarksError" class="alert alert-danger" style="display: none;">
+                        <i class="ri-error-warning-line me-2"></i>
+                        <span id="remarksErrorMessage">An error occurred while loading remarks.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveRemarksBtn" onclick="saveRemarks()">
+                        <i class="ri-save-line me-1"></i>Save Remarks
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this Purchase Order?</h5>
+                        <p class="text-muted">This action cannot be undone. All associated detail records will also be deleted.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PO Document Management Modal -->
+    <div class="modal fade" id="poDocumentModal" tabindex="-1" aria-labelledby="poDocumentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="poDocumentModalLabel">
+                        <i class="ri-file-text-line me-2"></i>Shipment Documents for Purchase Order
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="poDocumentSection">
+                        <!-- Document info will be displayed here -->
+                        <div class="alert alert-info mb-3" id="poDocumentInfo">
+                            <i class="ri-information-line me-2"></i>
+                            <span id="poDocumentInfoText">Loading document information...</span>
+                        </div>
+                        
+                        <!-- Document status and progress will be displayed here -->
+                        <div id="poDocumentProgress"></div>
+                        
+                        <!-- Existing documents will be loaded here dynamically -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Uploaded Documents</h6>
+                            </div>
+                            <div class="card-body" id="poExistingDocuments">
+                                <!-- Existing documents will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Required Documents Section -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Required Documents</h6>
+                            </div>
+                            <div class="card-body" id="poRequiredDocuments">
+                                <!-- Required documents will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i>Close
+                    </button>
+                    <button type="button" class="btn btn-primary" id="goToShipmentBtn" style="display: none;">
+                        <i class="ri-ship-line me-1"></i>Go to Shipment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Global variables
+    let currentPoId = null;
+    let remarksModal = null;
+    let originalRemarks = '';
+    let selectedPOs = new Set();
+    let currentDeleteType = null;
+    let currentDeleteData = {}; // Store delete operation data
+    let bulkDeleteModal = null;
+    let bulkDeleteConfirmModal = null;
+
+    let currentPOId = null;
+    let currentShipmentId = null;
+    let currentShipCatId = null;
+    let currentShipTypeId = null;
+    let poDocumentModal = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Initialize modals
+        remarksModal = new bootstrap.Modal(document.getElementById('remarksModal'));
+        bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+        bulkDeleteConfirmModal = new bootstrap.Modal(document.getElementById('bulkDeleteConfirmModal'));
+        poDocumentModal = new bootstrap.Modal(document.getElementById('poDocumentModal')); // NEW
+
+        // Setup remarks textarea character counter
+        setupRemarksCounter();
+        
+        // Setup modal reset on hide
+        setupModalReset();
+
+        // Setup bulk delete confirmation input
+        setupBulkDeleteConfirmation();
+        
+        // Initialize delete data storage
+        currentDeleteData = {};
+        currentDeleteType = null;
+        
+        console.log('Bulk delete system initialized');
+    });
+
+
+    function openPODocumentModal(poId, shipmentId, shipCatId, shipTypeId) {
+    console.log('Opening PO document modal with:', { poId, shipmentId, shipCatId, shipTypeId });
+    
+    if (!poId || !shipmentId || !shipCatId || !shipTypeId) {
+        showToast('danger', 'Invalid parameters for document management');
+        return;
+    }
+    
+    // Store current IDs for later use
+    currentPOId = poId;
+    currentShipmentId = shipmentId;
+    currentShipCatId = shipCatId;
+    currentShipTypeId = shipTypeId;
+    
+    // Show loading state
+    const existingDocuments = document.getElementById('poExistingDocuments');
+    const requiredDocuments = document.getElementById('poRequiredDocuments');
+    const documentInfo = document.getElementById('poDocumentInfoText');
+    
+    if (!existingDocuments || !requiredDocuments) {
+        console.error('PO Document modal container elements not found');
+        return;
+    }
+    
+    // Show loading indicators
+    documentInfo.textContent = `Loading document information for PO and Shipment...`;
+    existingDocuments.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading existing documents...</p></div>';
+    requiredDocuments.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading required documents...</p></div>';
+    
+    // Hide "Go to Shipment" button initially
+    document.getElementById('goToShipmentBtn').style.display = 'none';
+    
+    // Show the modal
+    poDocumentModal.show();
+    
+    // Load PO and shipment information
+    loadPODocumentInfo();
+}
+
+// Function to load PO document information
+async function loadPODocumentInfo() {
+    try {
+        // First get PO information
+        const poResponse = await fetch(`/purchase_orders/get-po-info/${currentPOId}`);
+        if (!poResponse.ok) {
+            throw new Error(`Failed to get PO details: ${poResponse.status}`);
+        }
+        const poData = await poResponse.json();
+        
+        if (!poData.success) {
+            throw new Error(poData.message || 'Failed to get PO data');
+        }
+        
+        // Then get shipment documents using the customer portal endpoint
+        const docsResponse = await fetch(`/customer_portal/get-required-documents/${currentShipCatId}/${currentShipTypeId}/${currentShipmentId}`);
+        if (!docsResponse.ok) {
+            throw new Error(`Failed to get document requirements: ${docsResponse.status}`);
+        }
+        const documentData = await docsResponse.json();
+        
+        // Update document info header
+        document.getElementById('poDocumentInfoText').innerHTML = `
+            <strong>PO:</strong> ${poData.po_number} | <strong>System Doc:</strong> ${poData.sysdocnum} | 
+            <strong>Shipment Job:</strong> ${poData.shipment_job_no || 'N/A'} | 
+            <strong>Supplier:</strong> ${poData.supplier_name}
+        `;
+        
+        // Show "Go to Shipment" button
+        const goToShipmentBtn = document.getElementById('goToShipmentBtn');
+        goToShipmentBtn.style.display = 'inline-block';
+        goToShipmentBtn.onclick = () => {
+            window.open(`/customer_portal/sea-import/${currentShipmentId}`, '_blank');
+        };
+        
+        // Process and display documents (reuse logic from sea_import)
+        displayPODocuments(documentData);
+        
+    } catch (error) {
+        console.error('Error loading PO document info:', error);
+        document.getElementById('poDocumentInfoText').textContent = 'Error loading document information';
+        document.getElementById('poExistingDocuments').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="ri-error-warning-line me-2"></i>Failed to load documents: ${error.message}
+            </div>`;
+        document.getElementById('poRequiredDocuments').innerHTML = '';
+    }
+}
+
+// Function to display PO documents (adapted from sea_import logic)
+function displayPODocuments(documentData) {
+    const existingDocuments = document.getElementById('poExistingDocuments');
+    const requiredDocuments = document.getElementById('poRequiredDocuments');
+    
+    // Group existing attachments by description
+    const attachmentsByDescription = {};
+    if (documentData.existing_attachments) {
+        documentData.existing_attachments.forEach(doc => {
+            if (!attachmentsByDescription[doc.description]) {
+                attachmentsByDescription[doc.description] = [];
+            }
+            attachmentsByDescription[doc.description].push(doc);
+        });
+    }
+    
+    // Create a map of ALL required documents for easy lookup
+    const allRequiredDocsMap = {};
+    if (documentData.all_required_documents) {
+        documentData.all_required_documents.forEach(reqDoc => {
+            allRequiredDocsMap[reqDoc.description] = reqDoc;
+        });
+    }
+    
+    // Display existing attachments
+    if (documentData.existing_attachments && documentData.existing_attachments.length > 0) {
+        let existingHtml = '';
+        
+        Object.keys(attachmentsByDescription).forEach(description => {
+            const docs = attachmentsByDescription[description];
+            
+            existingHtml += `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="ri-file-text-line me-2"></i>
+                                ${description}
+                                ${docs[0].isMandatory ? '<span class="badge badge-soft-danger ms-2">Required</span>' : '<span class="badge badge-soft-success ms-2">Optional</span>'}
+                                <span class="badge badge-soft-success ms-2">Uploaded (${docs.length})</span>
+                            </span>
+                        </h6>
+                        
+                        ${docs.map((doc, index) => {
+                            const originalDoc = allRequiredDocsMap[doc.description];
+                            
+                            let statusBadge = '';
+                            let aiValidationBadge = '';
+                            let aiValidationMessage = '';
+                            
+                            if (doc.docAccepted === 'accepted') {
+                                statusBadge = '<span class="badge badge-soft-success ms-2">Accepted by Company</span>';
+                            } else if (doc.docAccepted === 'rejected') {
+                                statusBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Rejected by Company</span>';
+                            } else {
+                                statusBadge = '<span class="badge badge-soft-secondary ms-2">Company Review Pending</span>';
+                            }
+
+                            // AI validation logic (simplified for PO view - read-only)
+                            if (originalDoc && originalDoc.ai_validate === 1) {
+                                if (doc.ai_validated === 0) {
+                                    aiValidationBadge = '<span class="badge badge-soft-info ms-2 blink-badge">AI Validation in Progress</span>';
+                                    aiValidationMessage = `
+                                    <div class="alert alert-info mt-2 mb-2 py-2">
+                                        <i class="ri-information-line me-1"></i>
+                                        <small><strong>AI Validation in Progress:</strong> Our AI agent is currently validating this document.</small>
+                                    </div>`;
+                                } else if (doc.ai_validated === 1) {
+                                    aiValidationBadge = '<span class="badge badge-soft-success ms-2">AI Validation Successful</span>';
+                                    aiValidationMessage = `
+                                    <div class="alert alert-success mt-2 mb-2 py-2">
+                                        <i class="ri-check-double-line me-1"></i>
+                                        <small><strong>AI Validation Successful:</strong> The document has been successfully validated by our AI system.</small>
+                                    </div>`;
+                                } else if (doc.ai_validated === 2) {
+                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">AI Validation Failed</span>';
+                                    aiValidationMessage = `
+                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                        <i class="ri-close-circle-line me-1"></i>
+                                        <small><strong>AI Validation Failed:</strong> The document has been rejected by our AI system.</small>
+                                    </div>`;
+                                } else if (doc.ai_validated === 8) {
+                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Document Type Mismatch</span>';
+                                    aiValidationMessage = `
+                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                        <i class="ri-file-forbid-line me-1"></i>
+                                        <small><strong>Document Type Mismatch:</strong> The submitted document doesn't match the required document type.</small>
+                                    </div>`;
+                                }
+                            } else {
+                                aiValidationBadge = '<span class="badge badge-soft-secondary ms-2">AI Validation Not Required</span>';
+                            }
+                            
+                            return `
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    <h6 class="mb-2">
+                                        Document ${index + 1}
+                                        ${aiValidationBadge}
+                                        ${statusBadge}
+                                    </h6>
+                                    ${aiValidationMessage}
+                                    
+                                    <p class="card-text">
+                                        <small class="text-muted">Note: ${doc.note || 'No notes added'}</small>
+                                    </p>
+                                    ${doc.docAccepteComments ? `
+                                    <div class="alert alert-${doc.docAccepted === 'rejected' ? 'danger' : 'info'} mt-2 mb-2 py-2">
+                                        <small><strong>Company Feedback:</strong> ${doc.docAccepteComments}</small>
+                                    </div>` : ''}
+                                    ${doc.docAccepteDate ? `
+                                    <p class="card-text">
+                                        <small class="text-muted">Reviewed on: ${new Date(doc.docAccepteDate).toLocaleDateString()}</small>
+                                    </p>` : ''}
+                                    ${doc.expiry_date ? `
+                                    <p class="card-text">
+                                        <small class="text-muted">Expires on: ${new Date(doc.expiry_date).toLocaleDateString()}</small>
+                                    </p>` : ''}
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button class="btn btn-sm btn-info" onclick="viewDocument('${doc.attachement_path}')">
+                                                <i class="ri-eye-line me-1"></i>View
+                                            </button>
+                                            ${doc.sample_file_path ? `
+                                            <button class="btn btn-sm btn-secondary" onclick="viewSampleDocument('${doc.sample_file_path}')">
+                                                <i class="ri-file-text-line me-1"></i>View Sample
+                                            </button>` : ''}
+                                            <button class="btn btn-sm btn-primary" onclick="downloadDocument('${doc.attachement_path}')">
+                                                <i class="ri-download-line me-1"></i>Download
+                                            </button>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            ${(doc.ai_validated === 1 || doc.ai_validated === 2) && originalDoc && originalDoc.ai_validate === 1 ? `
+                                            <button class="btn btn-sm btn-secondary" onclick="viewAIValidationResults('${doc.id}')">
+                                                <i class="ri-ai-generate me-1"></i>AI Validation Results
+                                            </button>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        existingDocuments.innerHTML = existingHtml;
+    } else {
+        existingDocuments.innerHTML = '<div class="alert alert-info">No documents have been uploaded yet.</div>';
+    }
+    
+    // Display required documents info
+    if (documentData.new_required_documents && documentData.new_required_documents.length > 0) {
+        let requiredHtml = '<div class="alert alert-info"><i class="ri-information-line me-2"></i>The following documents are required for this shipment:</div>';
+        
+        requiredHtml += '<div class="row g-3">';
+        documentData.new_required_documents.forEach(doc => {
+            const hasAttachments = attachmentsByDescription[doc.description] && attachmentsByDescription[doc.description].length > 0;
+            
+            requiredHtml += `
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 ${doc.isMandatory ? 'border-danger' : ''}">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                ${doc.description}
+                                ${doc.isMandatory 
+                                    ? '<span class="badge badge-soft-danger ms-2">Required</span>' 
+                                    : '<span class="badge badge-soft-success ms-2">Optional</span>'}
+                                ${hasAttachments 
+                                    ? `<span class="badge badge-soft-success ms-2">Uploaded (${attachmentsByDescription[doc.description].length})</span>` 
+                                    : '<span class="badge badge-soft-warning ms-2">Missing</span>'}
+                            </h6>
+                            ${doc.sample_file_path ? `
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="viewSampleDocument('${doc.sample_file_path}')">
+                                    <i class="ri-file-text-line me-1"></i>View Sample
+                                </button>
+                            </div>` : ''}
+                            <small class="text-muted">This document needs to be uploaded through the shipment management page.</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        requiredHtml += '</div>';
+        
+        requiredDocuments.innerHTML = requiredHtml;
+    } else {
+        requiredDocuments.innerHTML = '<div class="alert alert-success"><i class="ri-check-double-line me-2"></i>All required documents have been uploaded.</div>';
+    }
+}
+
+
+
+// Function to view sample document (reuse from sea_import)
+function viewSampleDocument(path) {
+    if (!path) {
+        showToast('warning', 'No sample file available');
+        return;
+    }
+    
+    const encodedPath = encodeURIComponent(path);
+    window.open(`/customer_portal/view-sample-document/${encodedPath}`, '_blank');
+}
+
+// Function to view document (reuse from sea_import)
+function viewDocument(path) {
+    if (!path) {
+        showToast('warning', 'No file path provided');
+        return;
+    }
+    
+    const encodedPath = encodeURIComponent(path);
+    window.open(`/customer_portal/view-document/${encodedPath}`, '_blank');
+}
+
+// Function to download document
+function downloadDocument(path) {
+    if (!path) {
+        showToast('warning', 'No file path provided');
+        return;
+    }
+
+    const encodedPath = encodeURIComponent(path);
+    window.open(`/customer_portal/download-document/${encodedPath}`, '_blank');
+}
+
+// Function to view AI validation results (reuse from sea_import)
+function viewAIValidationResults(docId) {
+    // First, close the PO document modal if it's open
+    const poDocModal = bootstrap.Modal.getInstance(document.getElementById('poDocumentModal'));
+    if (poDocModal) {
+        poDocModal.hide();
+    }
+    
+    // Add a small delay to ensure the modal is fully closed before showing the SweetAlert
+    setTimeout(() => {
+        // Show loading state
+        Swal.fire({
+            title: 'Loading validation results...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch validation results
+        fetch(`/customer_portal/get-document-validation/${docId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to load validation results'
+                    });
+                    return;
+                }
+
+                // Extract validation data
+                const results = data.results;
+                const validationResults = results.validation_results || {};
+                const matchPercentage = results.match_percentage || 0;
+                
+                // Use document_similarity from backend
+                let documentSimilarity = 0;
+                
+                if (results.document_similarity !== undefined) {
+                    // Convert to percentage if it's in decimal form (0-1)
+                    documentSimilarity = results.document_similarity <= 1 ? 
+                        results.document_similarity * 100 : results.document_similarity;
+                }
+                
+                // Ensure documentSimilarity is a number between 0-100
+                documentSimilarity = Math.max(0, Math.min(100, parseFloat(documentSimilarity)));
+                
+                // Determine colors for progress bars
+                const docSimilarityColor = documentSimilarity >= 70 ? 'success' : 
+                                         documentSimilarity >= 50 ? 'warning' : 'danger';
+                const matchPercentageColor = matchPercentage >= 80 ? 'success' : 
+                                           matchPercentage >= 50 ? 'warning' : 'danger';
+
+                // Build the HTML content for detailed field validation
+                let fieldValidationHtml = '';
+                
+                if (Object.keys(validationResults).length > 0) {
+                    fieldValidationHtml = `
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Field Name</th>
+                                    <th>Status</th>
+                                    <th>Similarity Score</th>
+                                    <th>Matched With</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    for (const [fieldName, field] of Object.entries(validationResults)) {
+                        // Skip if not a valid field object or if it's the document_type field
+                        if (!field || typeof field !== 'object' || field.matched === undefined || fieldName === 'document_type') continue;
+                        
+                        const matched = field.matched || false;
+                        const similarity = (field.similarity || 0) * 100;
+                        const matchedWith = field.matched_with || 'N/A';
+                        
+                        fieldValidationHtml += `
+                            <tr>
+                                <td>${fieldName}</td>
+                                <td>
+                                    ${matched ? 
+                                    '<span class="badge bg-success">Matched</span>' : 
+                                    '<span class="badge bg-danger">Not Matched</span>'}
+                                </td>
+                                <td>${similarity.toFixed(2)}%</td>
+                                <td>${matchedWith}</td>
+                            </tr>
+                        `;
+                    }
+                    
+                    fieldValidationHtml += `
+                            </tbody>
+                        </table>
+                    </div>`;
+                } else {
+                    fieldValidationHtml = `
+                    <div class="alert alert-info mt-3">
+                        <i class="ri-information-line me-2"></i>
+                        No detailed field validation results available.
+                    </div>`;
+                }
+
+                // Build the HTML content for the modal
+                let swalContent = `
+                <div class="validation-results">
+                    <h5>Document Type Similarity</h5>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-${docSimilarityColor}" 
+                             role="progressbar" 
+                             style="width: ${documentSimilarity.toFixed(2)}%;" 
+                             aria-valuenow="${documentSimilarity.toFixed(2)}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            ${documentSimilarity.toFixed(2)}%
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-4">Field Match Percentage</h5>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-${matchPercentageColor}" 
+                             role="progressbar" 
+                             style="width: ${matchPercentage.toFixed(2)}%;" 
+                             aria-valuenow="${matchPercentage.toFixed(2)}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            ${matchPercentage.toFixed(2)}%
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-4">Field Validation Details</h5>
+                    ${fieldValidationHtml}
+                </div>
+                `;
+
+                // Show the validation results
+                Swal.fire({
+                    title: 'AI Validation Results',
+                    html: swalContent,
+                    icon: 'info',
+                    width: '800px',
+                    heightAuto: true,
+                    scrollbarPadding: true,
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#3085d6',
+                    allowOutsideClick: true,
+                    didClose: () => {
+                        // Optionally reopen the PO document modal when this is closed
+                        setTimeout(() => {
+                            openPODocumentModal(currentPOId, currentShipmentId, currentShipCatId, currentShipTypeId);
+                        }, 100);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching validation results:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load validation results: ' + error.message
+                });
+            });
+    }, 300); // Short delay to ensure modal is closed
+}
+
+    // Bulk Selection Functions
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const poCheckboxes = document.querySelectorAll('.po-checkbox');
+        
+        poCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+            if (selectAllCheckbox.checked) {
+                selectedPOs.add(checkbox.value);
+            } else {
+                selectedPOs.delete(checkbox.value);
+            }
+        });
+        
+        updateSelectedCount();
+    }
+
+    function selectAllVisible() {
+        const poCheckboxes = document.querySelectorAll('.po-checkbox');
+        poCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            selectedPOs.add(checkbox.value);
+        });
+        document.getElementById('selectAllCheckbox').checked = true;
+        updateSelectedCount();
+    }
+
+    async function selectAllPages() {
+        try {
+            // Show loading indicator
+            showToast('info', 'Loading all POs from all pages...');
+            
+            // Get current filter values
+            const search = document.getElementById('searchInput').value || '';
+            const status = document.getElementById('statusFilter').value || '';
+            
+            const response = await fetch('/purchase_orders/get_all_po_ids', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    search: search,
+                    status: status
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Clear current selection
+                selectedPOs.clear();
+                
+                // Add all PO IDs from all pages
+                result.po_ids.forEach(id => {
+                    selectedPOs.add(id);
+                });
+                
+                // Update visible checkboxes
+                const poCheckboxes = document.querySelectorAll('.po-checkbox');
+                poCheckboxes.forEach(checkbox => {
+                    checkbox.checked = selectedPOs.has(checkbox.value);
+                });
+                
+                document.getElementById('selectAllCheckbox').checked = true;
+                updateSelectedCount();
+                
+                showToast('success', `Selected ${result.count} POs from all pages`);
+            } else {
+                showToast('danger', 'Error loading POs: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error selecting all pages:', error);
+            showToast('danger', 'Network error occurred while loading POs');
+        }
+    }
+
+    function clearSelection() {
+        const allCheckboxes = document.querySelectorAll('.po-checkbox, #selectAllCheckbox');
+        allCheckboxes.forEach(checkbox => checkbox.checked = false);
+        selectedPOs.clear();
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        // Get all currently visible checkboxes
+        const poCheckboxes = document.querySelectorAll('.po-checkbox');
+        
+        // Update selection set based on visible checkboxes
+        poCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                selectedPOs.add(checkbox.value);
+            } else {
+                selectedPOs.delete(checkbox.value);
+            }
+        });
+        
+        const count = selectedPOs.size;
+        console.log('updateSelectedCount - Selected POs:', Array.from(selectedPOs), 'Count:', count);
+        
+        document.getElementById('selectedCount').textContent = `${count} selected`;
+        document.getElementById('modalSelectedCount').textContent = count;
+        
+        // Update delete selected button
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.disabled = count === 0;
+        }
+        
+        // Show/hide bulk actions panel
+        const bulkActionsPanel = document.getElementById('bulkActionsPanel');
+        if (count > 0) {
+            bulkActionsPanel.classList.add('show');
+        } else {
+            bulkActionsPanel.classList.remove('show');
+        }
+        
+        // Update select all checkbox state
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const totalVisible = poCheckboxes.length;
+        const checkedVisible = document.querySelectorAll('.po-checkbox:checked').length;
+        
+        if (checkedVisible === 0 && selectedPOs.size === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedVisible === totalVisible && selectedPOs.size <= totalVisible) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    // Bulk Delete Functions
+    function showBulkDeleteModal() {
+        updateSelectedCount(); // Refresh count
+        bulkDeleteModal.show();
+    }
+
+    function confirmBulkDelete(deleteType) {
+        currentDeleteType = deleteType;
+        
+        // Initialize delete data object
+        currentDeleteData = { 
+            delete_type: deleteType 
+        };
+        
+        console.log('confirmBulkDelete called with type:', deleteType);
+        console.log('Current selectedPOs Set:', selectedPOs);
+        
+        // Validate and store date range if needed
+        if (deleteType === 'date_range') {
+            const startDate = document.getElementById('dateRangeStart').value;
+            const endDate = document.getElementById('dateRangeEnd').value;
+            
+            console.log('Date range validation - Start:', startDate, 'End:', endDate);
+            
+            if (!startDate || !endDate) {
+                showToast('warning', 'Please select both start and end dates');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showToast('warning', 'Start date cannot be after end date');
+                return;
+            }
+            
+            // Store the validated dates
+            currentDeleteData.start_date = startDate;
+            currentDeleteData.end_date = endDate;
+            
+        } else if (deleteType === 'selected') {
+            // Store selected PO IDs - convert Set to Array
+            const poIdsArray = Array.from(selectedPOs);
+            currentDeleteData.po_ids = poIdsArray;
+            
+            console.log('Stored selected PO IDs:', poIdsArray);
+            console.log('Number of selected POs:', poIdsArray.length);
+            
+            if (poIdsArray.length === 0) {
+                showToast('warning', 'No purchase orders selected');
+                return;
+            }
+            
+        } else if (deleteType === 'filtered') {
+            // Store filter criteria
+            currentDeleteData.search = document.getElementById('searchInput').value;
+            currentDeleteData.status = document.getElementById('statusFilter').value;
+        }
+        
+        console.log('Final stored delete data:', currentDeleteData);
+        
+        // Hide the bulk delete modal
+        bulkDeleteModal.hide();
+        
+        // Get preview of what will be deleted using stored data
+        getDeletePreview().then(count => {
+            console.log('Preview count received:', count);
+            
+            if (count === 0) {
+                showToast('warning', 'No purchase orders found matching the selected criteria');
+                return;
+            }
+            
+            let confirmText = '';
+            
+            switch(deleteType) {
+                case 'all':
+                    confirmText = `You are about to delete ALL ${count} purchase orders from your account. This includes orders from all pages and filters.`;
+                    break;
+                case 'date_range':
+                    confirmText = `You are about to delete ${count} purchase orders between ${currentDeleteData.start_date} and ${currentDeleteData.end_date}.`;
+                    break;
+                case 'filtered':
+                    const search = currentDeleteData.search || 'None';
+                    const status = currentDeleteData.status || 'All Status';
+                    confirmText = `You are about to delete ${count} purchase orders matching your current filters (Search: "${search}", Status: "${status}").`;
+                    break;
+                case 'selected':
+                    confirmText = `You are about to delete ${count} selected purchase orders.`;
+                    break;
+            }
+            
+            document.getElementById('confirmDeleteText').textContent = confirmText;
+            
+            // Reset confirmation input
+            document.getElementById('confirmationInput').value = '';
+            document.getElementById('finalDeleteBtn').disabled = true;
+            
+            // Show confirmation modal
+            bulkDeleteConfirmModal.show();
+        }).catch(error => {
+            console.error('Error in getDeletePreview:', error);
+            showToast('danger', 'Error getting delete preview: ' + error.message);
+        });
+    }
+
+    async function getDeletePreview() {
+        // Use stored data instead of reading from inputs
+        console.log('Getting preview with stored currentDeleteData:', currentDeleteData);
+        
+        if (!currentDeleteData || !currentDeleteData.delete_type) {
+            throw new Error('No delete data stored');
+        }
+        
+        const response = await fetch('/purchase_orders/count_pos_for_deletion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(currentDeleteData)
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.message);
+        }
+        
+        return result.count;
+    }
+
+    function setupBulkDeleteConfirmation() {
+        const confirmationInput = document.getElementById('confirmationInput');
+        const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+        
+        confirmationInput.addEventListener('input', function() {
+            finalDeleteBtn.disabled = this.value.toUpperCase() !== 'DELETE';
+        });
+        
+        confirmationInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.toUpperCase() === 'DELETE') {
+                executeBulkDelete();
+            }
+        });
+    }
+
+    async function executeBulkDelete() {
+        // Show loading indicator
+        document.getElementById('deleteLoadingIndicator').style.display = 'block';
+        document.getElementById('confirmationSection').style.display = 'none';
+        document.getElementById('confirmModalFooter').style.display = 'none';
+        
+        try {
+            // Use the stored delete data
+            const data = { ...currentDeleteData };
+            
+            console.log('Executing bulk delete with stored data:', data);
+            
+            const response = await fetch('/purchase_orders/bulk_delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Close modal
+                bulkDeleteConfirmModal.hide();
+                
+                // Show success message
+                showToast('success', result.message);
+                
+                // Reload page after short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(result.message);
+            }
+            
+        } catch (error) {
+            console.error('Error in bulk delete:', error);
+            
+            // Hide loading indicator
+            document.getElementById('deleteLoadingIndicator').style.display = 'none';
+            document.getElementById('confirmationSection').style.display = 'block';
+            document.getElementById('confirmModalFooter').style.display = 'flex';
+            
+            showToast('danger', 'Error deleting purchase orders: ' + error.message);
+        }
+    }
+
+    function deleteSelected() {
+        if (selectedPOs.size === 0) {
+            showToast('warning', 'No purchase orders selected');
+            return;
+        }
+        
+        console.log('Delete selected called with POs:', Array.from(selectedPOs));
+        
+        // Trigger the confirmation process
+        confirmBulkDelete('selected');
+    }
+
+    // Existing functions (remarks, single delete, etc.)
+    function setupRemarksCounter() {
+        const textarea = document.getElementById('remarksTextarea');
+        const counter = document.getElementById('remarksCounter');
+        
+        if (textarea && counter) {
+            textarea.addEventListener('input', function() {
+                const length = this.value.length;
+                counter.textContent = length;
+                
+                if (length > 1800) {
+                    counter.style.color = '#dc3545';
+                } else if (length > 1500) {
+                    counter.style.color = '#fd7e14';
+                } else {
+                    counter.style.color = '#6c757d';
+                }
+            });
+        }
+    }
+
+    function setupModalReset() {
+        const modal = document.getElementById('remarksModal');
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                resetRemarksModal();
+            });
+        }
+        
+        // Reset bulk delete modals
+        const bulkModal = document.getElementById('bulkDeleteModal');
+        if (bulkModal) {
+            bulkModal.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('dateRangeStart').value = '';
+                document.getElementById('dateRangeEnd').value = '';
+                // Only reset if we're not going to confirmation modal
+                if (!bulkDeleteConfirmModal || !bulkDeleteConfirmModal._element.classList.contains('show')) {
+                    currentDeleteData = {};
+                    currentDeleteType = null;
+                }
+            });
+        }
+        
+        const confirmModal = document.getElementById('bulkDeleteConfirmModal');
+        if (confirmModal) {
+            confirmModal.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('deleteLoadingIndicator').style.display = 'none';
+                document.getElementById('confirmationSection').style.display = 'block';
+                document.getElementById('confirmModalFooter').style.display = 'flex';
+                document.getElementById('confirmationInput').value = '';
+                document.getElementById('finalDeleteBtn').disabled = true;
+                // Reset stored data when confirmation modal closes
+                currentDeleteData = {};
+                currentDeleteType = null;
+            });
+        }
+    }
+
+    function resetRemarksModal() {
+        currentPoId = null;
+        originalRemarks = '';
+        
+        document.getElementById('remarksModalSubtitle').textContent = 'Loading...';
+        document.getElementById('remarksTextarea').value = '';
+        document.getElementById('remarksCounter').textContent = '0';
+        document.getElementById('remarksCounter').style.color = '#6c757d';
+        
+        document.getElementById('remarksLoadingSpinner').style.display = 'block';
+        document.getElementById('remarksContent').style.display = 'none';
+        document.getElementById('remarksError').style.display = 'none';
+        document.getElementById('remarksHistory').style.display = 'none';
+        
+        const saveBtn = document.getElementById('saveRemarksBtn');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="ri-save-line me-1"></i>Save Remarks';
+    }
+
+    function openRemarksModal(poId) {
+        currentPoId = poId;
+        remarksModal.show();
+        loadRemarks(poId);
+    }
+
+    async function loadRemarks(poId) {
+        try {
+            const response = await fetch(`/purchase_orders/remarks/${poId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('remarksModalSubtitle').textContent = 
+                    `PO: ${data.po_number} | Doc: ${data.sysdocnum}`;
+                
+                const textarea = document.getElementById('remarksTextarea');
+                textarea.value = data.remarks || '';
+                originalRemarks = data.remarks || '';
+                
+                document.getElementById('remarksCounter').textContent = (data.remarks || '').length;
+                
+                document.getElementById('remarksLoadingSpinner').style.display = 'none';
+                document.getElementById('remarksContent').style.display = 'block';
+                
+                if (data.remarks) {
+                    document.getElementById('remarksHistory').style.display = 'block';
+                    document.getElementById('remarksLastUpdated').textContent = 'Previously saved';
+                }
+                
+                setTimeout(() => textarea.focus(), 100);
+                
+            } else {
+                showRemarksError('Failed to load remarks');
+            }
+        } catch (error) {
+            console.error('Error loading remarks:', error);
+            showRemarksError('Network error occurred while loading remarks');
+        }
+    }
+
+    async function saveRemarks() {
+        if (!currentPoId) {
+            showRemarksError('No purchase order selected');
+            return;
+        }
+
+        const saveBtn = document.getElementById('saveRemarksBtn');
+        const textarea = document.getElementById('remarksTextarea');
+        const remarks = textarea.value.trim();
+
+        if (remarks === originalRemarks) {
+            remarksModal.hide();
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+        try {
+            const response = await fetch(`/purchase_orders/remarks/${currentPoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    remarks: remarks
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('success', 'Remarks saved successfully');
+                originalRemarks = remarks;
+                remarksModal.hide();
+            } else {
+                showRemarksError(data.message || 'Failed to save remarks');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="ri-save-line me-1"></i>Save Remarks';
+            }
+        } catch (error) {
+            console.error('Error saving remarks:', error);
+            showRemarksError('Network error occurred while saving remarks');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="ri-save-line me-1"></i>Save Remarks';
+        }
+    }
+
+    function showRemarksError(message) {
+        document.getElementById('remarksLoadingSpinner').style.display = 'none';
+        document.getElementById('remarksContent').style.display = 'none';
+        document.getElementById('remarksError').style.display = 'block';
+        document.getElementById('remarksErrorMessage').textContent = message;
+    }
+
+    function showToast(type, message) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="ri-${type === 'success' ? 'check' : 'error'}-warning-line me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+
+    function calculateStatusCounts() {
+        const statusElements = document.querySelectorAll('tbody .badge');
+        let pendingCount = 0;
+        let partialCount = 0;
+        let completedCount = 0;
+
+        statusElements.forEach(function(element) {
+            const statusText = element.textContent.trim();
+            if (statusText.includes('Pending')) {
+                pendingCount++;
+            } else if (statusText.includes('Partial')) {
+                partialCount++;
+            } else if (statusText.includes('Completed')) {
+                completedCount++;
+            }
+        });
+
+        const pendingElement = document.getElementById('pendingCount');
+        const partialElement = document.getElementById('partialCount');
+        const completedElement = document.getElementById('completedCount');
+
+        if (pendingElement) pendingElement.textContent = pendingCount;
+        if (partialElement) partialElement.textContent = partialCount;
+        if (completedElement) completedElement.textContent = completedCount;
+    }
+
+    function confirmDelete(id) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = "{{ url_for('po.delete_po', po_id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // Auto-submit form when changing entries per page
+    document.getElementById('entriesPerPage').addEventListener('change', function() {
+        this.form.submit();
+    });
+
+    // Auto-submit form when changing status filter
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        this.form.submit();
+    });
+
+    // Add event listeners to checkboxes for selection tracking
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('po-checkbox')) {
+            updateSelectedCount();
+        }
+    });
+</script>
+{% endblock extra_js %}

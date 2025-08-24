@@ -1,0 +1,304 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Demurrage Reasons{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Demurrage Reasons</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Masters</a></li>
+                                <li class="breadcrumb-item active">Demurrage Reasons</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h4 class="card-title mb-0">Demurrage Reasons Management</h4>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="text-end">
+                                        <a href="{{ url_for('masters.new_demurrage_reason') }}" class="btn btn-primary">
+                                            <i class="ri-add-line me-1"></i>Add New Reason
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Filters -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" 
+                                               placeholder="Search reasons..." 
+                                               value="{{ request.args.get('search', '') }}"
+                                               onkeyup="handleSearch(this.value)">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" onchange="handleStatusFilter(this.value)">
+                                        <option value="">All Status</option>
+                                        <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                                        <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-select" onchange="handlePerPageChange(this.value)">
+                                        <option value="10" {% if request.args.get('per_page', '10') == '10' %}selected{% endif %}>10 per page</option>
+                                        <option value="25" {% if request.args.get('per_page', '10') == '25' %}selected{% endif %}>25 per page</option>
+                                        <option value="50" {% if request.args.get('per_page', '10') == '50' %}selected{% endif %}>50 per page</option>
+                                        <option value="100" {% if request.args.get('per_page', '10') == '100' %}selected{% endif %}>100 per page</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                        <i class="ri-filter-off-line me-1"></i>Clear Filters
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 5%;">#</th>
+                                            <th style="width: 25%;">Reason Name</th>
+                                            <th style="width: 40%;">Description</th>
+                                            <th style="width: 10%;">Status</th>
+                                            <th style="width: 15%;">Created Date</th>
+                                            <th style="width: 5%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if reasons.items %}
+                                        {% for reason in reasons.items %}
+                                        <tr>
+                                            <td>{{ loop.index + (reasons.page - 1) * reasons.per_page }}</td>
+                                            <td>
+                                                <strong>{{ reason.reason_name }}</strong>
+                                            </td>
+                                            <td>
+                                                {% if reason.description %}
+                                                    {{ reason.description[:100] }}{% if reason.description|length > 100 %}...{% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">No description</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if reason.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ reason.created_at.strftime('%d %b %Y') if reason.created_at else '' }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                        <i class="ri-more-fill"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ url_for('masters.edit_demurrage_reason', reason_id=reason.id) }}">
+                                                                <i class="ri-pencil-line me-2"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item text-danger" onclick="confirmDelete({{ reason.id }}, '{{ reason.reason_name }}')">
+                                                                <i class="ri-delete-bin-line me-2"></i>Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <i class="ri-inbox-line display-4 text-muted mb-3"></i>
+                                                    <h5 class="text-muted">No demurrage reasons found</h5>
+                                                    <p class="text-muted mb-3">Get started by creating your first demurrage reason</p>
+                                                    <a href="{{ url_for('masters.new_demurrage_reason') }}" class="btn btn-primary">
+                                                        <i class="ri-add-line me-1"></i>Add New Reason
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if reasons.pages > 1 %}
+                            <div class="row align-items-center mt-4">
+                                <div class="col-sm-6">
+                                    <div class="text-muted">
+                                        Showing {{ reasons.per_page * (reasons.page - 1) + 1 }} to 
+                                        {{ reasons.per_page * reasons.page if reasons.page < reasons.pages else reasons.total }} 
+                                        of {{ reasons.total }} entries
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination justify-content-end mb-0">
+                                            {% if reasons.has_prev %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('masters.demurrage_reasons', page=reasons.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), per_page=request.args.get('per_page', 10)) }}">Previous</a>
+                                            </li>
+                                            {% endif %}
+                                            
+                                            {% for page_num in reasons.iter_pages() %}
+                                            {% if page_num %}
+                                            {% if page_num != reasons.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('masters.demurrage_reasons', page=page_num, search=request.args.get('search', ''), status=request.args.get('status', ''), per_page=request.args.get('per_page', 10)) }}">{{ page_num }}</a>
+                                            </li>
+                                            {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                            {% endif %}
+                                            {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                            {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if reasons.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('masters.demurrage_reasons', page=reasons.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), per_page=request.args.get('per_page', 10)) }}">Next</a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+
+<!-- Delete Form (Hidden) -->
+<form id="deleteForm" method="POST" style="display: none;">
+</form>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+let searchTimeout;
+
+function handleSearch(searchTerm) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        updateFilters({search: searchTerm});
+    }, 500);
+}
+
+function handleStatusFilter(status) {
+    updateFilters({status: status});
+}
+
+function handlePerPageChange(perPage) {
+    updateFilters({per_page: perPage, page: 1});
+}
+
+function clearFilters() {
+    updateFilters({search: '', status: '', per_page: 10, page: 1});
+}
+
+function updateFilters(params) {
+    const url = new URL(window.location);
+    
+    // Update search params
+    Object.keys(params).forEach(key => {
+        if (params[key] === '' || params[key] === null) {
+            url.searchParams.delete(key);
+        } else {
+            url.searchParams.set(key, params[key]);
+        }
+    });
+    
+    // Redirect with new params
+    window.location.href = url.toString();
+}
+
+function confirmDelete(reasonId, reasonName) {
+    Swal.fire({
+        title: 'Delete Demurrage Reason?',
+        text: `Are you sure you want to delete "${reasonName}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Submit delete form
+            const form = document.getElementById('deleteForm');
+            form.action = `/masters/demurrage-reason/${reasonId}/delete`;
+            form.submit();
+        }
+    });
+}
+
+// Auto-hide flash messages
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bootstrapAlert = new bootstrap.Alert(alert);
+            bootstrapAlert.close();
+        }, 5000);
+    });
+});
+</script>
+{% endblock extra_js %}

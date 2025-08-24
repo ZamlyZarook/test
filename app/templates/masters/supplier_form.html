@@ -1,0 +1,119 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if supplier %}Edit{% else %}New{% endif %} Supplier{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if supplier %}Edit{% else %}New{% endif %} Supplier</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">PO</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.suppliers') }}">Suppliers</a></li>
+                                <li class="breadcrumb-item active">{% if supplier %}Edit{% else %}Add{% endif %} Supplier</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Supplier Form Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if supplier %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Supplier Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <!-- Supplier Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Supplier Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="supplier_code" class="form-label">Supplier Code <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" id="supplier_code" name="supplier_code" 
+                                                                   value="{{ supplier.supplier_code if supplier else '' }}" required>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="supplier_name" class="form-label">Supplier Name <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" id="supplier_name" name="supplier_name" 
+                                                                   value="{{ supplier.supplier_name if supplier else '' }}" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('masters.suppliers') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>{% if supplier %}Update{% else %}Create{% endif %} Supplier
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock extra_js %}

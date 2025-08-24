@@ -1,0 +1,678 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Customer Details{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Customer Details</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.customers') }}">Customer Management</a></li>
+                                <li class="breadcrumb-item active">Customer Details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('masters.customers') }}" class="btn btn-secondary">
+                                <i class="ri-arrow-left-line me-1"></i> Back
+                            </a>
+                            {% if current_user.role == 'super_admin' %}
+                            <a href="{{ url_for('masters.edit_customer', id=customer.id) }}" class="btn btn-primary">
+                                <i class="ri-pencil-line me-1"></i> Edit
+                            </a>
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ customer.id }}')">
+                                <i class="ri-delete-bin-line me-1"></i> Delete
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="customerDetailsTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
+                                <i class="ri-information-line me-1"></i> Basic Information
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rate-tab" data-bs-toggle="tab" data-bs-target="#rate" type="button" role="tab" aria-controls="rate" aria-selected="false">
+                                <i class="ri-money-dollar-circle-line me-1"></i> Rate Card
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments" type="button" role="tab" aria-controls="attachments" aria-selected="false">
+                                <i class="ri-attachment-line me-1"></i> Attachments
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="customerDetailsTabContent">
+                        <!-- Basic Information Tab -->
+                        <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                            <!-- Customer Details Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-user-line me-2 text-primary"></i> Customer Information
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- Customer Information -->
+                                        <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-nowrap mb-4">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row" style="width: 30%;">Customer ID</th>
+                                                            <td>{{ customer.customer_id }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Customer Name</th>
+                                                            <td>{{ customer.customer_name }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Short Name</th>
+                                                            <td>{{ customer.short_name }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Address</th>
+                                                            <td>{{ customer.address }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Email</th>
+                                                            <td>{{ customer.email }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Telephone</th>
+                                                            <td>{{ customer.telephone }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Status</th>
+                                                            <td>
+                                                                {% if customer.status %}
+                                                                <span class="badge badge-soft-success">
+                                                                    <i class="ri-checkbox-circle-line me-1"></i> Active
+                                                                </span>
+                                                                {% else %}
+                                                                <span class="badge badge-soft-danger">
+                                                                    <i class="ri-close-circle-line me-1"></i> Inactive
+                                                                </span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Additional Information -->
+                                        <!-- <div class="col-md-6">
+                                            <div class="table-responsive">
+                                                <table class="table table-nowrap mb-4">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th scope="row" style="width: 30%;">Credit Facility</th>
+                                                            <td>{{ customer.credit_facility or 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Credit Period</th>
+                                                            <td>{{ customer.credit_period or 'N/A' }} {% if customer.credit_period %}Days{% endif %}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">DSR Format</th>
+                                                            <td>{{ customer.dsr_format or 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">ICL Report Format</th>
+                                                            <td>{{ customer.icl_report_format or 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Storage Report Format</th>
+                                                            <td>{{ customer.new_storage_report_format or 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">Sales Person</th>
+                                                            <td>{{ customer.sales_person or 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th scope="row">CS Executive</th>
+                                                            <td>{{ customer.cs_executive or 'N/A' }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div> -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rate Card Tab -->
+                        <div class="tab-pane fade" id="rate" role="tabpanel" aria-labelledby="rate-tab">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-money-dollar-circle-line me-2 text-primary"></i> Customer Rate Card
+                                    </h5>
+                                    <div class="d-flex gap-2">
+                                        {% if currencies|length > 0 %}
+                                        <select id="currency_select" class="form-select form-select-sm" style="width: auto;" onchange="loadRateCard()">
+                                            {% for currency in currencies %}
+                                            <option value="{{ currency.currencyID }}" {% if active_currency_id == currency.currencyID %}selected{% endif %}>
+                                                {{ currency.CurrencyCode }} - {{ currency.CurrencyName }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="saveRateCard()">
+                                            <i class="ri-save-line me-1"></i> Save Rate Card
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    {% if incomes|length > 0 %}
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th style="width: 5%">#</th>
+                                                    <th style="width: 15%">GL Code</th>
+                                                    <th style="width: 60%">Description</th>
+                                                    <th style="width: 20%">Rate Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for income in incomes %}
+                                                <tr>
+                                                    <td>{{ loop.index }}</td>
+                                                    <td>{{ income.gl_code }}</td>
+                                                    <td>{{ income.description }}</td>
+                                                    <td>
+                                                        <input type="hidden" name="rate_card_income_ids[]" value="{{ income.id }}">
+                                                        <input type="number" step="0.01" min="0" class="form-control rate-input" 
+                                                               name="rate_card_amounts[]" 
+                                                               data-income-id="{{ income.id }}"
+                                                               value="{{ rate_cards_dict.get(income.id, 0.00) }}">
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info mb-0">
+                                        <i class="ri-information-line me-2"></i>
+                                        No income types available. Please contact administrator.
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attachments Tab -->
+                        <div class="tab-pane fade" id="attachments" role="tabpanel" aria-labelledby="attachments-tab">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-attachment-line me-2 text-primary"></i> Document Attachments
+                                    </h5>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="showUploadModal()">
+                                        <i class="ri-upload-2-line me-1"></i> Upload Document
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="attachmentsTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>File Name</th>
+                                                    <th>Description</th>
+                                                    <th>Expiry Date</th>
+                                                    <th>Uploaded By</th>
+                                                    <th>Uploaded On</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="attachmentsBody">
+                                                <!-- Will be populated via JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Upload Document Modal -->
+    <div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadDocumentModalLabel">Upload Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="uploadDocumentForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="documentFile" class="form-label">File <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="documentFile" name="file" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter document description..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="expiryDate" class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="expiryDate" name="expiry_date" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Document Modal -->
+    <div class="modal fade" id="editDocumentModal" tabindex="-1" aria-labelledby="editDocumentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDocumentModalLabel">Edit Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editDocumentForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editDocumentId" name="documentId">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editDocumentFile" class="form-label">Replace File (Optional)</label>
+                            <input type="file" class="form-control" id="editDocumentFile" name="file">
+                            <small class="text-muted">Leave empty to keep existing file</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editExpiryDate" class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="editExpiryDate" name="expiry_date" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="ri-alert-line fs-1 text-warning"></i>
+                        <h5 class="mt-2">Are you sure you want to delete this customer?</h5>
+                        <p class="text-muted">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="ri-delete-bin-line me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Global variables
+    let customerId = {{ customer.id }};
+    let attachments = [];
+
+    // Rate Card Functions
+    function loadRateCard() {
+        const currencyId = document.getElementById('currency_select').value;
+        if (!currencyId) return;
+
+        fetch(`/masters/customer/${customerId}/rate-card/get?currency_id=${currencyId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update all rate inputs
+                    document.querySelectorAll('.rate-input').forEach(input => {
+                        const incomeId = parseInt(input.dataset.incomeId);
+                        input.value = data.rate_cards[incomeId] || 0.00;
+                    });
+                } else {
+                    console.error('Error loading rate card:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading rate card:', error);
+            });
+    }
+
+    function saveRateCard() {
+        const currencyId = document.getElementById('currency_select').value;
+        if (!currencyId) {
+            Swal.fire('Error', 'Please select a currency', 'error');
+            return;
+        }
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('currency_id', currencyId);
+
+        // Get all income IDs and amounts
+        const incomeInputs = document.querySelectorAll('input[name="rate_card_income_ids[]"]');
+        const amountInputs = document.querySelectorAll('input[name="rate_card_amounts[]"]');
+
+        incomeInputs.forEach(input => {
+            formData.append('rate_card_income_ids[]', input.value);
+        });
+
+        amountInputs.forEach(input => {
+            formData.append('rate_card_amounts[]', input.value || '0');
+        });
+
+        // Save rate card
+        fetch(`/masters/customer/${customerId}/rate-card/save`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Success', 'Rate card saved successfully', 'success');
+            } else {
+                Swal.fire('Error', data.message || 'Failed to save rate card', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving rate card:', error);
+            Swal.fire('Error', 'Failed to save rate card', 'error');
+        });
+    }
+
+    // Attachment Functions
+    function showUploadModal() {
+        document.getElementById('uploadDocumentForm').reset();
+        new bootstrap.Modal(document.getElementById('uploadDocumentModal')).show();
+    }
+
+    function loadAttachments() {
+        fetch(`/masters/customer/${customerId}/attachments`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    attachments = data.attachments;
+                    displayAttachments();
+                } else {
+                    console.error('Error loading attachments:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading attachments:', error);
+            });
+    }
+
+    function displayAttachments() {
+        const tbody = document.getElementById('attachmentsBody');
+        tbody.innerHTML = '';
+
+        if (attachments.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No documents uploaded yet</td></tr>';
+            return;
+        }
+
+        attachments.forEach(doc => {
+            const row = document.createElement('tr');
+            
+            const expiryDate = new Date(doc.expiry_date);
+            const today = new Date();
+            const isExpired = expiryDate < today;
+            const isExpiringSoon = !isExpired && (expiryDate - today) / (1000 * 60 * 60 * 24) <= 30;
+            
+            let expiryClass = '';
+            let expiryBadge = '';
+            if (isExpired) {
+                expiryClass = 'text-danger';
+                expiryBadge = '<span class="badge bg-danger ms-1">Expired</span>';
+            } else if (isExpiringSoon) {
+                expiryClass = 'text-warning';
+                expiryBadge = '<span class="badge bg-warning ms-1">Expiring Soon</span>';
+            }
+            
+            row.innerHTML = `
+                <td>${doc.file_name}</td>
+                <td>${doc.description || 'N/A'}</td>
+                <td class="${expiryClass}">${formatDate(doc.expiry_date)}${expiryBadge}</td>
+                <td>${doc.uploaded_by_name}</td>
+                <td>${formatDateTime(doc.uploaded_at)}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-soft-info" onclick="viewDocument('${doc.file_url}')" title="View">
+                            <i class="ri-eye-line"></i>
+                        </button>
+                        <button type="button" class="btn btn-soft-primary" onclick="editDocument(${doc.id})" title="Edit">
+                            <i class="ri-pencil-line"></i>
+                        </button>
+                        <button type="button" class="btn btn-soft-danger" onclick="deleteDocument(${doc.id})" title="Delete">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    function viewDocument(url) {
+        window.open(url, '_blank');
+    }
+
+    function editDocument(id) {
+        const doc = attachments.find(d => d.id === id);
+        if (!doc) return;
+        
+        document.getElementById('editDocumentId').value = doc.id;
+        document.getElementById('editDescription').value = doc.description || '';
+        document.getElementById('editExpiryDate').value = doc.expiry_date;
+        
+        new bootstrap.Modal(document.getElementById('editDocumentModal')).show();
+    }
+
+    function deleteDocument(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/masters/customer/${customerId}/attachment/${id}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Deleted!', 'Document has been deleted.', 'success');
+                        loadAttachments();
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to delete document', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Failed to delete document', 'error');
+                });
+            }
+        });
+    }
+
+    function handleUploadDocument(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        
+        fetch(`/masters/customer/${customerId}/attachment/upload`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('uploadDocumentModal')).hide();
+                Swal.fire('Success', 'Document uploaded successfully', 'success');
+                loadAttachments();
+            } else {
+                Swal.fire('Error', data.message || 'Failed to upload document', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('Error', 'Failed to upload document', 'error');
+        });
+    }
+
+    function handleEditDocument(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const documentId = document.getElementById('editDocumentId').value;
+        
+        fetch(`/masters/customer/${customerId}/attachment/${documentId}/update`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editDocumentModal')).hide();
+                Swal.fire('Success', 'Document updated successfully', 'success');
+                loadAttachments();
+            } else {
+                Swal.fire('Error', data.message || 'Failed to update document', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('Error', 'Failed to update document', 'error');
+        });
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatDateTime(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function confirmDelete(id) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = "{{ url_for('masters.delete_customer', id=0) }}".replace('0', id);
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // Document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+
+        // Load attachments on page load
+        loadAttachments();
+
+        // Bind form submissions
+        document.getElementById('uploadDocumentForm').addEventListener('submit', handleUploadDocument);
+        document.getElementById('editDocumentForm').addEventListener('submit', handleEditDocument);
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,1278 @@
+{% extends "partials/base.html" %}
+{% block title %}{{ project.name }} - Tasks{% endblock title %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+<style>
+    .task-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .due-date-warning {
+        color: #f7b84b;
+    }
+    .due-date-danger {
+        color: #f06548;
+    }
+    .due-date-normal {
+        color: #299cdb;
+    }
+    .truncate-text {
+        max-width: 250px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{{ project.name }} - Tasks</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.projects') }}">Projects</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('tasks.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                                <li class="breadcrumb-item active">Tasks</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <div class="d-flex align-items-center">
+                                <h5 class="card-title mb-0 flex-grow-1">All Tasks</h5>
+                                <div class="flex-shrink-0">
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+                                        <i class="ri-add-line align-bottom me-1"></i> Create Task
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body border border-dashed border-end-0 border-start-0">
+                            <form>
+                                <div class="row g-3">
+                                    <div class="col-xxl-4 col-sm-4">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" id="searchInput" 
+                                                   placeholder="Search for tasks...">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <select class="form-control" id="categoryFilter">
+                                            <option value="">All Categories</option>
+                                            {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <select class="form-control" id="statusFilter">
+                                            <option value="">All Statuses</option>
+                                            {% for status in statuses %}
+                                            <option value="{{ status.id }}">{{ status.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <select class="form-control" id="assigneeFilter">
+                                            <option value="">All Assignees</option>
+                                            {% for member in project_members %}
+                                            <option value="{{ member.id }}">{{ member.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-2">
+                                        <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">
+                                            <i class="ri-equalizer-fill me-1 align-bottom"></i> Apply Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive table-card">
+                                <table class="table table-nowrap table-centered align-middle">
+                                    <thead class="bg-light text-muted">
+                                        <tr>
+                                            <th scope="col">Task Key</th>
+                                            <th scope="col">Task</th>
+                                            <th scope="col">Category</th>
+                                            <th scope="col">Assignee</th>
+                                            <th scope="col">Due Date</th>
+                                            <th scope="col">Priority</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col" style="width: 120px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tasksList">
+                                        <!-- Tasks will be loaded here via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="noTasksMessage" class="text-center p-4" style="display: none;">
+                                <div class="avatar-lg mx-auto mb-4">
+                                    <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-1">
+                                        <i class="ri-task-line"></i>
+                                    </div>
+                                </div>
+                                <h5>No Tasks Found</h5>
+                                <p class="text-muted">Create your first task to get started!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light p-3">
+                <h5 class="modal-title">Create Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createTaskForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs nav-tabs-custom nav-justified" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#task-details-tab" role="tab" aria-selected="true">
+                                <i class="ri-task-line me-1 align-bottom"></i> Task Details
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#task-attachments-tab" role="tab" aria-selected="false">
+                                <i class="ri-attachment-line me-1 align-bottom"></i> Attachments
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Task Details Tab -->
+                        <div class="tab-pane active" id="task-details-tab" role="tabpanel">
+                            <div class="mt-4 mb-3">
+                                <label for="taskTitle" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="taskTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskCategory" class="form-label">Category</label>
+                                        <select class="form-select" id="taskCategory" required>
+                                            {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskAssignee" class="form-label">Assignee</label>
+                                        <select class="form-select" id="taskAssignee">
+                                            <option value="">Unassigned</option>
+                                            {% for member in project_members %}
+                                            <option value="{{ member.id }}">{{ member.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="taskStatus" class="form-label">Status</label>
+                                        <select class="form-select" id="taskStatus" required>
+                                            {% for status in statuses %}
+                                            <option value="{{ status.id }}">{{ status.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="taskPriority" class="form-label">Priority</label>
+                                        <select class="form-select" id="taskPriority" required>
+                                            {% for priority in priorities %}
+                                            <option value="{{ priority.id }}">{{ priority.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="taskDueDate" class="form-label">Due Date</label>
+                                        <input type="date" class="form-control" id="taskDueDate" name="due_date">
+                                        <small id="dueDateHelperText" class="text-muted">
+                                            <!-- This text will be updated dynamically based on project settings -->
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Attachments Tab -->
+                        <div class="tab-pane" id="task-attachments-tab" role="tabpanel">
+                            <div class="mb-3 mt-3">
+                                <label for="taskAttachments" class="form-label">Attachments</label>
+                                <input type="file" class="form-control" id="taskAttachments" multiple>
+                                <div id="attachmentList" class="mt-3"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="createTaskBtn">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+
+<script>
+    // Add this at the top, outside any functions
+let isEditMode = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial tasks
+    loadTasks();
+
+    // Initialize form submission
+    document.getElementById('createTaskForm').addEventListener('submit', createTask);
+
+    const taskAttachments = document.getElementById('taskAttachments');
+    if (taskAttachments) {
+        taskAttachments.addEventListener('change', handleFileSelect);
+    }
+
+    initializeCategoryLeadAutoAssign();
+
+    // Initialize search
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        clearTimeout(window.searchTimeout);
+        window.searchTimeout = setTimeout(loadTasks, 500);
+    });
+    
+    // Initialize modal behavior
+    const createTaskModal = document.getElementById('createTaskModal');
+    if (createTaskModal) {
+        createTaskModal.addEventListener('show.bs.modal', function() {
+            // Skip setup if in edit mode
+            if (isEditMode) return;
+            
+            document.getElementById('attachmentList').innerHTML = '';
+
+            // Fetch project settings to determine if due date can be set manually
+            const projectId = {{ project.id }};
+            
+            fetch(`/tasks/api/projects/${projectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dueDateField = document.getElementById('taskDueDate');
+                    const dueDateContainer = dueDateField.closest('.mb-3');
+                    const categorySelect = document.getElementById('taskCategory');
+                    const assigneeSelect = document.getElementById('taskAssignee');
+                    
+                    if (data.allow_due_date_assignment) {
+                        // Enable manual due date selection
+                        dueDateField.removeAttribute('disabled');
+                        dueDateField.removeAttribute('readonly');
+                        dueDateField.style.display = 'block';
+                        dueDateContainer.style.display = 'block';
+                        
+                        // Show helper text
+                        const dueDateHelperText = document.getElementById('dueDateHelperText');
+                        dueDateHelperText.textContent = 'Select a due date for this task';
+                        
+                        // If there's a read-only display, hide it
+                        const readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+                        if (readOnlyDisplay) {
+                            readOnlyDisplay.style.display = 'none';
+                        }
+                    } else {
+                        // Hide the date selector completely
+                        dueDateField.style.display = 'none';
+                        dueDateField.setAttribute('disabled', 'disabled');
+                        
+                        // Create or update the read-only display element
+                        let readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+                        if (!readOnlyDisplay) {
+                            readOnlyDisplay = document.createElement('div');
+                            readOnlyDisplay.className = 'due-date-readonly form-control-plaintext';
+                            readOnlyDisplay.style.marginTop = '8px';
+                            dueDateField.after(readOnlyDisplay);
+                        } else {
+                            readOnlyDisplay.style.display = 'block';
+                        }
+                        
+                        // Show helper text explaining auto-calculation
+                        const dueDateHelperText = document.getElementById('dueDateHelperText');
+                        dueDateHelperText.textContent = 'Due date will be calculated based on category SLA';
+                        dueDateHelperText.classList.add('text-muted');
+                        
+                        // Calculate due date immediately if a category is selected
+                        if (categorySelect.value) {
+                            calculateDueDate(categorySelect.value);
+                        } else {
+                            readOnlyDisplay.textContent = 'Select a category to see calculated due date';
+                            readOnlyDisplay.style.color = '#6c757d'; // Text muted color
+                        }
+                        
+                        // Add event listener to category selection to auto-calculate due date
+                        categorySelect.addEventListener('change', function() {
+                            if (this.value) {
+                                calculateDueDate(this.value);
+                            } else {
+                                readOnlyDisplay.textContent = 'Select a category to see calculated due date';
+                                readOnlyDisplay.style.color = '#6c757d';
+                            }
+                        });
+                    }
+                    
+                    // Add event listener for category change to auto-assign lead as assignee
+                    categorySelect.addEventListener('change', function() {
+                        const categoryId = this.value;
+                        if (!categoryId) return;
+                        
+                        // Fetch category details to get the lead
+                        fetch(`/tasks/api/categories/${categoryId}`)
+                            .then(response => response.json())
+                            .then(categoryData => {
+                                if (categoryData.success && categoryData.category && 
+                                    categoryData.category.lead && categoryData.category.lead.id) {
+                                    // Update assignee dropdown with category lead
+                                    assigneeSelect.value = categoryData.category.lead.id.toString();
+                                    console.log(`Auto-assigned to category lead: ${categoryData.category.lead.name}`);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching category lead:', error);
+                            });
+                    });
+                    
+                    // If a category is already selected, try to set assignee based on category lead
+                    if (categorySelect.value) {
+                        fetch(`/tasks/api/categories/${categorySelect.value}`)
+                            .then(response => response.json())
+                            .then(categoryData => {
+                                if (categoryData.success && categoryData.category && 
+                                    categoryData.category.lead && categoryData.category.lead.id) {
+                                    assigneeSelect.value = categoryData.category.lead.id.toString();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching initial category lead:', error);
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching project settings:', error);
+                });
+        });
+
+        if (typeof window.convertDatesToLocalTimezone === 'function') {
+            setTimeout(window.convertDatesToLocalTimezone, 100);
+        }
+        
+        // Reset modal when it's closed
+        createTaskModal.addEventListener('hidden.bs.modal', function() {
+            // Reset edit mode flag
+            isEditMode = false;
+            
+            // Reset form
+            document.getElementById('createTaskForm').reset();
+            document.getElementById('createTaskForm').dataset.taskId = '';
+            
+            // Reset modal title and button text
+            document.querySelector('#createTaskModal .modal-title').textContent = 'Create Task';
+            document.querySelector('#createTaskBtn').textContent = 'Create Task';
+            
+            // Clean up any read-only displays
+            const readOnlyDisplay = document.querySelector('.due-date-readonly');
+            if (readOnlyDisplay) {
+                readOnlyDisplay.textContent = '';
+            }
+            
+            // Reset due date field to visible state
+            const dueDateField = document.getElementById('taskDueDate');
+            dueDateField.style.display = 'block';
+            dueDateField.removeAttribute('disabled');
+            dueDateField.removeAttribute('readonly');
+            
+            // Reset helper text
+            const dueDateHelperText = document.getElementById('dueDateHelperText');
+            if (dueDateHelperText) {
+                dueDateHelperText.textContent = '';
+                dueDateHelperText.classList.remove('text-muted');
+            }
+            
+            // Remove all event listeners from category select
+            const categorySelect = document.getElementById('taskCategory');
+            if (categorySelect) {
+                const newCategorySelect = categorySelect.cloneNode(true);
+                categorySelect.parentNode.replaceChild(newCategorySelect, categorySelect);
+            }
+        });
+    }
+});
+
+// Function to calculate due date based on category SLA
+function calculateDueDate(categoryId) {
+    if (isEditMode && document.getElementById('taskDueDate').value) {
+        console.log("Skipping due date calculation in edit mode with existing due date");
+        return;
+    }
+    
+    if (!categoryId) {
+        const readOnlyDisplay = document.querySelector('.due-date-readonly');
+        if (readOnlyDisplay) {
+            readOnlyDisplay.textContent = 'Select a category to see calculated due date';
+            readOnlyDisplay.style.color = '#6c757d';
+        }
+        return;
+    }
+    
+    const readOnlyDisplay = document.querySelector('.due-date-readonly');
+    if (readOnlyDisplay) {
+        readOnlyDisplay.textContent = 'Calculating...';
+        readOnlyDisplay.style.color = '#6c757d';
+    }
+    
+    fetch(`/tasks/api/categories/${categoryId}`)
+        .then(response => response.json())
+        .then(data => {
+            const dueDateHelperText = document.getElementById('dueDateHelperText');
+            if (data.success && data.category && data.category.sla_hours) {
+                const slaHours = data.category.sla_hours;
+                const now = new Date();
+                const dueDate = new Date(now.getTime() + (slaHours * 60 * 60 * 1000));
+                
+                // Format UTC date for backend storage
+                const utcFormattedDate = dueDate.toISOString().slice(0, 19).replace('T', ' ');
+                
+                // Store for form submission
+                const hiddenUtcInput = document.getElementById('taskDueDate');
+                if (hiddenUtcInput) {
+                    hiddenUtcInput.value = utcFormattedDate;
+                }
+
+                // Format for display in local timezone
+                const localDisplayDate = new Intl.DateTimeFormat('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true
+                }).format(dueDate);
+
+                // Update the read-only display
+                if (readOnlyDisplay) {
+                    readOnlyDisplay.innerHTML = `<strong>${localDisplayDate}</strong>`;
+                    readOnlyDisplay.style.color = '#495057';
+                }
+                
+                if (dueDateHelperText) {
+                    dueDateHelperText.innerHTML = `Due date calculated as <strong>${slaHours} hours</strong> from now (per category SLA)`;
+                }
+            } else {
+                if (readOnlyDisplay) {
+                    readOnlyDisplay.textContent = 'No SLA defined for this category';
+                    readOnlyDisplay.style.color = '#dc3545';
+                }
+                if (dueDateHelperText) {
+                    dueDateHelperText.textContent = 'Warning: This category has no SLA defined';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching category SLA:', error);
+            if (readOnlyDisplay) {
+                readOnlyDisplay.textContent = 'Error calculating due date';
+                readOnlyDisplay.style.color = '#dc3545';
+            }
+        });
+}
+
+function loadTasks() {
+    const projectId = {{ project.id }};
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const assigneeFilter = document.getElementById('assigneeFilter');
+    
+    const searchParams = new URLSearchParams({
+        search: searchInput ? searchInput.value || '' : '',
+        category: categoryFilter ? categoryFilter.value || '' : '',
+        status: statusFilter ? statusFilter.value || '' : '',
+        assignee: assigneeFilter ? assigneeFilter.value || '' : ''
+    });
+
+    fetch(`/tasks/api/projects/${projectId}/tasks?${searchParams}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const tasksList = document.getElementById('tasksList');
+                const noTasksMessage = document.getElementById('noTasksMessage');
+                console.log('Tasks data:', data.tasks);
+
+
+                if (!tasksList || !noTasksMessage) {
+                    console.error('Required DOM elements not found');
+                    return;
+                }
+
+                if (!data.tasks || data.tasks.length === 0) {
+                    tasksList.innerHTML = '';
+                    noTasksMessage.style.display = 'block';
+                    return;
+                }
+
+                noTasksMessage.style.display = 'none';
+                tasksList.innerHTML = data.tasks.map(task => `
+                    <tr>
+                        <td>${task.task_key}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h5 class="fs-14 mb-1">
+                                        <a href="javascript:void(0);" class="text-dark">${task.title}</a>
+                                    </h5>
+                                    <p class="text-muted mb-0" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.description || ''}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            ${task.category ? `
+                                <span class="task-tag" style="background-color: ${task.category.color}20; color: ${task.category.color}">
+                                    ${task.category.name}
+                                </span>
+                            ` : '-'}
+                        </td>
+                        <td>
+                            ${task.assignee ? `
+                                <div class="d-flex align-items-center">
+                                    ${task.assignee.profile_picture_base64 ? 
+                                        `<img src="data:image/jpeg;base64,${task.assignee.profile_picture_base64}" class="rounded-circle avatar-xxs">` : 
+                                        `<img src="/static/images/users/user-dummy-img.jpg" class="rounded-circle avatar-xxs">`
+                                    }
+                                    <span class="ms-2">${typeof task.assignee === 'object' ? task.assignee.name : task.assignee}</span>
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td>
+                            <span class="${getDueDateClass(task.due_date)}">
+                            ${task.due_date ? 
+                                (() => {
+                                    console.log('.........Original due date from database:', task.due_date);
+                                    
+                                    try {
+                                        const parsedDate = new Date(task.due_date.replace(' ', 'T') + 'Z');
+                                        
+                                        console.log('.........Parsed date object:', parsedDate);
+                                        console.log('.........Parsed date toString():', parsedDate.toString());
+                                        
+                                        const displayDate = parsedDate.toLocaleString('en-US', {
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                            hour12: true
+                                        });
+                                        
+                                        console.log('........Converted display date:', displayDate);
+                                        
+                                        return `<span>${displayDate}</span>`;
+                                    } catch (error) {
+                                        console.error('Error converting due date:', error);
+                                    }
+                                })() : 
+                                '-'}
+                        </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-${getPriorityColor(task.priority.name)}">${task.priority.name || '-'}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-${getStatusColor(task.status.name)}">${task.status.name || '-'}</span>
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="ri-more-fill align-middle"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="javascript:void(0);" onclick="viewTask(${task.id}, ${projectId})">
+                                            <i class="ri-eye-line align-bottom me-2 text-primary"></i> View
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="editTask(${task.id})">
+                                            <i class="ri-pencil-fill align-bottom me-2 text-info"></i> Edit
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="deleteTask(${task.id})">
+                                            <i class="ri-delete-bin-fill align-bottom me-2 text-danger"></i> Delete
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+
+                    </tr>
+                `).join('');
+                
+                // Trigger timezone conversion after rendering tasks
+                console.log("Total UTC datetime elements:", document.querySelectorAll('.utc-datetime').length);
+                if (typeof window.convertDatesToLocalTimezone === 'function') {
+                    console.log("Manually triggering timezone conversion");
+                    setTimeout(window.convertDatesToLocalTimezone, 100);
+                }
+
+            } else {
+                showErrorAlert(data.error || 'Failed to load tasks');
+                console.warn("convertDatesToLocalTimezone function not found");
+            }
+        })
+        .catch(error => {
+            console.error('Error loading tasks:', error);
+            showErrorAlert('Failed to load tasks');
+        });
+}
+
+function viewTask(taskId, projectId) {
+    // Redirect to task detail page using the correct URL pattern
+    window.location.href = `/tasks/task/${projectId}/${taskId}`;
+}
+
+async function createTask(e) {
+    e.preventDefault();
+    
+    const projectId = {{ project.id }};
+    const taskId = document.getElementById('createTaskForm').dataset.taskId;
+    const isEditMode = !!taskId;
+    
+    try {
+        // Create FormData object for file uploads
+        const formData = new FormData();
+        
+        // First, fetch project settings to determine if we need to calculate due date
+        const projectResponse = await fetch(`/tasks/api/projects/${projectId}`);
+        const projectData = await projectResponse.json();
+        
+        // Get form data
+        const title = document.getElementById('taskTitle').value;
+        const description = document.getElementById('taskDescription').value;
+        const categoryId = document.getElementById('taskCategory').value;
+        const assigneeId = document.getElementById('taskAssignee').value || null;
+        const statusId = document.getElementById('taskStatus').value;
+        const priorityId = document.getElementById('taskPriority').value;
+        let dueDate = document.getElementById('taskDueDate').value || null;
+        
+        // Add basic fields to FormData
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('category_id', categoryId);
+        if (assigneeId) formData.append('assignee_id', assigneeId);
+        formData.append('status_id', statusId);
+        formData.append('priority_id', priorityId);
+        
+        // If due date assignment is not allowed, always calculate it based on category SLA
+        if (!projectData.allow_due_date_assignment && categoryId) {
+            // Calculate due date based on SLA for both new tasks and edits
+            const categoryResponse = await fetch(`/tasks/api/categories/${categoryId}`);
+            const categoryData = await categoryResponse.json();
+            
+            if (categoryData.success && categoryData.category && categoryData.category.sla_hours) {
+                const now = new Date();
+                const slaHours = categoryData.category.sla_hours;
+                const calculatedDueDate = new Date(now.getTime() + (slaHours * 60 * 60 * 1000));
+                
+                // Format date with time in YYYY-MM-DD HH:MM:SS format for backend
+                dueDate = calculatedDueDate.toISOString().slice(0, 19).replace('T', ' ');
+                console.log(`Using calculated due date: ${dueDate} (${slaHours} hours from now)`);
+            } else {
+                console.warn('Failed to calculate due date: Missing SLA hours for category');
+            }
+        } else if (projectData.allow_due_date_assignment && dueDate) {
+            // If date is in YYYY-MM-DD format, add time component
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+                const dateObj = new Date(dueDate + 'T00:00:00');
+                dueDate = dateObj.toISOString().slice(0, 19).replace('T', ' ');
+                console.log(`Added time component to manual date: ${dueDate}`);
+            }
+            // If date already includes time, ensure it's in the correct format
+            else if (dueDate.includes(' ')) {
+                try {
+                    // Try to parse the existing date-time string
+                    const dateObj = new Date(dueDate.replace(' ', 'T'));
+                    dueDate = dateObj.toISOString().slice(0, 19).replace('T', ' ');
+                    console.log(`Normalized date-time format: ${dueDate}`);
+                } catch(e) {
+                    console.warn(`Error normalizing date-time format: ${e.message}`);
+                }
+            }
+        }
+        
+        // Add due date to FormData
+        if (dueDate) {
+            formData.append('due_date', dueDate);
+        }
+
+        // Add files to FormData
+        const fileInput = document.getElementById('taskAttachments');
+        if (fileInput && fileInput.files.length > 0) {
+            Array.from(fileInput.files).forEach(file => {
+                formData.append('attachments', file);
+            });
+        }
+
+        console.log(`${isEditMode ? 'Updating' : 'Creating'} task...`);
+
+        let url, method;
+        if (isEditMode) {
+            url = `/tasks/api/tasks/${taskId}`;
+            method = 'PUT';
+        } else {
+            url = `/tasks/api/projects/${projectId}/tasks`;
+            method = 'POST';
+        }
+
+        const response = await fetch(url, {
+            method: method,
+            body: formData // Use FormData instead of JSON for file uploads
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createTaskModal'));
+            modal.hide();
+            
+            // Reset form and remove task ID
+            document.getElementById('createTaskForm').reset();
+            document.getElementById('createTaskForm').dataset.taskId = '';
+            document.getElementById('attachmentList').innerHTML = '';
+            
+            // Clean up any read-only displays
+            const readOnlyDisplay = document.querySelector('.due-date-readonly');
+            if (readOnlyDisplay) {
+                readOnlyDisplay.textContent = '';
+            }
+            
+            // Reset modal title and button text
+            document.querySelector('#createTaskModal .modal-title').textContent = 'Create Task';
+            document.querySelector('#createTaskBtn').textContent = 'Create Task';
+            
+            // Show success message
+            showSuccessAlert(`Task ${isEditMode ? 'updated' : 'created'} successfully`);
+            
+            // Reload tasks list
+            loadTasks();
+        } else {
+            throw new Error(result.error || `Failed to ${isEditMode ? 'update' : 'create'} task`);
+        }
+    } catch (error) {
+        console.error(`Error ${isEditMode ? 'updating' : 'creating'} task:`, error);
+        showErrorAlert(error.message || `Failed to ${isEditMode ? 'update' : 'create'} task`);
+    }
+}
+
+async function editTask(taskId) {
+    try {
+        // Set edit mode flag to true
+        isEditMode = true;
+        
+        console.log(`Fetching task with ID: ${taskId}`);
+        const response = await fetch(`/tasks/api/tasks/${taskId}`);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Response error:', errorData);
+            throw new Error(errorData.error || 'Failed to fetch task details');
+        }
+        
+        const task = await response.json();
+        console.log("Retrieved task data:", task);
+        
+        // First fetch project details to determine if due date is editable
+        const projectId = task.project.id;
+        const projectResponse = await fetch(`/tasks/api/projects/${projectId}`);
+        const project = await projectResponse.json();
+        
+        // Populate modal with task data
+        const titleField = document.getElementById('taskTitle');
+        const descField = document.getElementById('taskDescription');
+        const categoryField = document.getElementById('taskCategory');
+        const assigneeField = document.getElementById('taskAssignee');
+        const statusField = document.getElementById('taskStatus');
+        const priorityField = document.getElementById('taskPriority');
+        const dueDateField = document.getElementById('taskDueDate');
+        
+        if (titleField) titleField.value = task.title || '';
+        if (descField) descField.value = task.description || '';
+        if (statusField) statusField.value = task.status_id ? String(task.status_id) : '';
+        if (priorityField) priorityField.value = task.priority_id ? String(task.priority_id) : '';
+        
+        // Format due date properly if it exists
+        let formattedDueDate = null;
+        let displayDate = 'No due date set';
+        
+        if (task.due_date) {
+            try {
+                const dueDate = new Date(task.due_date.replace(' ', 'T') + 'Z');
+                formattedDueDate = dueDate.toISOString().slice(0, 19).replace('T', ' ');
+                
+                displayDate = dueDate.toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true
+                });
+                
+                console.log(`Formatted UTC due date for input: ${formattedDueDate}`);
+                console.log(`Local display date: ${displayDate}`);
+            } catch (e) {
+                console.error(`Error formatting due date from: ${task.due_date}`, e);
+                formattedDueDate = null;
+                displayDate = 'Invalid date format';
+            }
+        }
+        
+        // Set the hidden input value regardless of edit mode
+        if (dueDateField) dueDateField.value = formattedDueDate || '';
+        
+        // Now handle due date display based on project settings
+        const dueDateContainer = dueDateField ? dueDateField.closest('.mb-3') : null;
+        const dueDateHelperText = document.getElementById('dueDateHelperText');
+        
+        if (!dueDateContainer) {
+            console.error("Could not find due date container");
+            return;
+        }
+
+        // Get or create read-only display element
+        let readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+        if (!readOnlyDisplay) {
+            readOnlyDisplay = document.createElement('div');
+            readOnlyDisplay.className = 'due-date-readonly form-control-plaintext';
+            readOnlyDisplay.style.marginTop = '8px';
+            dueDateField.after(readOnlyDisplay);
+        }
+        
+        if (project.allow_due_date_assignment) {
+            // Enable manual editing
+            dueDateField.removeAttribute('disabled');
+            dueDateField.removeAttribute('readonly');
+            dueDateField.style.display = 'block';
+            
+            // Remove any read-only display if it exists
+            readOnlyDisplay.style.display = 'none';
+            
+            if (dueDateHelperText) {
+                dueDateHelperText.textContent = 'You can modify the due date';
+            }
+        } else {
+            // Hide the input field
+            dueDateField.style.display = 'none';
+            dueDateField.setAttribute('disabled', 'disabled');
+            readOnlyDisplay.style.display = 'block';
+            
+            // Display original due date from database
+            if (formattedDueDate) {
+                readOnlyDisplay.innerHTML = `<strong>${displayDate}</strong>`;
+                readOnlyDisplay.style.color = '#495057';
+                
+                if (dueDateHelperText) {
+                    dueDateHelperText.textContent = 'Original due date from task';
+                }
+            } else {
+                readOnlyDisplay.textContent = 'No due date set';
+                readOnlyDisplay.style.color = '#6c757d';
+                
+                if (dueDateHelperText) {
+                    dueDateHelperText.textContent = 'No due date assigned to this task';
+                }
+            }
+            
+            // Now set up category select with modified event listener
+            const oldCategorySelect = document.getElementById('taskCategory');
+            if (oldCategorySelect) {
+                const originalCategoryId = task.category_id ? String(task.category_id) : '';
+                
+                // Clone to remove existing listeners
+                const newCategorySelect = oldCategorySelect.cloneNode(true);
+                oldCategorySelect.parentNode.replaceChild(newCategorySelect, oldCategorySelect);
+                
+                // Set the category value after cloning
+                if (task.category_id) {
+                    newCategorySelect.value = originalCategoryId;
+                }
+                
+                // Add listener that only recalculates if category changed
+                newCategorySelect.addEventListener('change', function() {
+                    const newCategoryId = this.value;
+                    
+                    if (newCategoryId && newCategoryId !== originalCategoryId) {
+                        // Only calculate new due date if category actually changed
+                        calculateDueDate(newCategoryId);
+                        if (dueDateHelperText) {
+                            dueDateHelperText.textContent = 'Due date recalculated based on new category SLA';
+                        }
+                        
+                        // Also fetch and set assignee based on category lead
+                        fetch(`/tasks/api/categories/${newCategoryId}`)
+                            .then(response => response.json())
+                            .then(categoryData => {
+                                if (categoryData.success && categoryData.category && 
+                                    categoryData.category.lead && categoryData.category.lead.id) {
+                                    if (assigneeField) {
+                                        assigneeField.value = categoryData.category.lead.id.toString();
+                                        console.log(`Auto-assigned to category lead: ${categoryData.category.lead.name}`);
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching category lead:', error);
+                            });
+                    } else if (newCategoryId === originalCategoryId && formattedDueDate) {
+                        // If user changes back to original category, restore original due date
+                        dueDateField.value = formattedDueDate;
+                        readOnlyDisplay.innerHTML = `<strong>${displayDate}</strong>`;
+                        readOnlyDisplay.style.color = '#495057';
+                        
+                        if (dueDateHelperText) {
+                            dueDateHelperText.textContent = 'Original due date from task';
+                        }
+                        
+                        // Restore original assignee if needed
+                        if (assigneeField && task.assignee_id) {
+                            assigneeField.value = String(task.assignee_id);
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Now set the category (after setting up the due date)
+        if (categoryField && task.category_id) {
+            categoryField.value = String(task.category_id);
+        }
+        
+        // Set the assignee value after setting up the category
+        if (assigneeField) {
+            if (task.assignee_id) {
+                // If task already has an assignee, use that
+                assigneeField.value = String(task.assignee_id);
+            } else if (task.category_id) {
+                // If task has no assignee but has category, attempt to assign category lead
+                fetch(`/tasks/api/categories/${task.category_id}`)
+                    .then(response => response.json())
+                    .then(categoryData => {
+                        if (categoryData.success && categoryData.category && 
+                            categoryData.category.lead && categoryData.category.lead.id) {
+                            assigneeField.value = categoryData.category.lead.id.toString();
+                            console.log(`Auto-assigned to category lead: ${categoryData.category.lead.name}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching category lead:', error);
+                    });
+            }
+        }
+        
+        // Change modal title and button text
+        const modalTitle = document.querySelector('#createTaskModal .modal-title');
+        if (modalTitle) modalTitle.textContent = 'Edit Task';
+        
+        const createTaskBtn = document.querySelector('#createTaskBtn');
+        if (createTaskBtn) createTaskBtn.textContent = 'Update Task';
+        
+        // Store task ID for update
+        document.getElementById('createTaskForm').dataset.taskId = taskId;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error loading task details:', error);
+        showErrorAlert(error.message);
+    }
+}
+
+// Function to handle file selection for attachments
+function handleFileSelect(event) {
+    const files = event.target.files;
+    const attachmentList = document.getElementById('attachmentList');
+    attachmentList.innerHTML = '';
+    
+    Array.from(files).forEach(file => {
+        const fileSize = (file.size / 1024).toFixed(2);
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        let iconClass = 'ri-file-text-line';
+        
+        // Set icon based on file type
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+            iconClass = 'ri-image-line';
+        } else if (['pdf'].includes(fileExtension)) {
+            iconClass = 'ri-file-pdf-line';
+        } else if (['doc', 'docx'].includes(fileExtension)) {
+            iconClass = 'ri-file-word-line';
+        } else if (['xls', 'xlsx'].includes(fileExtension)) {
+            iconClass = 'ri-file-excel-line';
+        }
+
+        attachmentList.innerHTML += `
+            <div class="d-flex align-items-center mt-2 border rounded p-2">
+                <i class="${iconClass} fs-20 me-2"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${file.name}</div>
+                    <small class="text-muted">${fileSize} KB</small>
+                </div>
+                <button type="button" class="btn btn-ghost-danger btn-icon btn-sm" onclick="removeAttachment(this)">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
+            </div>
+        `;
+    });
+}
+
+// Function to remove an attachment
+function removeAttachment(button) {
+    const attachmentDiv = button.closest('.d-flex');
+    attachmentDiv.remove();
+    
+    // Clear the file input if all attachments are removed
+    if (document.getElementById('attachmentList').children.length === 0) {
+        document.getElementById('taskAttachments').value = '';
+    }
+}
+
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'Success!',
+        text: message,
+        icon: 'success',
+        customClass: {
+            confirmButton: "btn btn-danger",
+            cancelButton: "btn btn-secondary"
+            },
+        buttonsStyling: false
+    });
+}
+
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'Error!',
+        text: message,
+        icon: 'error',
+        customClass: {
+            confirmButton: "btn btn-danger",
+            cancelButton: "btn btn-secondary"
+            },
+        buttonsStyling: false
+    });
+}
+
+function getDueDateClass(dueDate) {
+    if (!dueDate) return '';
+    
+    const today = new Date();
+    const due = new Date(dueDate);
+    const daysUntilDue = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilDue < 0) return 'due-date-danger';
+    if (daysUntilDue <= 3) return 'due-date-warning';
+    return 'due-date-normal';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString.replace(' ', 'T') + 'Z');
+        return date.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true
+        });
+    } catch (e) {
+        console.error('Error formatting date:', e);
+        return dateString;
+    }
+}
+
+// Add these utility functions
+function toUTCString(date) {
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+function fromUTCString(utcString) {
+    return new Date(utcString.replace(' ', 'T') + 'Z');
+}
+
+function formatLocalDateTime(date) {
+    if (!(date instanceof Date)) {
+        date = new Date(date);
+    }
+    return date.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+
+function getPriorityColor(priority) {
+    const colors = {
+        'Critical': 'danger',
+        'Important': 'warning',
+        'Normal': 'info',
+        'Optional': 'success'
+    };
+    return colors[priority] || 'secondary';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'To Do': 'secondary',
+        'In Progress': 'warning',
+        'Done': 'success'
+    };
+    return colors[status] || 'secondary';
+}
+
+async function deleteTask(taskId) {
+    try {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'No, cancel!',
+            confirmButtonClass: 'btn btn-danger mt-2',
+            cancelButtonClass: 'btn btn-secondary ms-2 mt-2',
+            buttonsStyling: false
+        });
+        
+        if (result.isConfirmed) {
+            const response = await fetch(`/tasks/api/tasks/${taskId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) throw new Error('Failed to delete task');
+            
+            const data = await response.json();
+            if (data.success) {
+                showSuccessAlert('Task deleted successfully');
+                loadTasks();
+            } else {
+                throw new Error(data.error || 'Failed to delete task');
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        showErrorAlert(error.message);
+    }
+}
+
+// Add this function after your document.addEventListener('DOMContentLoaded', ...) block
+function initializeCategoryLeadAutoAssign() {
+    const categorySelect = document.getElementById('taskCategory');
+    const assigneeSelect = document.getElementById('taskAssignee');
+    
+    if (!categorySelect || !assigneeSelect) return;
+    
+    categorySelect.addEventListener('change', async function() {
+        const categoryId = this.value;
+        if (!categoryId) return;
+        
+        try {
+            // Fetch category details including the lead
+            const response = await fetch(`/tasks/api/categories/${categoryId}`);
+            const data = await response.json();
+            
+            if (data.success && data.category && data.category.lead && data.category.lead.id) {
+                // Set the assignee to category lead
+                assigneeSelect.value = data.category.lead.id.toString();
+                
+                // Create a change event to trigger any dependent logic
+                const event = new Event('change', { bubbles: true });
+                assigneeSelect.dispatchEvent(event);
+                
+                console.log(`Auto-assigned task to category lead: ${data.category.lead.name} (ID: ${data.category.lead.id})`);
+            }
+        } catch (error) {
+            console.error('Error fetching category lead data:', error);
+        }
+    });
+}
+
+
+function applyFilters() {
+    loadTasks();
+}
+</script>
+{% endblock %}

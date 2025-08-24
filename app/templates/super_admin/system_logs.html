@@ -1,0 +1,369 @@
+{% extends "partials/base.html" %}
+{% block title %}System Logs{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">System Logs</h4>
+
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('super_admin.system_logs') }}">Super Admin</a></li>
+                                    <li class="breadcrumb-item active">System Logs</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end page title -->
+
+                <!-- Filters Card -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title mb-0">Filter Logs</h4>
+                            </div>
+                            <div class="card-body">
+                                <form method="GET" class="row g-3">
+                                    <div class="col-md-2">
+                                        <label class="form-label">Module</label>
+                                        <select name="module" class="form-select">
+                                            <option value="">All Modules</option>
+                                            {% for module in modules %}
+                                            <option value="{{ module[0] }}" {% if module[0] == selected_module %}selected{% endif %}>
+                                                {{ module[0] }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Level</label>
+                                        <select name="level" class="form-select">
+                                            <option value="">All Levels</option>
+                                            {% for level in levels %}
+                                            <option value="{{ level[0] }}" {% if level[0] == selected_level %}selected{% endif %}>
+                                                {{ level[0] }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">From Date</label>
+                                        <input type="date" name="from_date" class="form-control" value="{{ from_date }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">To Date</label>
+                                        <input type="date" name="to_date" class="form-control" value="{{ to_date }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Search</label>
+                                        <input type="text" name="search" class="form-control" placeholder="Search logs..." value="{{ search }}">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary me-2">
+                                            <i class="ri-filter-2-line align-bottom me-1"></i> Filter
+                                        </button>
+                                        <a href="{{ url_for('super_admin.system_logs') }}" class="btn btn-light">
+                                            <i class="ri-refresh-line align-bottom me-1"></i> Reset
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Table Card -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex align-items-center">
+                                    <h5 class="card-title mb-0 flex-grow-1">System Logs</h5>
+                                    <button type="button" class="btn btn-danger btn-sm" id="clearLogsBtn">
+                                        <i class="ri-delete-bin-line align-bottom me-1"></i> Clear Filtered Logs
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-nowrap align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col">Timestamp</th>
+                                                <th scope="col">Module</th>
+                                                <th scope="col">Level</th>
+                                                <th scope="col">User</th>
+                                                <th scope="col">Message</th>
+                                                <th scope="col">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for log in logs.items %}
+                                            <tr class="{{ 'table-danger' if log.level == 'ERROR' }}">
+                                                <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                <td>{{ log.module }}</td>
+                                                <td>
+                                                    <span class="badge {% if log.level == 'ERROR' %}bg-danger{% elif log.level == 'WARNING' %}bg-warning{% else %}bg-info{% endif %}">
+                                                        {{ log.level }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ log.user.username if log.user else 'System' }}</td>
+                                                <td>{{ log.message[:100] }}{% if log.message|length > 100 %}...{% endif %}</td>
+                                                <td>
+                                                    {% if log.stack_trace %}
+                                                    <button type="button" class="btn btn-sm btn-soft-info" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#stackTraceModal{{ log.id }}">
+                                                        <i class="ri-error-warning-line align-bottom me-1"></i> Details
+                                                    </button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                {% if logs.pages > 1 %}
+                                <div class="d-flex justify-content-end mt-3">
+                                    <ul class="pagination mb-0">
+                                        <li class="page-item {{ 'disabled' if logs.page == 1 }}">
+                                            <a class="page-link" href="{{ url_for('super_admin.system_logs', page=logs.prev_num, module=selected_module, level=selected_level, search=search, from_date=from_date, to_date=to_date) }}">
+                                                <i class="ri-arrow-left-s-line"></i>
+                                            </a>
+                                        </li>
+                                        {% for page_num in range(1, logs.pages + 1) %}
+                                        <li class="page-item {{ 'active' if page_num == logs.page }}">
+                                            <a class="page-link" href="{{ url_for('super_admin.system_logs', page=page_num, module=selected_module, level=selected_level, search=search, from_date=from_date, to_date=to_date) }}">{{ page_num }}</a>
+                                        </li>
+                                        {% endfor %}
+                                        <li class="page-item {{ 'disabled' if logs.page == logs.pages }}">
+                                            <a class="page-link" href="{{ url_for('super_admin.system_logs', page=logs.next_num, module=selected_module, level=selected_level, search=search, from_date=from_date, to_date=to_date) }}">
+                                                <i class="ri-arrow-right-s-line"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <script>document.write(new Date().getFullYear())</script> © Sona DBA.
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end d-none d-sm-block">
+                            Designed & Developed by Team Sona DBA
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Stack Trace Modals -->
+    {% for log in logs.items %}
+    {% if log.stack_trace %}
+    <div class="modal fade" id="stackTraceModal{{ log.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Error Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <h6>Message:</h6>
+                        <pre class="bg-light p-3 rounded">{{ log.message }}</pre>
+                    </div>
+                    <div>
+                        <h6>Stack Trace:</h6>
+                        <pre class="bg-light p-3 rounded">{{ log.stack_trace }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Add showCustomAlert function for consistent alert styling
+        function showCustomAlert(message, type = 'warning') {
+            const existingAlert = document.querySelector('.custom-alert-container');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+    
+            const alertContainer = document.createElement('div');
+            alertContainer.className = 'custom-alert-container';
+            alertContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999999;
+                min-width: 300px;
+                max-width: 500px;
+                margin-left: 260px;
+            `;
+    
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible bg-${type} text-white alert-label-icon fade show material-shadow`;
+            alertDiv.style.cssText = `
+                margin: 0;
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            `;
+            alertDiv.setAttribute('role', 'alert');
+            
+            let icon;
+            switch(type) {
+                case 'success':
+                    icon = 'ri-check-line';
+                    break;
+                case 'danger':
+                    icon = 'ri-error-warning-line';
+                    break;
+                case 'warning':
+                    icon = 'ri-alert-line';
+                    break;
+                default:
+                    icon = 'ri-information-line';
+            }
+            
+            alertDiv.innerHTML = `
+                <i class="${icon} label-icon"></i>
+                <strong>${type.charAt(0).toUpperCase() + type.slice(1)}</strong> - ${message}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+    
+            alertContainer.appendChild(alertDiv);
+            document.body.appendChild(alertContainer);
+    
+            setTimeout(() => {
+                if (alertContainer && document.body.contains(alertContainer)) {
+                    alertContainer.remove();
+                }
+            }, 5000);
+        }
+    
+        // Clear Logs Button Handler
+        document.getElementById('clearLogsBtn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonClass: 'btn btn-primary w-xs me-2',
+                cancelButtonClass: 'btn btn-danger w-xs',
+                confirmButtonText: 'Yes, clear logs!',
+                buttonsStyling: false,
+                showCloseButton: true
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    // Get current filter values
+                    const module = document.querySelector('select[name="module"]').value;
+                    const level = document.querySelector('select[name="level"]').value;
+                    const fromDate = document.querySelector('input[name="from_date"]').value;
+                    const toDate = document.querySelector('input[name="to_date"]').value;
+    
+                    // Send request to clear logs
+                    fetch("{{ url_for('super_admin.clear_logs') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            module: module,
+                            level: level,
+                            from_date: fromDate,
+                            to_date: toDate
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showCustomAlert(data.message, 'success');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showCustomAlert(data.message, 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        showCustomAlert('An error occurred while clearing logs.', 'danger');
+                    });
+                }
+            });
+        });
+    
+        // Initialize datatable if needed
+        if ($.fn.DataTable !== undefined) {
+            $('.datatable').DataTable({
+                pageLength: 25,
+                ordering: true,
+                order: [[0, 'desc']], // Sort by first column (timestamp) descending
+                responsive: true
+            });
+        }
+    
+        // Add form submit handler for filters
+        const filterForm = document.querySelector('form[method="GET"]');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                const fromDate = this.querySelector('input[name="from_date"]').value;
+                const toDate = this.querySelector('input[name="to_date"]').value;
+    
+                if (fromDate && toDate && fromDate > toDate) {
+                    e.preventDefault();
+                    showCustomAlert('From date cannot be later than To date', 'warning');
+                }
+            });
+        }
+    
+        // Hide preloader
+        window.onload = function() {
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.style.display = 'none';
+            }
+        };
+    
+        // Stack trace modal handlers
+        document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const modalId = this.getAttribute('data-bs-target');
+                const modal = new bootstrap.Modal(document.querySelector(modalId));
+                modal.show();
+            });
+        });
+    
+        // Make functions globally available if needed
+        window.showCustomAlert = showCustomAlert;
+    });
+</script>
+{% endblock %}

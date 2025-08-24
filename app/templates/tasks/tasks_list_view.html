@@ -1,0 +1,1830 @@
+{% extends "partials/base.html" %}
+{% block title %}Tasks List{% endblock title %}
+{% block extra_css %}
+<!-- Sweet Alert css-->
+<link href="{{url_for('static' ,filename='libs/sweetalert2/dist/sweetalert2.min.css')}}" rel="stylesheet" type="text/css" />
+{% endblock extra_css %}
+{% block content %}
+            <!-- ============================================================== -->
+            <!-- Start right Content here -->
+            <!-- ============================================================== -->
+            <div class="main-content">
+
+                <div class="page-content">
+                    <div class="container-fluid">
+
+                     <!-- start page title -->
+                     <div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                <h4 class="mb-sm-0">Tasks List</h4>
+
+                                <div class="page-title-right">
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Tasks</a></li>
+                                        <li class="breadcrumb-item active">Tasks List</li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end page title -->
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+                    <div class="row">
+                        <!-- Statistics Cards -->
+                        <div class="col-xxl-4 col-sm-4">
+                            <div class="card card-animate">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="fw-medium text-muted mb-0">Total Tasks</p>
+                                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ total_tasks }}">0</span></h2>
+                                            <p class="mb-0 text-muted">Total tasks in system</p>
+                                        </div>
+                                        <div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-info text-info rounded-circle fs-4">
+                                                    <i class="ri-ticket-2-line"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xxl-4 col-sm-4">
+                            <div class="card card-animate">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="fw-medium text-muted mb-0">Pending Tasks</p>
+                                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ pending_tasks }}">0</span></h2>
+                                            <p class="mb-0 text-muted">Pending Tasks out of total tasks</p>
+                                        </div>
+                                        <div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-warning text-warning rounded-circle fs-4">
+                                                    <i class="mdi mdi-timer-sand"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xxl-4 col-sm-4">
+                            <div class="card card-animate">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="fw-medium text-muted mb-0">Completed Tasks</p>
+                                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ completed_tasks }}">0</span></h2>
+                                            <p class="mb-0 text-muted">Completed tasks out of total tasks</p>
+                                        </div>
+                                        <div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-success text-success rounded-circle fs-4">
+                                                    <i class="ri-checkbox-circle-line"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--end col-->
+                        <!-- <div class="col-xxl-3 col-sm-6">
+                            <div class="card card-animate">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="fw-medium text-muted mb-0">Deleted Tasks</p>
+                                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="14.84">0</span>%</h2>
+                                            <p class="mb-0 text-muted"><span class="badge bg-light text-success mb-0"> <i class="ri-arrow-up-line align-middle"></i> 0.63 % </span> vs. previous month</p>
+                                        </div>
+                                        <div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-secondary rounded-circle fs-4">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
+                        <!--end col-->
+                    </div>
+                    <!--end row-->
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card" id="tasksList">
+                                <div class="card-header border-0">
+                                    <div class="d-flex align-items-center">
+                                        <h5 class="card-title mb-0 flex-grow-1">All Tasks</h5>
+                                        <div class="flex-shrink-0">
+                                            <div class="d-flex flex-wrap gap-2">
+                                            	<button class="btn btn-danger add-btn" data-bs-toggle="modal" data-bs-target="#showModal"><i class="ri-add-line align-bottom me-1"></i> Create Task</button>
+                                            	<button class="btn btn-success" id="remove-actions" onClick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                                           </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body border border-dashed border-end-0 border-start-0">
+                                    <form>
+                                        <div class="row g-3">
+                                            <div class="col-xxl-4 col-sm-4">
+                                                <div class="search-box">
+                                                    <input type="text" class="form-control search bg-light border-light" placeholder="Search for tasks or something...">
+                                                    <i class="ri-search-line search-icon"></i>
+                                                </div>
+                                            </div>
+                                            <!--end col-->
+
+                                                <div class="col-xxl-3 col-sm-3">
+                                                    <div class="input-light">
+                                                        <input type="text" class="form-control bg-light border-light" id="demo-datepicker" 
+                                                               data-provider="flatpickr" data-date-format="d M, Y" data-range-date="true" 
+                                                               data-clear-button="true"
+                                                               placeholder="Select due date range">
+                                                    </div>
+                                                </div>
+                                            <!--end col-->
+
+                                            <div class="col-xxl-2 col-sm-2">
+                                                <div class="input-light">
+                                                    <select class="form-control" data-choices data-choices-search-false name="choices-single-default" id="idStatus">
+                                                        <option value="">Status</option>
+                                                        <option value="all" selected>All</option>
+                                                        <!-- Task statuses will be loaded dynamically -->
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <!--end col-->
+
+                                            <div class="col-xxl-2 col-sm-2">
+                                                <div class="input-light">
+                                                    <select class="form-control" data-choices data-choices-search-false name="taskView" id="idTaskView">
+                                                        <option value="my_tasks" selected>My Tasks</option>
+                                                        <option value="connected_tasks">My Connected Tasks</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-xxl-1 col-sm-1">
+                                                <button type="button" class="btn btn-primary w-100" onclick="SearchData();"> <i class="ri-equalizer-fill me-1 align-bottom"></i>
+                                                    Filters
+                                                </button>
+                                            </div>
+                                            <!--end col-->
+                                        </div>
+                                        <!--end row-->
+                                    </form>
+                                </div>
+                                <!--end card-body-->
+                                <div class="card-body">
+                                    <div class="table-responsive table-card mb-4">
+                                        <table class="table align-middle table-nowrap mb-0" id="tasksTable">
+                                            <thead class="table-light text-muted">
+                                                <tr>
+                                                    <th scope="col" style="width: 40px;">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="checkAll" value="option">
+                                                        </div>
+                                                    </th>
+                                                    <th class="sort" data-sort="id">Task Key</th>
+                                                    <th class="sort" data-sort="project_name">Project</th>
+                                                    <th class="sort" data-sort="tasks_name">Task</th>
+                                                    <th class="sort" data-sort="assignedto">Assigned To</th>
+                                                    <th class="sort" data-sort="due_date">Due Date</th>
+                                                    <th class="sort" data-sort="status">Status</th>
+                                                    <th class="sort" data-sort="priority">Priority</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="form-check-all">
+                                                {% for task in tasks %}
+                                                <tr class="task-row" 
+                                                    data-task-id="{{ task.id }}" 
+                                                    data-created-by="{{ task.created_by }}"
+                                                    data-is-done="{{ task.is_done }}" 
+                                                    data-is-reviewed="{{ task.is_reviewed }}"
+                                                    data-assigned-to="{{ task.assigned_to }}"
+                                                    data-has-visibility="{{ 'true' if task.id in visible_task_ids else 'false' }}"
+                                                    data-is-reviewer="{{ 'true' if is_reviewer_map.get(task.id, False) else 'false' }}">
+                                                    
+                                                    <th scope="row">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="chk_child" value="option{{ task.id }}">
+                                                        </div>
+                                                    </th>
+                                                    <td class="id"><a href="{{ url_for('tasks.task_detail', project_id=task.project_id, task_id=task.id) }}?taskView={{ request.args.get('taskView', 'my_tasks') }}" class="fw-medium link-primary">
+                                                        {{ task.task_key }}</a></td>
+                                                    <td class="project_name">
+                                                        {% if task.project %}
+                                                        <a href="{{ url_for('tasks.task_detail', project_id=task.project_id, task_id=task.id) }}?taskView={{ request.args.get('taskView', 'my_tasks') }}" class="fw-medium link-primary">
+                                                            {{ task.project.name }}</a>
+                                                        {% else %}
+                                                        -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <div class="flex-grow-1 tasks_name">{{ task.title }}</div>
+                                                            <div class="flex-shrink-0 ms-4">
+                                                                <ul class="list-inline tasks-list-menu mb-0">
+                                                                    <li class="list-inline-item">
+                                                                        <a href="{{ url_for('tasks.task_detail', project_id=task.project_id, task_id=task.id) }}?taskView={{ request.args.get('taskView', 'my_tasks') }}">
+                                                                            <i class="ri-eye-fill align-bottom me-2 text-muted"></i>
+                                                                        </a>
+                                                                    </li>
+                                                                    {% if current_user.role_id == 1 or current_user.id == task.creator_id %}
+                                                                    <li class="list-inline-item">
+                                                                            <a class="edit-item-btn" href="#showModal" data-bs-toggle="modal" onclick="editTask({{ task.id }})">
+                                                                                <i class="ri-pencil-fill align-bottom me-2 text-muted"></i>
+                                                                            </a>
+                                                                        </li>
+                                                                        <li class="list-inline-item">
+                                                                            <a class="remove-item-btn" onclick="deleteTask({{ task.id }})">
+                                                                                <i class="ri-delete-bin-fill align-bottom me-2 text-muted"></i>
+                                                                            </a>
+                                                                        </li>
+                                                                    {% endif %}
+
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="assignedto">
+                                                        {% if task.assignee %}
+                                                        <div class="avatar-group">
+                                                            <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="{{ task.assignee.name }}">
+                                                                {% if task.assignee.profile_picture %}
+                                                                <img src="data:image/jpeg;base64,{{ task.assignee.profile_picture_base64 }}" alt="" class="rounded-circle avatar-xxs">
+                                                                {% else %}
+                                                                <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" alt="" class="rounded-circle avatar-xxs">
+                                                                {% endif %}
+                                                            </a>
+                                                        </div>
+                                                        {% else %}
+                                                        -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="due_date">{{ task.due_date.strftime('%d %b, %Y') if task.due_date else '-' }}</td>
+                                                    <td class="status">
+                                                        <span class="badge badge-soft-{{ task.status.color if task.status else 'secondary' }} text-uppercase">
+                                                            {{ task.status.name if task.status else 'Not Set' }}
+                                                        </span>
+                                                        <!-- Show review status badge only for project reviewers -->
+                                                        {% if is_reviewer_map.get(task.id, False) %}
+                                                            {% if task.is_reviewed == 1 %}
+                                                                <span class="badge badge-soft-success ms-1" title="This task has been reviewed">
+                                                                    <i class="ri-check-double-line me-1"></i>Reviewed
+                                                                </span>
+                                                            {% else %}
+                                                                <span class="badge badge-soft-warning ms-1" title="This task is pending review">
+                                                                    <i class="ri-time-line me-1"></i>Pending
+                                                                </span>
+                                                            {% endif %}
+                                                        {% endif %}
+
+                                                    </td>
+                                                    <td class="priority">
+                                                        {% if task.priority %}
+                                                            {% set color_map = {
+                                                                'red': 'danger',
+                                                                'blue': 'primary',
+                                                                'green': 'success',
+                                                                'yellow': 'warning',
+                                                                'gray': 'secondary'
+                                                            } %}
+                                                            <span class="badge badge-soft-{{ color_map[task.priority.color] if task.priority.color in color_map else 'secondary' }} text-uppercase">
+                                                                {{ task.priority.name }}
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge badge-soft-secondary text-uppercase">Not Set</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        <!--end table-->
+                                        <div class="noresult" style="display: none">
+                                            <div class="text-center">
+                                                <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
+                                                <h5 class="mt-2">Sorry! No Result Found</h5>
+                                                <p class="text-muted mb-0">We did not find any tasks for you search.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <div class="pagination-wrap hstack gap-2">
+                                            <a class="page-item pagination-prev disabled" href="#">
+                                                Previous
+                                            </a>
+                                            <ul class="pagination listjs-pagination mb-0"></ul>
+                                            <a class="page-item pagination-next" href="#">
+                                                Next
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--end card-body-->
+                            </div>
+                            <!--end card-->
+                        </div>
+                        <!--end col-->
+                    </div>
+                    <!--end row-->
+
+                    <div class="modal fade flip" id="deleteOrder" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-body p-5 text-center">
+                                    <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop" colors="primary:#405189,secondary:#f06548" style="width:90px;height:90px"></lord-icon>
+                                    <div class="mt-4 text-center">
+                                        <h4>You are about to delete a task ?</h4>
+                                        <p class="text-muted fs-14 mb-4">Deleting your task will remove all of
+                                            your information from our database.</p>
+                                        <div class="hstack gap-2 justify-content-center remove">
+                                            <button class="btn btn-link btn-ghost-success fw-medium text-decoration-none" id="deleteRecord-close" data-bs-dismiss="modal"><i class="ri-close-line me-1 align-middle"></i> Close</button>
+                                            <button class="btn btn-danger" id="delete-record">Yes, Delete It</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end delete modal -->
+
+                    <div class="modal fade zoomIn" id="showModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0">
+                                <div class="modal-header p-3 bg-soft-info">
+                                    <h5 class="modal-title" id="exampleModalLabel">Create Task</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="close-modal"></button>
+                                </div>
+                                    <!-- In the showModal div, update the form -->
+                                    <form id="createTaskForm" enctype="multipart/form-data" action="{{ url_for('tasks.create_project_task', project_id=0) }}" method="POST">
+
+                                        <div class="modal-body">
+                                            <!-- Tab Navigation -->
+                                            <ul class="nav nav-tabs nav-tabs-custom nav-justified" role="tablist">
+                                                <li class="nav-item">
+                                                    <a class="nav-link active" data-bs-toggle="tab" href="#task-details-tab" role="tab" aria-selected="true">
+                                                        <i class="ri-task-line me-1 align-bottom"></i> Task Details
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" data-bs-toggle="tab" href="#task-attachments-tab" role="tab" aria-selected="false">
+                                                        <i class="ri-attachment-line me-1 align-bottom"></i> Attachments
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                            
+                                            <!-- Tab Content -->
+                                            <div class="tab-content">
+                                                <!-- Task Details Tab -->
+                                                <div class="tab-pane active" id="task-details-tab" role="tabpanel">
+                                                    <div class="row mt-4">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="projects" class="form-label">Project</label>
+                                                                <select class="form-select" id="projects" required>
+                                                                    {% for project in projects %}
+                                                                    <option value="{{ project.id }}">{{ project.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                
+                                                    </div>
+                                                    <div class="mt-2 mb-3">
+                                                        <label for="taskTitle" class="form-label">Title</label>
+                                                        <input type="text" class="form-control" id="taskTitle" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="taskDescription" class="form-label">Description</label>
+                                                        <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                                                    </div>
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="taskCategory" class="form-label">Category</label>
+                                                                <select class="form-select" id="taskCategory" required>
+                                                                    {% for category in categories %}
+                                                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="taskAssignee" class="form-label">Assignee</label>
+                                                                <select class="form-select" id="taskAssignee">
+                                                                    <option value="">Unassigned</option>
+                                                                    {% for member in project_members %}
+                                                                    <option value="{{ member.id }}">{{ member.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="taskStatus" class="form-label">Status</label>
+                                                                <select class="form-select" id="taskStatus" required>
+                                                                    {% for status in statuses %}
+                                                                    <option value="{{ status.id }}">{{ status.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="taskPriority" class="form-label">Priority</label>
+                                                                <select class="form-select" id="taskPriority" required>
+                                                                    {% for priority in priorities %}
+                                                                    <option value="{{ priority.id }}">{{ priority.name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="taskDueDate" class="form-label">Due Date</label>
+                                                                <input type="date" class="form-control" id="taskDueDate" name="due_date">
+                                                                <small id="dueDateHelperText" class="text-muted">
+                                                                    <!-- This text will be updated dynamically based on project settings -->
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Attachments Tab -->
+                                                <div class="tab-pane" id="task-attachments-tab" role="tabpanel">
+                                                    <div class="mb-3 mt-3">
+                                                        <label for="taskAttachments" class="form-label">Attachments</label>
+                                                        <input type="file" class="form-control" id="taskAttachments" multiple>
+                                                        <div id="attachmentList" class="mt-3"></div>
+                                                    </div>
+                        
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-success" id="createTaskBtn">Create Task</button>
+                                        </div>
+                                    </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end modal-->
+
+                </div>
+                <!-- container-fluid -->
+            </div>
+            <!-- End Page-content -->
+
+            {% block footer %}
+            {% include "partials/footer.html" %}
+            {% endblock footer %}
+            </div>
+            <!-- end main content-->
+{% endblock content %}
+{% block extra_js %}
+    <!-- list.js min js -->
+    <script src="{{url_for('static' ,filename='libs/list.js/dist/list.min.js')}}"></script>
+
+    <!--list pagination js-->
+    <script src="{{url_for('static' ,filename='libs/list.pagination.js/dist/list.pagination.min.js')}}"></script>
+
+    <!-- Sweet Alerts js -->
+    <script src="{{url_for('static' ,filename='libs/sweetalert2/dist/sweetalert2.min.js')}}"></script>
+
+    <!-- titcket init js -->
+    <script src="{{url_for('static' ,filename='js/pages/tasks-list.init.js')}}"></script>
+
+<script>
+    // This script enhances the edit task functionality in the tasks list view
+// while preserving all other existing functionality
+
+document.addEventListener('DOMContentLoaded', function() {
+    const createTaskForm = document.getElementById('createTaskForm');
+    const projectSelect = document.getElementById('projects');
+    
+    if (createTaskForm) {
+        createTaskForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Get the selected project ID
+            const projectId = document.getElementById('projects').value;
+            if (!projectId) {
+                alert('Please select a project');
+                return;
+            }
+            
+            // Create FormData
+            const formData = new FormData();
+            
+            // Add form fields
+            formData.append('title', document.getElementById('taskTitle').value);
+            formData.append('description', document.getElementById('taskDescription').value);
+            formData.append('category_id', document.getElementById('taskCategory').value);
+            formData.append('assignee_id', document.getElementById('taskAssignee').value);
+            formData.append('status_id', document.getElementById('taskStatus').value);
+            formData.append('priority_id', document.getElementById('taskPriority').value);
+            formData.append('due_date', document.getElementById('taskDueDate').value);
+            
+            // Add file attachments
+            const attachments = document.getElementById('taskAttachments').files;
+            for (let i = 0; i < attachments.length; i++) {
+                formData.append('attachments', attachments[i]);
+            }
+            
+            try {
+                // Submit to the correct URL with the selected project ID
+                const response = await fetch(`/tasks/api/projects/${projectId}/create-task`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message and close modal
+                    Swal.fire({
+                        title: 'Success',
+                        text: 'Task created successfully',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(result.error || 'Failed to create task');
+                }
+            } catch (error) {
+                console.error('Error creating task:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'Failed to create task',
+                    icon: 'error'
+                });
+            }
+        });
+    }
+
+    // Add event listener for project selection
+    if (projectSelect) {
+        projectSelect.addEventListener('change', function() {
+            const selectedProjectId = this.value;
+            if (selectedProjectId) {
+                updateProjectFormData(selectedProjectId);
+                
+                // Load project settings if in edit mode
+                const form = document.getElementById('createTaskForm');
+                if (form && form.dataset.mode === 'edit') {
+                    loadProjectSettings(selectedProjectId);
+                }
+            }
+        });
+    }
+
+    // Add this to the existing DOMContentLoaded event handler
+    // After the existing project select event listener
+
+    // Trigger data loading when a project is selected
+    if (projectSelect) {
+        projectSelect.addEventListener('change', function() {
+            const selectedProjectId = this.value;
+            if (selectedProjectId) {
+                // This function needs to fetch the project data and populate the dropdowns
+                updateProjectFormData(selectedProjectId);
+            }
+        });
+        
+        // Also load data for the first project when the modal opens
+        document.querySelector('.add-btn').addEventListener('click', function() {
+            const initialProjectId = projectSelect.value;
+            if (initialProjectId) {
+                setTimeout(() => updateProjectFormData(initialProjectId), 300);
+            }
+        });
+    }
+
+    // Add event listener for category selection
+    const categorySelect = document.getElementById('taskCategory');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const selectedCategoryId = this.value;
+            if (selectedCategoryId) {
+                handleCategorySelection(selectedCategoryId);
+            }
+        });
+    }
+
+    // Reset form when modal is closed
+    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', resetTaskForm);
+    });
+
+    // Also reset when modal is hidden
+    const modal = document.getElementById('showModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', resetTaskForm);
+    }
+
+    // Initialize attachment handling
+    const taskAttachments = document.getElementById('taskAttachments');
+    if (taskAttachments) {
+        taskAttachments.addEventListener('change', handleFileSelect);
+    }
+
+    // Format tasks for review
+    formatTasksListForReview();
+});
+
+
+function formatTasksListForReview() {
+    // Find all tasks in the list
+    const taskRows = document.querySelectorAll('.task-row');
+    
+    taskRows.forEach(row => {
+        const isDone = row.getAttribute('data-is-done') === '1';
+        const isReviewed = row.getAttribute('data-is-reviewed') === '1';
+        
+        if (isDone && !isReviewed) {
+            // Highlight tasks that need review
+            row.classList.add('needs-review');
+            
+            // Add a badge
+            const statusCell = row.querySelector('.task-status');
+            if (statusCell) {
+                const reviewBadge = document.createElement('span');
+                reviewBadge.className = 'badge bg-warning ms-2';
+                reviewBadge.textContent = 'Needs Review';
+                statusCell.appendChild(reviewBadge);
+            }
+        } else if (isDone && isReviewed) {
+            // Add reviewed badge
+            const statusCell = row.querySelector('.task-status');
+            if (statusCell) {
+                const reviewedBadge = document.createElement('span');
+                reviewedBadge.className = 'badge bg-success ms-2';
+                reviewedBadge.textContent = 'Reviewed';
+                statusCell.appendChild(reviewedBadge);
+            }
+        }
+    });
+}
+
+
+// Enhanced helper functions for status and priority colors
+function getStatusColor(status) {
+    const colors = {
+        'New': 'info',
+        'In Progress': 'warning',
+        'Completed': 'success',
+        'Pending': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getPriorityColor(priority) {
+    const colors = {
+        'High': 'danger',
+        'Medium': 'warning',
+        'Low': 'success'
+    };
+    return colors[priority] || 'secondary';
+}
+
+// Function to create new task
+function createTask(event) {
+    event.preventDefault();
+    const form = document.getElementById('createTaskForm');
+    const formData = new FormData(form);
+    
+    const data = {
+        title: formData.get('tasksTitle-field'),
+        description: formData.get('description'),
+        priority: formData.get('priority-field'),
+        status: formData.get('ticket-status'),
+        due_date: formData.get('duedate-field'),
+        assigned_to: formData.get('assignedTo[]')
+    };
+
+    fetch('/tasks/api/tasks', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.task_id) {
+            // Close modal
+            var modal = bootstrap.Modal.getInstance(document.getElementById('showModal'));
+            modal.hide();
+            
+            // Reload tasks
+            loadTasks();
+            
+            // Show success message
+            Swal.fire({
+                title: 'Success!',
+                text: 'Task created successfully',
+                icon: 'success',
+                confirmButtonClass: 'btn btn-primary w-xs mt-2',
+                buttonsStyling: false
+            });
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Function to delete task
+function deleteTask(taskId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonClass: 'btn btn-primary w-xs me-2 mt-2',
+        cancelButtonClass: 'btn btn-danger w-xs mt-2',
+        confirmButtonText: 'Yes, delete it!',
+        buttonsStyling: false,
+        showCloseButton: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/tasks/api/tasks/${taskId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // If server returns an error, throw it to be caught
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Unknown error occurred');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Instead of calling loadTasks(), reload the page
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Task has been deleted.',
+                    icon: 'success',
+                    confirmButtonClass: 'btn btn-primary w-xs mt-2',
+                    buttonsStyling: false
+                }).then(() => {
+                    // Reload page after confirmation
+                    window.location.reload();
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: `Failed to delete task: ${error.message}`,
+                    icon: 'error',
+                    confirmButtonClass: 'btn btn-primary w-xs mt-2',
+                    buttonsStyling: false
+                });
+            });
+        }
+    });
+}
+
+// Enhanced edit task function
+window.editTask = async function(taskId) {
+    try {
+        // Show loading state
+        const modalTitle = document.querySelector('#showModal .modal-title');
+        const submitButton = document.getElementById('createTaskBtn');
+        
+        if (modalTitle) modalTitle.textContent = 'Loading Task...';
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
+        }
+        
+        // Set the form in edit mode
+        const form = document.getElementById('createTaskForm');
+        form.dataset.mode = 'edit';
+        form.dataset.taskId = taskId;
+        
+        // Show the modal first
+        const modal = new bootstrap.Modal(document.getElementById('showModal'));
+        modal.show();
+        
+        // Fetch task data
+        const response = await fetch(`/tasks/api/tasks/${taskId}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch task: ${response.status}`);
+        }
+        
+        const task = await response.json();
+        console.log("Task data for editing:", task);
+        
+        // Update modal UI
+        if (modalTitle) modalTitle.textContent = 'Edit Task';
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Update Task';
+        }
+        
+        // Get project ID and load project data first
+        if (task.project && task.project.id) {
+            const projectSelect = document.getElementById('projects');
+            if (projectSelect) {
+                projectSelect.value = task.project.id;
+                
+                // Now load project data
+                try {
+                    await updateProjectFormData(task.project.id);
+                    // Also load project settings
+                    await loadProjectSettings(task.project.id);
+                    
+                    // After project data is loaded, populate all form fields
+                    populateFormFields(task);
+                } catch (error) {
+                    console.error("Error updating project data:", error);
+                    // Continue with populating basic fields even if project data loading fails
+                    populateFormFields(task);
+                }
+            } else {
+                // If no project select, just populate the fields directly
+                populateFormFields(task);
+            }
+        } else {
+            // No project data, populate what we can
+            populateFormFields(task);
+        }
+    } catch (error) {
+        console.error('Error in editTask:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Failed to load task data: ' + error.message,
+            icon: 'error'
+        });
+        
+        // Reset form and close modal on error
+        resetTaskForm();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('showModal'));
+        if (modal) {
+            modal.hide();
+            // After modal is hidden, ensure backdrop is removed
+            document.querySelector('.modal-backdrop')?.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }
+    }
+};
+
+// Function to populate form fields
+function populateFormFields(task) {
+    console.log("Populating form fields with:", task);
+    
+    // Basic fields that don't depend on drop-downs
+    const titleField = document.getElementById('taskTitle');
+    const descriptionField = document.getElementById('taskDescription');
+    
+    if (titleField) titleField.value = task.title || '';
+    if (descriptionField) descriptionField.value = task.description || '';
+    
+    // Fields that depend on drop-downs being populated
+    const categorySelect = document.getElementById('taskCategory');
+    const statusSelect = document.getElementById('taskStatus');
+    const prioritySelect = document.getElementById('taskPriority');
+    const assigneeSelect = document.getElementById('taskAssignee');
+    const dueDateField = document.getElementById('taskDueDate');
+    
+    if (categorySelect && task.category_id) {
+        categorySelect.value = task.category_id;
+    }
+    
+    if (statusSelect && task.status_id) {
+        statusSelect.value = task.status_id;
+    }
+    
+    if (prioritySelect && task.priority_id) {
+        prioritySelect.value = task.priority_id;
+    }
+    
+    if (assigneeSelect && task.assignee_id) {
+        assigneeSelect.value = task.assignee_id;
+    }
+    
+    // Handle due date
+    if (dueDateField && task.due_date) {
+        try {
+            const dueDateObj = new Date(task.due_date);
+            const formattedDate = dueDateObj.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            dueDateField.value = formattedDate;
+        } catch (error) {
+            console.error("Error formatting due date:", error);
+        }
+    }
+    
+    // Setup due date field based on project settings
+    setupTaskDueDateField(task);
+    
+    // Handle attachments if any
+    const attachmentList = document.getElementById('attachmentList');
+    if (attachmentList) {
+        attachmentList.innerHTML = '';
+        
+        if (task.attachments && task.attachments.length > 0) {
+            task.attachments.forEach(attachment => {
+                const fileIcon = getFileIcon(attachment.file_name);
+                
+                attachmentList.innerHTML += `
+                    <div class="d-flex align-items-center mt-2 border rounded p-2">
+                        <i class="${fileIcon} fs-20 me-2"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium">${attachment.file_name}</div>
+                            <small class="text-muted">Uploaded by ${attachment.uploaded_by || 'Unknown'}</small>
+                        </div>
+                        <a href="/tasks/download_attachment/${attachment.id}" class="btn btn-ghost-primary btn-icon btn-sm me-1">
+                            <i class="ri-download-line"></i>
+                        </a>
+                        <button type="button" class="btn btn-ghost-danger btn-icon btn-sm" onclick="deleteAttachment(${attachment.id})">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+    }
+}
+
+// Make sure this function properly loads and fills the dropdowns
+async function updateProjectFormData(projectId) {
+    try {
+        // Fetch project form data from the API
+        const response = await fetch(`/tasks/api/projects/${projectId}/form-data`);
+        if (!response.ok) {
+            throw new Error('Failed to load project data');
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to load project data');
+        }
+        
+        // Update categories dropdown
+        const categorySelect = document.getElementById('taskCategory');
+        if (categorySelect) {
+            categorySelect.innerHTML = '<option value="">Select Category</option>';
+            result.data.categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+        }
+        
+        // Update statuses dropdown
+        // Update statuses dropdown
+        const statusSelect = document.getElementById('taskStatus');
+        if (statusSelect) {
+            statusSelect.innerHTML = '<option value="">Select Status</option>';
+            result.data.statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status.id;
+                option.textContent = status.name;
+                if (status.task_status_id == 1) {  // Note: use == not === for type flexibility
+                    option.selected = true;
+                }
+                statusSelect.appendChild(option);
+            });
+        }
+        
+        // Update priorities dropdown
+        const prioritySelect = document.getElementById('taskPriority');
+        if (prioritySelect) {
+            prioritySelect.innerHTML = '<option value="">Select Priority</option>';
+            result.data.priorities.forEach(priority => {
+                const option = document.createElement('option');
+                option.value = priority.id;
+                option.textContent = priority.name;
+                prioritySelect.appendChild(option);
+            });
+        }
+        
+        // Update assignee dropdown
+        const assigneeSelect = document.getElementById('taskAssignee');
+        if (assigneeSelect) {
+            assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
+            result.data.team_members.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member.id;
+                option.textContent = member.name;
+                assigneeSelect.appendChild(option);
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error loading project form data:', error);
+        // Show error to user
+        alert('Failed to load project data: ' + error.message);
+    }
+}
+
+
+// Function to load project settings (for due date handling)
+async function loadProjectSettings(projectId) {
+    try {
+        const response = await fetch(`/tasks/api/projects/${projectId}`);
+        const projectData = await response.json();
+        
+        window.projectSettings = {
+            allowDueDateAssignment: projectData.allow_due_date_assignment,
+            projectType: projectData.project_type
+        };
+        
+        console.log("Loaded project settings:", window.projectSettings);
+        return window.projectSettings;
+    } catch (error) {
+        console.error('Error loading project settings:', error);
+        
+        // Default settings
+        window.projectSettings = {
+            allowDueDateAssignment: true,
+            projectType: 'general'
+        };
+        
+        return window.projectSettings;
+    }
+}
+
+// Function to setup due date field based on project settings
+function setupTaskDueDateField(task) {
+    const dueDateField = document.getElementById('taskDueDate');
+    if (!dueDateField) return;
+    
+    const dueDateContainer = dueDateField.closest('.mb-3');
+    if (!dueDateContainer) return;
+    
+    const dueDateHelperText = document.getElementById('dueDateHelperText');
+    
+    // Check if we have project settings
+    if (!window.projectSettings) {
+        console.log("No project settings, assuming manual due date allowed");
+        return; // No special handling needed
+    }
+    
+    if (window.projectSettings.allowDueDateAssignment) {
+        // Enable manual due date editing
+        dueDateField.removeAttribute('disabled');
+        dueDateField.style.display = 'block';
+        
+        // Remove any read-only display
+        const readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+        if (readOnlyDisplay) {
+            readOnlyDisplay.style.display = 'none';
+        }
+        
+        // Update helper text
+        if (dueDateHelperText) {
+            dueDateHelperText.textContent = 'You can modify the due date';
+        }
+    } else {
+        // For automatic due date, show it as read-only
+        dueDateField.style.display = 'none';
+        dueDateField.setAttribute('disabled', 'disabled');
+        
+        // Create or update read-only display
+        let readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+        if (!readOnlyDisplay) {
+            readOnlyDisplay = document.createElement('div');
+            readOnlyDisplay.className = 'due-date-readonly form-control-plaintext';
+            readOnlyDisplay.style.marginTop = '8px';
+            dueDateField.after(readOnlyDisplay);
+        }
+        
+        // Show original due date
+        if (task.due_date) {
+            const dueDate = new Date(task.due_date);
+            const displayDate = dueDate.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+            });
+            
+            readOnlyDisplay.innerHTML = `<strong>${displayDate}</strong>`;
+            
+            // Update helper text
+            if (dueDateHelperText) {
+                dueDateHelperText.textContent = 'Due date calculated based on category SLA';
+            }
+        } else {
+            readOnlyDisplay.textContent = 'No due date set';
+            
+            // Update helper text
+            if (dueDateHelperText) {
+                dueDateHelperText.textContent = 'Due date will be calculated when task is updated';
+            }
+        }
+    }
+}
+
+// Handle category selection - update assignee and due date
+function handleCategorySelection(categoryId) {
+    if (!window.currentProjectData) return;
+    
+    // Find the selected category in our data
+    const category = window.currentProjectData.categories.find(c => c.id == categoryId);
+    if (!category) return;
+    
+    console.log("Selected category:", category);
+    
+    // Auto-assign to category lead if exists
+    const assigneeSelect = document.getElementById('taskAssignee');
+    if (category.category_lead && assigneeSelect) {
+        assigneeSelect.value = category.category_lead.id;
+        console.log(`Auto-assigned to category lead: ${category.category_lead.name}`);
+    }
+    
+    // If manual due date assignment is disabled, calculate based on SLA
+    if (window.projectSettings && !window.projectSettings.allowDueDateAssignment) {
+        const dueDateField = document.getElementById('taskDueDate');
+        if (!dueDateField) return;
+        
+        const slaHours = category.sla_hours || 24; // Default to 24 hours
+        
+        // Calculate due date
+        const now = new Date();
+        const dueDate = new Date(now.getTime() + (slaHours * 60 * 60 * 1000));
+        
+        // Format for storage (YYYY-MM-DD)
+        const formattedDate = dueDate.toISOString().slice(0, 10);
+        dueDateField.value = formattedDate;
+        
+        // Update display for read-only mode
+        const dueDateContainer = dueDateField.closest('.mb-3');
+        if (dueDateContainer) {
+            let readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+            if (!readOnlyDisplay) {
+                readOnlyDisplay = document.createElement('div');
+                readOnlyDisplay.className = 'due-date-readonly form-control-plaintext';
+                readOnlyDisplay.style.marginTop = '8px';
+                dueDateField.after(readOnlyDisplay);
+            }
+            
+            // Format for display
+            const displayDate = dueDate.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+            });
+            
+            readOnlyDisplay.innerHTML = `<strong>${displayDate}</strong>`;
+            
+            // Update helper text
+            const dueDateHelperText = document.getElementById('dueDateHelperText');
+            if (dueDateHelperText) {
+                dueDateHelperText.innerHTML = `Due date calculated as <strong>${slaHours} hours</strong> from now (per category SLA)`;
+            }
+        }
+    }
+}
+
+// Reset form function
+function resetTaskForm() {
+    const form = document.getElementById('createTaskForm');
+    if (!form) return;
+    
+    form.reset();
+    delete form.dataset.mode;
+    delete form.dataset.taskId;
+    
+    // Reset modal title and button
+    const modalTitle = document.querySelector('#showModal .modal-title');
+    const submitButton = document.getElementById('createTaskBtn');
+    
+    if (modalTitle) modalTitle.textContent = 'Create Task';
+    if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Create Task';
+    }
+    
+    // Clear attachment list
+    const attachmentList = document.getElementById('attachmentList');
+    if (attachmentList) {
+        attachmentList.innerHTML = '';
+    }
+    
+    // Reset due date field
+    const dueDateField = document.getElementById('taskDueDate');
+    if (dueDateField) {
+        dueDateField.removeAttribute('disabled');
+        dueDateField.style.display = 'block';
+        
+        // Remove read-only display if exists
+        const dueDateContainer = dueDateField.closest('.mb-3');
+        if (dueDateContainer) {
+            const readOnlyDisplay = dueDateContainer.querySelector('.due-date-readonly');
+            if (readOnlyDisplay) {
+                readOnlyDisplay.remove();
+            }
+        }
+    }
+    
+    // Clear helper text
+    const dueDateHelperText = document.getElementById('dueDateHelperText');
+    if (dueDateHelperText) {
+        dueDateHelperText.textContent = '';
+    }
+
+    setTimeout(() => {
+        if (!document.querySelector('.modal.show') && document.querySelector('.modal-backdrop')) {
+            document.querySelector('.modal-backdrop').remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }
+    }, 200);
+}
+
+// Delete attachment function
+function deleteAttachment(attachmentId) {
+    const taskId = document.getElementById('createTaskForm').dataset.taskId;
+    if (!taskId) return;
+    
+    Swal.fire({
+        title: 'Delete Attachment',
+        text: 'Are you sure you want to delete this attachment?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/tasks/api/tasks/${taskId}/attachments/${attachmentId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove attachment from list
+                    const attachmentElement = document.querySelector(`button[onclick="deleteAttachment(${attachmentId})"]`).closest('.d-flex');
+                    attachmentElement.remove();
+                    
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: 'Attachment has been deleted.',
+                        icon: 'success',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                } else {
+                    throw new Error(data.error || 'Failed to delete attachment');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting attachment:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'Failed to delete attachment',
+                    icon: 'error'
+                });
+            });
+        }
+    });
+}
+
+// Handle file selection for attachments
+function handleFileSelect(event) {
+    const files = event.target.files;
+    const attachmentList = document.getElementById('attachmentList');
+    
+    if (!attachmentList) return;
+    
+    // Clear list if we're not in edit mode
+    const form = document.getElementById('createTaskForm');
+    if (!form || !form.dataset.mode) {
+        attachmentList.innerHTML = '';
+    }
+    
+    Array.from(files).forEach(file => {
+        const fileSize = (file.size / 1024).toFixed(2);
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        let iconClass = getFileIcon(file.name);
+        
+        attachmentList.innerHTML += `
+            <div class="d-flex align-items-center mt-2 border rounded p-2">
+                <i class="${iconClass} fs-20 me-2"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${file.name}</div>
+                    <small class="text-muted">${fileSize} KB</small>
+                </div>
+                <button type="button" class="btn btn-ghost-danger btn-icon btn-sm" onclick="removeAttachment(this)">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
+            </div>
+        `;
+    });
+}
+
+// Remove attachment from form
+function removeAttachment(button) {
+    const attachmentDiv = button.closest('.d-flex');
+    attachmentDiv.remove();
+    
+    // Clear the file input if all attachments are removed
+    if (document.getElementById('attachmentList').children.length === 0) {
+        document.getElementById('taskAttachments').value = '';
+    }
+}
+
+// Get file icon based on extension
+function getFileIcon(fileName) {
+    if (!fileName) return 'ri-file-text-line';
+    
+    const ext = fileName.split('.').pop().toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
+        return 'ri-image-line';
+    } else if (ext === 'pdf') {
+        return 'ri-file-pdf-line';
+    } else if (['doc', 'docx'].includes(ext)) {
+        return 'ri-file-word-line';
+    } else if (['xls', 'xlsx'].includes(ext)) {
+        return 'ri-file-excel-line';
+    } else if (['ppt', 'pptx'].includes(ext)) {
+        return 'ri-file-ppt-line';
+    } else if (['zip', 'rar', 'tar', 'gz'].includes(ext)) {
+        return 'ri-file-zip-line';
+    } else {
+        return 'ri-file-text-line';
+    }
+}
+
+
+</script>
+
+<!-- filter -->
+<script>
+    /**
+ * Comprehensive Task Filtering System
+ * This script properly handles all filters including:
+ * 1. "My Tasks" vs "My Connected Tasks" separation
+ * 2. Text search
+ * 3. Date range filter
+ * 4. Status filter with dynamic status loading
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Starting comprehensive filter system setup...");
+    
+    // Get filter elements
+    const viewFilter = document.getElementById('idTaskView');
+    const searchInput = document.querySelector('.search');
+    const dateRangePicker = document.getElementById('demo-datepicker');
+    const statusFilter = document.getElementById('idStatus');
+    
+    if (!viewFilter) {
+        console.error("View filter element not found");
+        return;
+    }
+    
+    // Store the current user ID for comparison
+    const currentUserId = '{{ current_user.id }}';
+    console.log(`Current user ID: ${currentUserId}`);
+
+    // First, load status options into the status dropdown
+    loadTaskStatuses();
+    
+    /**
+     * Main filtering function that coordinates all filters
+     * This completely replaces the existing SearchData function
+     */
+    window.SearchData = function() {
+        console.log("Comprehensive filter function called");
+        
+        // Step 1: Make all rows visible first
+        const allRows = resetRowVisibility();
+        console.log(`Reset visibility for ${allRows.length} rows`);
+        
+        // Step 2: Apply combined filtering
+        applyAllFilters(allRows);
+    };
+    
+    /**
+     * Reset all rows to visible state
+     * This is critical to ensure filters work correctly
+     */
+    function resetRowVisibility() {
+        const allRows = document.querySelectorAll('#tasksTable tbody tr');
+        allRows.forEach(row => {
+            row.style.display = '';
+        });
+        return allRows;
+    }
+    
+    /**
+     * Load task statuses from the table into the status dropdown
+     */
+    function loadTaskStatuses() {
+        // Keep only first two options (blank and "All")
+        while (statusFilter && statusFilter.options.length > 2) {
+            statusFilter.remove(2);
+        }
+        
+        // Extract unique statuses from the table
+        const statusSet = new Set();
+        document.querySelectorAll('#tasksTable .status .badge').forEach(badge => {
+            // Extract the status text (ignoring any badges for connected tasks)
+            const statusText = badge.textContent.trim();
+            if (statusText && statusText !== 'Not Set' && !badge.classList.contains('bg-info')) {
+                statusSet.add(statusText);
+            }
+        });
+        
+        // Add unique statuses to dropdown
+        if (statusFilter) {
+            statusSet.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status.toLowerCase();
+                option.textContent = status;
+                statusFilter.appendChild(option);
+            });
+            
+            console.log(`Added ${statusSet.size} statuses to dropdown`);
+        }
+    }
+    
+    /**
+     * Apply all filters in the correct sequence
+     */
+    function applyAllFilters(rows) {
+        // Get filter values
+        const viewMode = viewFilter.value;
+        const searchText = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const dateRange = dateRangePicker ? dateRangePicker.value : '';
+        const statusValue = statusFilter ? statusFilter.value.toLowerCase() : '';
+        
+        console.log(`Applying filters - View: ${viewMode}, Search: "${searchText}", Date Range: ${dateRange}, Status: ${statusValue}`);
+        
+        // Parse date range if provided
+        let startDate = null;
+        let endDate = null;
+        
+        if (dateRange) {
+            const dateValues = parseDateRange(dateRange);
+            startDate = dateValues.startDate;
+            endDate = dateValues.endDate;
+        }
+        
+        // Track statistics
+        let hiddenCount = 0;
+        let visibleCount = 0;
+        let myTasksCount = 0;
+        let connectedTasksCount = 0;
+        
+        // Apply all filters to each row
+        rows.forEach(row => {
+            // Extract row data
+            const taskId = row.getAttribute('data-task-id');
+            const assignedTo = row.getAttribute('data-assigned-to');
+            const hasVisibility = row.getAttribute('data-has-visibility') === 'true';
+            const isDone = row.getAttribute('data-is-done') === '1';
+            const isReviewed = row.getAttribute('data-is-reviewed') === '1';
+
+            // Check if user is a reviewer for this task
+            const isReviewer = row.hasAttribute('data-is-reviewer') && 
+                            row.getAttribute('data-is-reviewer') === 'true';
+
+            // View filter - My Tasks vs My Connected Tasks
+            const isMyTask = assignedTo === currentUserId;
+            const isConnectedTask = hasVisibility && assignedTo !== currentUserId; // Only count connected if NOT assigned
+            let passesViewFilter = false;
+            
+            const createdBy = row.getAttribute('data-created-by');
+            const isCreator = createdBy === currentUserId;
+
+
+            // Change needed around line 731-742 where the view filter is applied
+            if (viewMode === 'my_tasks') {
+                // Previously only checking if assigned to user
+                // Need to modify to include tasks pending review for reviewers
+                passesViewFilter = isMyTask || isCreator || (isReviewer && isDone && !isReviewed);
+                if (isMyTask) myTasksCount++;
+                if (isReviewer && isDone && !isReviewed) myTasksCount++;
+            } else if (viewMode === 'connected_tasks') {
+                // For reviewers: only show tasks that have been reviewed in connected tasks
+                // For non-reviewers: show all connected tasks
+                if (isReviewer) {
+                    passesViewFilter = (isConnectedTask && !(isDone && !isReviewed)) || 
+                                    (isDone && isReviewed);
+                } else {
+                    passesViewFilter = isConnectedTask;
+                }
+                
+                if (passesViewFilter) connectedTasksCount++;
+            }
+            
+            // Text search filter
+            let passesSearchFilter = true;
+            if (searchText) {
+                const rowText = row.textContent.toLowerCase();
+                passesSearchFilter = rowText.includes(searchText);
+            }
+            
+            // Status filter
+            let passesStatusFilter = true;
+            if (statusValue && statusValue !== 'all') {
+                const statusCell = row.querySelector('.status');
+                const statusBadge = statusCell ? statusCell.querySelector('.badge:not(.bg-info)') : null;
+                let statusText = '';
+                
+                if (statusBadge) {
+                    statusText = statusBadge.textContent.trim().toLowerCase();
+                } else if (statusCell) {
+                    statusText = statusCell.textContent.trim().toLowerCase();
+                }
+                
+                passesStatusFilter = statusText.includes(statusValue);
+            }
+            
+            // Date filter
+            let passesDateFilter = true;
+            if (startDate && endDate) {
+                const dueDateCell = row.querySelector('.due_date');
+                if (dueDateCell) {
+                    const dueDateText = dueDateCell.textContent.trim();
+                    if (dueDateText && dueDateText !== '-') {
+                        const dueDate = parseDate(dueDateText);
+                        passesDateFilter = dueDate && dueDate >= startDate && dueDate <= endDate;
+                    } else {
+                        // No due date, doesn't pass date filter
+                        passesDateFilter = false;
+                    }
+                }
+            }
+            
+            // Combine all filters (AND logic)
+            const isVisible = passesViewFilter && passesSearchFilter && 
+                              passesStatusFilter && passesDateFilter;
+            
+            // Apply visibility
+            row.style.display = isVisible ? '' : 'none';
+            
+            // Count for statistics
+            if (isVisible) {
+                visibleCount++;
+            } else {
+                hiddenCount++;
+            }
+        });
+        
+        console.log(`Filter results: ${visibleCount} shown, ${hiddenCount} hidden`);
+        console.log(`My tasks: ${myTasksCount}, Connected tasks: ${connectedTasksCount}`);
+        
+        // Update stats and handle no results
+        updateTaskCounters(rows);
+        toggleNoResultsMessage(visibleCount === 0);
+    }
+    
+    /**
+     * Helper function to update task counters in UI
+     */
+    function updateTaskCounters(allRows) {
+        const visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none');
+        
+        // Count total, pending and completed
+        const totalCount = visibleRows.length;
+        const pendingCount = visibleRows.filter(row => row.getAttribute('data-is-done') !== '1').length;
+        const completedCount = visibleRows.filter(row => row.getAttribute('data-is-done') === '1').length;
+        
+        // Update counter elements
+        const counterElements = document.querySelectorAll('.counter-value');
+        if (counterElements.length >= 3) {
+            counterElements[0].setAttribute('data-target', totalCount);
+            counterElements[0].textContent = totalCount;
+            
+            counterElements[1].setAttribute('data-target', pendingCount);
+            counterElements[1].textContent = pendingCount;
+            
+            counterElements[2].setAttribute('data-target', completedCount);
+            counterElements[2].textContent = completedCount;
+        }
+    }
+    
+    /**
+     * Helper function to toggle no results message
+     */
+    function toggleNoResultsMessage(show) {
+        const noResultDiv = document.querySelector('.noresult');
+        if (noResultDiv) {
+            noResultDiv.style.display = show ? 'block' : 'none';
+        }
+    }
+    
+    /**
+     * Helper function to parse date strings from the table
+     */
+    function parseDate(dateStr) {
+        if (!dateStr || dateStr === '-') return null;
+        
+        try {
+            // Format: "15 Feb, 2023"
+            const formatRegex = /(\d+)\s+([A-Za-z]+),?\s+(\d{4})/;
+            const match = dateStr.match(formatRegex);
+            
+            if (match) {
+                const day = match[1].padStart(2, '0');
+                const month = getMonthNumber(match[2]);
+                const year = match[3];
+                return new Date(`${year}-${month}-${day}`);
+            }
+            
+            // Try direct parsing as fallback
+            const directDate = new Date(dateStr);
+            if (!isNaN(directDate.getTime())) {
+                return directDate;
+            }
+        } catch (error) {
+            console.error(`Error parsing date: ${dateStr}`, error);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Helper function to parse a date range string
+     */
+    function parseDateRange(dateRange) {
+        let startDate = null;
+        let endDate = null;
+        
+        if (dateRange.includes('to')) {
+            // Format: "15 Feb, 2023 to 20 Feb, 2023"
+            const dates = dateRange.split('to').map(d => d.trim());
+            if (dates.length === 2) {
+                startDate = parseDate(dates[0]);
+                endDate = parseDate(dates[1]);
+                
+                // Set end date to end of day for inclusive comparison
+                if (endDate) {
+                    endDate = new Date(endDate);
+                    endDate.setHours(23, 59, 59, 999);
+                }
+            }
+        } else {
+            // Single date
+            startDate = parseDate(dateRange);
+            endDate = parseDate(dateRange);
+            
+            // Set end date to end of day for inclusive comparison
+            if (endDate) {
+                endDate = new Date(endDate);
+                endDate.setHours(23, 59, 59, 999);
+            }
+        }
+        
+        return { startDate, endDate };
+    }
+    
+    /**
+     * Helper function to convert month name to number
+     */
+    function getMonthNumber(monthName) {
+        const months = {
+            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 
+            'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+            'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+        };
+        return months[monthName.substring(0, 3)] || '01';
+    }
+    
+    // Set up event listeners for all filter controls
+    // Update URL when view filter changes
+    if (viewFilter) {
+        viewFilter.addEventListener('change', function() {
+            console.log(`View filter changed to: ${this.value}`);
+            
+            // Update URL with the new filter value without reloading the page
+            const url = new URL(window.location.href);
+            url.searchParams.set('taskView', this.value);
+            
+            // Replace current history state without reloading
+            window.history.replaceState({}, '', url.toString());
+            console.log(`Updated URL to: ${url.toString()}`);
+            
+            // Then apply filters
+            window.SearchData();
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            window.SearchData();
+        });
+    }
+    
+    if (dateRangePicker) {
+        // Initialize the flatpickr date picker if it isn't already
+        if (typeof flatpickr === 'function' && !dateRangePicker._flatpickr) {
+            flatpickr(dateRangePicker, {
+                mode: "range",
+                dateFormat: "d M, Y",
+                clear: true,
+                onChange: function() {
+                    window.SearchData();
+                }
+            });
+        }
+
+        dateRangePicker.addEventListener('change', function() {
+            window.SearchData();
+        });
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            window.SearchData();
+        });
+    }
+    
+    // Apply initial filtering after a short delay to ensure the page is fully loaded
+    setTimeout(window.SearchData, 500);
+});
+
+// Simple filter parameter handler
+document.addEventListener('DOMContentLoaded', function() {
+  // Check URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const taskViewParam = urlParams.get('taskView');
+  
+  if (taskViewParam) {
+    // If there's a taskView parameter in the URL, update the filter dropdown
+    const taskViewSelect = document.getElementById('idTaskView');
+    if (taskViewSelect && (taskViewParam === 'my_tasks' || taskViewParam === 'connected_tasks')) {
+      taskViewSelect.value = taskViewParam;
+      
+      // Apply filter (using the existing SearchData function)
+      if (typeof SearchData === 'function') {
+        SearchData();
+      }
+    }
+  }
+});
+
+</script>
+    
+<!-- 4. Add a small CSS to highlight connected tasks (optional) -->
+<style>
+/* Connected task styling */
+tr[data-has-visibility="true"]:not([data-assigned-to="{{ current_user.id }}"]) {
+    background-color: rgba(0, 149, 255, 0.01); /* Light blue background */
+}
+
+/* Badge for connected tasks */
+.connected-badge {
+    font-size: 10px;
+    padding: 2px 5px;
+    margin-left: 5px;
+    background-color: #0d6efd;
+    color: white;
+}
+</style>
+
+
+
+
+    
+{% endblock extra_js %}

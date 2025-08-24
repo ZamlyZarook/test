@@ -1,0 +1,999 @@
+{% extends "partials/base.html" %}
+{% block title %}Projects{% endblock title %}
+
+
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Projects</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Tasks</a></li>
+                                <li class="breadcrumb-item active">Projects</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h5 class="card-title mb-0 flex-grow-1">Projects</h5>
+                                <div class="flex-shrink-0">
+                                    <button class="btn btn-danger add-btn" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                                        <i class="ri-add-line align-bottom me-1"></i> Create Project
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-centered align-middle table-nowrap mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Project Name</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Key</th>
+                                            <th scope="col">Lead</th>
+                                            <th scope="col">Team</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Due Date</th>
+                                            <th scope="col"></th>
+                                            <th scope="col" style="width: 120px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for project in projects %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0 me-2">
+                                                        {% if project.project_type == 'development' %}
+                                                        <i class="ri-code-box-line fs-18 text-primary"></i>
+                                                        {% else %}
+                                                        <i class="ri-task-line fs-18 text-success"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <a href="{{ url_for('tasks.project_detail', project_id=project.id) }}" 
+                                                           class="fw-medium link-primary">
+                                                            {{ project.name }}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if project.project_type == 'development' %}
+                                                <span class="badge bg-primary-subtle text-primary">Development</span>
+                                                {% else %}
+                                                <span class="badge bg-success-subtle text-success">General</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ project.key }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if project.lead.profile_picture_base64 %}
+                                                        <img src="data:image/jpeg;base64,{{ project.lead.profile_picture_base64 }}" 
+                                                             alt="{{ project.lead.name }}" class="rounded-circle avatar-xxs">
+                                                    {% else %}
+                                                        <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                             alt="{{ project.lead.name }}" class="rounded-circle avatar-xxs">
+                                                    {% endif %}
+                                                    <span class="ms-2">{{ project.lead.name }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if project.team %}
+                                                <div class="avatar-group">
+                                                    {% for member in project.team[:3] %}
+                                                    <a href="javascript: void(0);" class="avatar-group-item" 
+                                                       data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                       title="{{ member.name }}">
+                                                        {% if member.profile_picture_base64 %}
+                                                            <img src="data:image/jpeg;base64,{{ member.profile_picture_base64 }}" 
+                                                                 alt="{{ member.name }}" class="rounded-circle avatar-xxs">
+                                                        {% else %}
+                                                            <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') }}" 
+                                                                 alt="{{ member.name }}" class="rounded-circle avatar-xxs">
+                                                        {% endif %}
+                                                    </a>
+                                                    {% endfor %}
+                                                    {% if project.team|length > 3 %}
+                                                    <a href="javascript: void(0);" class="avatar-group-item" 
+                                                       data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                       title="More">
+                                                        <div class="avatar-xxs">
+                                                            <span class="avatar-title rounded-circle">{{ project.team|length - 3 }}+</span>
+                                                        </div>
+                                                    </a>
+                                                    {% endif %}
+                                                </div>
+                                                {% else %}
+                                                <div class="text-muted">No team members</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% set status_colors = {
+                                                    'Planning': 'secondary',
+                                                    'Active': 'success',
+                                                    'OnHold': 'warning',
+                                                    'Completed': 'info'
+                                                } %}
+                                                <span class="badge bg-{{ status_colors[project.status] }}">{{ project.status }}</span>
+                                            </td>
+                                            <td>{{ project.end_date.strftime('%d %b, %Y') if project.end_date }}</td>
+                                            <td>
+                                                {% if project.project_type == 'development' %}
+                                                    <a href="{{ url_for('tasks.project_issues', project_id=project.id) }}" 
+                                                       class="btn btn-sm btn-info"
+                                                       data-bs-toggle="tooltip" 
+                                                       data-bs-placement="top" 
+                                                       title="Issues">
+                                                        <i class="ri-bug-line"></i>
+                                                    </a>
+                                                    {% else %}
+                                                    <a href="{{ url_for('tasks.project_tasks', project_id=project.id) }}" 
+                                                       class="btn btn-sm btn-warning"
+                                                       data-bs-toggle="tooltip" 
+                                                       data-bs-placement="top" 
+                                                       title="Tasks">
+                                                        <i class="ri-task-line"></i>
+                                                    </a>
+                                                    {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                        <i class="ri-more-fill align-middle"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ url_for('tasks.project_detail', project_id=project.id) }}">
+                                                                <i class="ri-eye-line align-bottom me-2 text-primary"></i> View
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ url_for('tasks.project_edit', project_id=project.id) }}">
+                                                                <i class="ri-pencil-line align-bottom me-2 text-success"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item delete-project" data-id="{{ project.id }}">
+                                                                <i class="ri-delete-bin-line align-bottom me-2 text-danger"></i> Delete
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                            
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "partials/footer.html" %}
+</div>
+
+<!-- Create Project Modal -->
+<div class="modal fade" id="createProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header p-3 bg-soft-info">
+                <h5 class="modal-title" id="createProjectModalLabel">Create Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createProjectForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Project Type Selection -->
+                        <div class="col-lg-12">
+                            <label for="projectType" class="form-label">Project Type</label>
+                            <select class="form-select" id="projectType" name="project_type" required onchange="toggleProjectFields()">
+                                <option value="">Select Project Type</option>
+                                <option value="development">Development Project</option>
+                                <option value="general">General Project</option>
+                            </select>
+                        </div>
+                
+                        <!-- Common Fields -->
+                        <div class="col-lg-12">
+                            <label for="projectName" class="form-label">Project Name</label>
+                            <input type="text" class="form-control" id="projectName" name="name" required>
+                        </div>
+                
+                        <!-- Company Selection (for admin) -->
+                        <div class="col-lg-12">
+                            {% if current_user.role.role_name == 'admin' %}
+                            <label for="company_id" class="form-label">Company</label>
+                            <select class="form-select" id="company_id" name="company_id" required onchange="loadCompanyUsers(this.value)">
+                                <option value="">Select Company</option>
+                                {% for company in companies %}
+                                <option value="{{ company.id }}">{{ company.company_name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
+                            <input type="hidden" name="company_id" value="{{ current_user.company_id }}">
+                            <label for="company_display" class="form-label">Company</label>
+                            <input type="text" class="form-control" id="company_display" value="{{ current_user.company.company_name }}" disabled>
+                            {% endif %}
+                        </div>
+                
+                        <!-- Development Project Fields -->
+                        <div id="developmentFields" style="display: none;">
+                            <!-- <div class="col-lg-12">
+                                <label for="projectKey" class="form-label">Project Key</label>
+                                <input type="text" class="form-control" id="projectKey" name="key">
+                            </div> -->
+                        </div>
+                
+                        <!-- General Project Fields -->
+                        <div id="generalFields" style="display: none;">
+                            <!-- Update to the category creation in the modal -->
+
+                            <div class="col-lg-12">
+                                <label for="categories" class="form-label">Task Categories</label>
+                                <div id="categoryList" class="mb-2">
+                                    <!-- Categories will be added here dynamically -->
+                                </div>
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="newCategory" placeholder="New category name">
+                                    <input type="color" class="form-control form-control-color" id="categoryColor" value="#563d7c" title="Choose category color">
+                                    <input type="number" class="form-control" id="categorySlaHours" placeholder="SLA Hours" min="1" max="168">
+                                    <select class="form-control" id="categoryLead">
+                                        <option value="">Select Lead</option>
+                                        <!-- Team members will be populated dynamically -->
+                                    </select>
+                                    <div class="input-group-text">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="categoryAttachmentRequired">
+                                            <label class="form-check-label" for="categoryAttachmentRequired">Attachment Required</label>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-success" onclick="addCategory()">
+                                        <i class="ri-add-line align-bottom"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            
+                            <div class="col-lg-12 mt-3">
+                                <label for="projectStatuses" class="form-label">Project Statuses</label>
+                                <select id="projectStatuses" class="form-control" multiple="multiple">
+                                    {% for status in project_statuses %}
+                                    <option value="{{ status.id }}">{{ status.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Selected statuses will be available for tasks in this project</small>
+                            </div>
+
+                            <!-- Add this after the project statuses section in generalFields -->
+                            <div class="col-lg-12 mt-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allowDueDateAssignment" name="allow_due_date_assignment">
+                                    <label class="form-check-label" for="allowDueDateAssignment">
+                                        Allow Task Creator to assign Due Date
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        When enabled, task creators can set their own due dates. Otherwise, due dates will be calculated based on category SLA.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                
+                        <!-- Common Fields Continued -->
+                        <div class="col-lg-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+
+                        
+                
+                        <div class="col-lg-6">
+                            <label for="leadId" class="form-label">Project Lead</label>
+                            <select class="form-select" id="leadId" name="lead_id" required>
+                                <option value="">Select Lead</option>
+                            </select>
+                        </div>
+                
+                        <div class="col-lg-6">
+                            <label for="status1" class="form-label">Status</label>
+                            <select class="form-select" id="status1" name="status" required>
+                                <option value="Planning">Planning</option>
+                                <option value="Active">Active</option>
+                                <option value="OnHold">On Hold</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                
+                        <div class="col-lg-6">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date">
+                        </div>
+                
+                        <div class="col-lg-6">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date">
+                        </div>
+                
+                        <div class="col-lg-12">
+                            <label for="team_members" class="form-label">Team Members / Participants</label>
+                            <select class="form-control" id="team_members" name="team_members" multiple>
+                                <!-- Team members will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                            <!-- Category Edit Modal -->
+                            <!-- Category Edit Modal - change to a separate form -->
+                            <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Category</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <!-- Make this a separate form with its own ID -->
+                                        <form id="editCategoryForm">
+                                            <div class="modal-body">
+                                                <input type="hidden" id="editCategoryIndex" name="category_index">
+                                                <div class="mb-3">
+                                                    <label for="editCategoryName" class="form-label">Category Name</label>
+                                                    <input type="text" class="form-control" id="editCategoryName" name="category_name" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editCategoryColor" class="form-label">Color</label>
+                                                    <input type="color" class="form-control form-control-color w-100" id="editCategoryColor" name="category_color">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editCategorySlaHours" class="form-label">SLA Hours</label>
+                                                    <input type="number" class="form-control" id="editCategorySlaHours" name="sla_hours" min="1" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="editCategoryLead" class="form-label">Category Lead</label>
+                                                    <select class="form-control" id="editCategoryLead" name="category_lead">
+                                                        <option value="">Select Lead</option>
+                                                        <!-- Will be populated dynamically -->
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="editCategoryAttachmentRequired" name="attachment_required">
+                                                        <label class="form-check-label" for="editCategoryAttachmentRequired">Attachment Required</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="button" class="btn btn-primary" onclick="saveEditedCategory()">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.0/dist/sweetalert2.all.min.js"></script>
+
+<script>
+    // Global variables
+    let projectCategories = [];
+    let teamMembersChoices = null;
+
+
+    // Function to initialize Choices.js on an element
+    function initializeChoices(element) {
+        return new Choices(element, {
+            removeItemButton: true,
+            classNames: {
+                containerOuter: 'choices select-choices',
+            },
+            placeholder: true,
+            placeholderValue: 'Select team members'
+        });
+    }
+
+    // Function to initialize status selection
+    function initializeStatusSelection() {
+        const statusSelect = document.getElementById('projectStatuses');
+        return new Choices(statusSelect, {
+            removeItemButton: true,
+            classNames: {
+                containerOuter: 'choices select-choices',
+            },
+            placeholder: true,
+            placeholderValue: 'Select project statuses',
+            renderChoiceLimit: -1
+        });
+    }
+
+    // Function to clear user selects
+    function clearUserSelects() {
+        const leadSelect = document.getElementById('leadId');
+        leadSelect.innerHTML = '<option value="">Select Lead</option>';
+        
+        const teamSelect = document.getElementById('team_members');
+        if (teamSelect._choices) {
+            teamSelect._choices.destroy();
+        }
+        teamSelect.innerHTML = '';
+        
+        initializeChoices(teamSelect);
+    }
+
+    // Function to update user selects with new data
+    function updateUserSelects(users) {
+        // 1. Update Project Lead dropdown
+        const leadSelect = document.getElementById('leadId');
+        leadSelect.innerHTML = '<option value="">Select Lead</option>';
+        users.forEach(user => {
+            leadSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+        });
+        
+        // 2. Update Team Members dropdown
+        const teamSelect = document.getElementById('team_members');
+        
+        // Store current selected values before resetting
+        const currentValues = teamMembersChoices ? teamMembersChoices.getValue(true) : [];
+        
+        // Clear and repopulate options
+        teamSelect.innerHTML = '';
+        users.forEach(user => {
+            teamSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+        });
+        
+        // Reinitialize Choices
+        initializeChoices(teamSelect);
+        
+        // Restore selected values if they exist in new options
+        if (currentValues.length > 0) {
+            const validValues = currentValues.filter(val => 
+                users.some(user => user.id.toString() === val)
+            );
+            if (validValues.length > 0) {
+                teamMembersChoices.setValue(validValues);
+            }
+        }
+        
+        // 3. Update Category Lead dropdown (NEW - This was missing)
+        const categoryLeadSelect = document.getElementById('categoryLead');
+        if (categoryLeadSelect) {
+            categoryLeadSelect.innerHTML = '<option value="">Select Lead</option>';
+            users.forEach(user => {
+                categoryLeadSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+            });
+        }
+        
+        // 4. Update Edit Category Lead dropdown (for the modal)
+        const editCategoryLead = document.getElementById('editCategoryLead');
+        if (editCategoryLead) {
+            editCategoryLead.innerHTML = '<option value="">Select Lead</option>';
+            users.forEach(user => {
+                editCategoryLead.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+            });
+        }
+    }
+
+
+    // Function to load company users
+    function loadCompanyUsers(companyId) {
+        if (!companyId) {
+            clearUserSelects();
+            return;
+        }
+        
+        // Show loading state
+        const leadSelect = document.getElementById('leadId');
+        leadSelect.innerHTML = '<option value="">Loading users...</option>';
+        
+        fetch(`/tasks/api/companies/${companyId}/users`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.users) {
+                    updateUserSelects(data.users);
+                } else if (data.error) {
+                    throw new Error(data.error);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading users:', error);
+                
+                // Reset dropdowns with error message
+                const leadSelect = document.getElementById('leadId');
+                leadSelect.innerHTML = '<option value="">Error loading users</option>';
+                
+                const teamSelect = document.getElementById('team_members');
+                if (teamSelect._choices) {
+                    teamSelect._choices.clearStore();
+                }
+                
+                // Show more detailed error to user if needed
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Loading Users',
+                    text: 'Could not load users for the selected company. Please try again.',
+                    footer: error.message
+                });
+            });
+    }
+
+        
+    function syncAllUserDropdowns(companyId) {
+        if (!companyId) {
+            // Clear all dropdowns if no company selected
+            const userDropdowns = [
+                'leadId', 
+                'team_members', 
+                'categoryLead', 
+                'editCategoryLead'
+            ];
+            
+            userDropdowns.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '<option value="">Select Lead</option>';
+                    if (id === 'team_members' && teamMembersChoices) {
+                        teamMembersChoices.clearStore();
+                    }
+                }
+            });
+            return;
+        }
+        
+        // Load users and update all dropdowns
+        loadCompanyUsers(companyId);
+    }
+
+    // Toggle fields based on project type
+    function toggleProjectFields() {
+        const projectType = document.getElementById('projectType').value;
+        const developmentFields = document.getElementById('developmentFields');
+        const generalFields = document.getElementById('generalFields');
+        
+        if (projectType === 'development') {
+            developmentFields.style.display = 'block';
+            generalFields.style.display = 'none';
+            document.getElementById('projectKey').required = true;
+        } else if (projectType === 'general') {
+            developmentFields.style.display = 'none';
+            generalFields.style.display = 'block';
+            document.getElementById('projectKey').required = false;
+        } else {
+            developmentFields.style.display = 'none';
+            generalFields.style.display = 'none';
+        }
+    }
+
+    // Get selected statuses IDs
+    function getSelectedStatusIds() {
+        const statusSelect = document.getElementById('projectStatuses');
+        if (!statusSelect) return [];
+        
+        return Array.from(statusSelect.selectedOptions || [])
+            .map(option => parseInt(option.value));
+    }
+
+    // Add a new category
+    function addCategory() {
+        const categoryName = document.getElementById('newCategory').value.trim();
+        const categoryColor = document.getElementById('categoryColor').value;
+        const categorySlaHours = document.getElementById('categorySlaHours').value;
+        const categoryLeadId = document.getElementById('categoryLead').value;
+        const attachmentRequired = document.getElementById('categoryAttachmentRequired').checked;
+        
+        if (!categoryName) {
+            alert('Please enter a category name');
+            return;
+        }
+
+        if (!categorySlaHours || isNaN(categorySlaHours) || categorySlaHours < 1) {
+            alert('Please enter valid SLA hours (minimum 1)');
+            return;
+        }
+        
+        // Check for duplicate names
+        if (projectCategories.some(cat => cat.name.toLowerCase() === categoryName.toLowerCase())) {
+            alert('A category with this name already exists');
+            return;
+        }
+        
+        projectCategories.push({
+            name: categoryName,
+            color: categoryColor,
+            sla_hours: parseInt(categorySlaHours, 10),
+            category_lead_id: categoryLeadId || null,
+            attachment_required: attachmentRequired
+        });
+        
+        updateCategoryList();
+        
+        // Clear inputs
+        document.getElementById('newCategory').value = '';
+        document.getElementById('categorySlaHours').value = '';
+        document.getElementById('categoryLead').value = '';
+        document.getElementById('categoryAttachmentRequired').checked = false;
+    }
+
+    // Update category list display
+    function updateCategoryList() {
+        const categoryList = document.getElementById('categoryList');
+        if (!categoryList) return;
+
+        categoryList.innerHTML = projectCategories.map((category, index) => {
+            // Find lead name if available
+            const leadId = category.category_lead_id;
+            let leadName = 'None';
+            if (leadId) {
+                const leadSelect = document.getElementById('categoryLead');
+                const leadOption = leadSelect ? Array.from(leadSelect.options).find(opt => opt.value === leadId) : null;
+                leadName = leadOption ? leadOption.text : 'None';
+            }
+            
+            return `
+                <div class="badge bg-light text-dark me-2 mb-2 p-2">
+                    <span class="d-inline-block rounded-circle me-1" 
+                        style="width: 10px; height: 10px; background-color: ${category.color}">
+                    </span>
+                    ${category.name}
+                    <span class="badge bg-info ms-1">
+                        Lead: ${leadName}
+                    </span>
+                    <span class="badge bg-secondary ms-1">
+                        SLA: ${category.sla_hours}h
+                    </span>
+                    <span class="badge ${category.attachment_required ? 'bg-warning' : 'bg-light text-muted'} ms-1">
+                        ${category.attachment_required ? 'Attachment Required' : 'Attachment Optional'}
+                    </span>
+                    <button type="button" class="btn btn-link btn-sm text-primary p-0 ms-1" 
+                            onclick="editCategory(${index})">
+                        <i class="ri-edit-line"></i>
+                    </button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-1" 
+                            onclick="removeCategory(${index})">
+                        <i class="ri-close-line"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Remove a category
+    function removeCategory(index) {
+        projectCategories.splice(index, 1);
+        updateCategoryList();
+    }
+
+    // Open edit category modal
+    function editCategory(index) {
+        const category = projectCategories[index];
+        
+        // Populate the edit form
+        document.getElementById('editCategoryIndex').value = index;
+        document.getElementById('editCategoryName').value = category.name;
+        document.getElementById('editCategoryColor').value = category.color;
+        document.getElementById('editCategorySlaHours').value = category.sla_hours;
+        document.getElementById('editCategoryAttachmentRequired').checked = category.attachment_required;
+        
+        // Populate the lead dropdown
+        const editCategoryLead = document.getElementById('editCategoryLead');
+        editCategoryLead.innerHTML = '<option value="">Select Lead</option>';
+        
+        // Clone options from the main lead dropdown
+        const categoryLead = document.getElementById('categoryLead');
+        if (categoryLead) {
+            Array.from(categoryLead.options).forEach(option => {
+                if (option.value) { // Skip the empty option
+                    const newOption = document.createElement('option');
+                    newOption.value = option.value;
+                    newOption.textContent = option.textContent;
+                    editCategoryLead.appendChild(newOption);
+                }
+            });
+        }
+        
+        // Set the selected lead
+        if (category.category_lead_id) {
+            editCategoryLead.value = category.category_lead_id;
+        }
+        
+        // Show the modal
+        const editCategoryModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+        editCategoryModal.show();
+    }
+
+    // Save edited category
+    function saveEditedCategory() {
+        const index = parseInt(document.getElementById('editCategoryIndex').value);
+        if (isNaN(index) || index < 0 || index >= projectCategories.length) {
+            alert('Invalid category index');
+            return;
+        }
+        
+        const categoryName = document.getElementById('editCategoryName').value.trim();
+        const categoryColor = document.getElementById('editCategoryColor').value;
+        const categorySlaHours = document.getElementById('editCategorySlaHours').value;
+        const categoryLeadId = document.getElementById('editCategoryLead').value;
+        const attachmentRequired = document.getElementById('editCategoryAttachmentRequired').checked;
+        
+        if (!categoryName) {
+            alert('Please enter a category name');
+            return;
+        }
+
+        if (!categorySlaHours || isNaN(categorySlaHours) || categorySlaHours < 1) {
+            alert('Please enter valid SLA hours (minimum 1)');
+            return;
+        }
+        
+        // Check for duplicate names (excluding the current category)
+        if (projectCategories.some((cat, i) => i !== index && cat.name.toLowerCase() === categoryName.toLowerCase())) {
+            alert('A category with this name already exists');
+            return;
+        }
+        
+        // Update the category
+        projectCategories[index] = {
+            ...projectCategories[index],
+            name: categoryName,
+            color: categoryColor,
+            sla_hours: parseInt(categorySlaHours, 10),
+            category_lead_id: categoryLeadId || null,
+            attachment_required: attachmentRequired
+        };
+        
+        // Update the display
+        updateCategoryList();
+        
+        // Close the modal
+        bootstrap.Modal.getInstance(document.getElementById('editCategoryModal')).hide();
+    }
+
+    // Handle project form submission
+    function handleProjectSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const teamMembers = [];
+
+        const choicesInstance = document.getElementById('team_members')._choices;
+        if (choicesInstance) {
+            teamMembers.push(...choicesInstance.getValue(true));
+        }
+
+        const data = {
+            name: formData.get('name'),
+            project_type: formData.get('project_type'),
+            description: formData.get('description'),
+            company_id: formData.get('company_id'),
+            lead_id: formData.get('lead_id'),
+            status: formData.get('status'),
+            start_date: formData.get('start_date'),
+            end_date: formData.get('end_date'),
+            team_members: Array.from(document.getElementById('team_members').selectedOptions)
+                .map(option => option.value),
+            allow_due_date_assignment: document.getElementById('allowDueDateAssignment').checked
+
+        };
+
+        // Add categories for general project type
+        if (formData.get('project_type') === 'general') {
+            // Make sure projectCategories is properly populated from the category form inputs
+            data.categories = projectCategories.map(category => ({
+                name: category.name,
+                color: category.color,
+                category_lead_id: category.category_lead_id,
+                sla_hours: category.sla_hours
+            }));
+            
+            // Add selected project statuses - just pass the IDs
+            data.project_status_ids = getSelectedStatusIds();
+        }
+
+        // Debug log
+        console.log('Submitting project data:', data);
+
+        fetch('/tasks/api/projects', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to create project');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while creating the project');
+        });
+    }
+        
+// Handle project deletion with SweetAlert
+function handleProjectDelete(projectId) {
+    // Find the project name from the DOM
+    const projectRow = document.querySelector(`button.delete-project[data-id="${projectId}"]`).closest('tr');
+    const projectName = projectRow ? projectRow.querySelector('.link-primary').textContent.trim() : 'this project';
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        html: `You are about to delete project <strong>${projectName}</strong>.<br><br>
+               <span class="text-danger">This will delete all associated tasks, issues, and project data.</span><br>
+               This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            Swal.fire({
+                title: 'Deleting project...',
+                html: 'Please wait while we delete the project and all associated data.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Send delete request
+            fetch(`/tasks/api/projects/${projectId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: data.message || 'Project has been deleted successfully.',
+                        icon: 'success'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.error || 'Failed to delete project.',
+                        icon: 'error'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'An unexpected error occurred while deleting the project.',
+                    icon: 'error'
+                });
+            });
+        }
+    });
+}
+
+
+    // Single DOMContentLoaded event listener for all initializations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize company select
+        const companySelect = document.getElementById('company_id');
+        if (companySelect) {
+            companySelect.addEventListener('change', function() {
+                syncAllUserDropdowns(this.value);
+            });
+            
+            if (companySelect.value) {
+                loadCompanyUsers(companySelect.value);
+            }
+        }
+
+        // Initialize company users for non-admin
+        const companyIdInput = document.querySelector('input[name="company_id"]');
+        if (companyIdInput && companyIdInput.value) {
+            loadCompanyUsers(companyIdInput.value);
+        }
+
+        // Initialize project type change handler
+        const projectTypeSelect = document.getElementById('projectType');
+        if (projectTypeSelect) {
+            projectTypeSelect.addEventListener('change', toggleProjectFields);
+        }
+
+        // Initialize status selection
+        const statusSelect = document.getElementById('projectStatuses');
+        if (statusSelect) {
+            initializeStatusSelection();
+        }
+
+        // Initialize form submission
+        const createProjectForm = document.getElementById('createProjectForm');
+        if (createProjectForm) {
+            createProjectForm.addEventListener('submit', handleProjectSubmit);
+        }
+
+        // Initialize project deletion handlers
+        document.querySelectorAll('.delete-project').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleProjectDelete(this.dataset.id);
+            });
+        });
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize modal reset
+        const createProjectModal = document.getElementById('createProjectModal');
+        if (createProjectModal) {
+            createProjectModal.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('createProjectForm').reset();
+                projectCategories = [];
+                updateCategoryList();
+                toggleProjectFields();
+                
+                // Reset status selection if it exists
+                const statusSelect = document.getElementById('projectStatuses');
+                if (statusSelect && statusSelect._choices) {
+                    statusSelect._choices.removeActiveItems();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

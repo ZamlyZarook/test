@@ -1,0 +1,137 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{{ title }}</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Masters</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('masters.demurrage_reasons') }}">Demurrage Reasons</a></li>
+                                <li class="breadcrumb-item active">{{ title }}</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title mb-0">{{ title }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" novalidate>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label for="reason_name" class="form-label">Reason Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="reason_name" name="reason_name" 
+                                                   value="{{ reason.reason_name if reason else '' }}" 
+                                                   placeholder="Enter reason name" required>
+                                            <div class="invalid-feedback">
+                                                Please provide a reason name.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" name="description" 
+                                                      rows="3" placeholder="Enter description (optional)">{{ reason.description if reason else '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                                       {% if not reason or reason.is_active %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_active">
+                                                    Active Status
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">Active reasons will be available for selection</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <a href="{{ url_for('masters.demurrage_reasons') }}" class="btn btn-secondary me-2">
+                                        <i class="ri-arrow-left-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>
+                                        {% if reason %}Update{% else %}Save{% endif %} Reason
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    }, false);
+})();
+
+// Auto-hide flash messages
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bootstrapAlert = new bootstrap.Alert(alert);
+            bootstrapAlert.close();
+        }, 5000);
+    });
+});
+</script>
+{% endblock extra_js %}

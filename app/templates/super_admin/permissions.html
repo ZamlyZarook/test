@@ -1,0 +1,483 @@
+{% extends "partials/base.html" %}
+{% block title %}Permissions{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Permissions</h4>
+
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="javascript: void(0);">Super Admin</a></li>
+                                    <li class="breadcrumb-item active">Permissions</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end page title -->
+
+
+                <div class="container mt-3">
+                    <h3 class="mb-4">Manage Permissions</h3>
+                    <div class="mb-3">
+                        <label for="roleDropdown" class="form-label">Select Role</label>
+                        <select id="roleDropdown" class="form-select">
+                            <option value="" disabled selected>Choose a Role</option>
+                            {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.role_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
+                    <div id="menuPermissions" style="display: none;">
+                        <h5 class="mt-4">Menus & Submenus</h5>
+                        <div class="list-group">
+                            {% for menu in menus %}
+                                <div class="list-group-item">
+                                    <div class="form-check">
+                                        <input 
+                                            type="checkbox" 
+                                            class="form-check-input menu-checkbox" 
+                                            id="menu_{{ menu.id }}" 
+                                            data-menu-id="{{ menu.id }}" 
+                                            {% if menu.can_access %} checked {% endif %}
+                                        >
+                                        <label for="menu_{{ menu.id }}" class="form-check-label">{{ menu.name }}</label>
+                                    </div>
+                
+                                    {% if not menu.children %}
+                                        <!-- Leaf Node - Add Action Checkboxes -->
+                                        <div class="ms-4">
+                                            <div class="d-flex">
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" class="form-check-input all-action-checkbox" id="all_{{ menu.id }}" data-menu-id="{{ menu.id }}">
+                                                    <label class="form-check-label" for="all_{{ menu.id }}">All</label>
+                                                </div>
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" class="form-check-input action-checkbox" id="create_{{ menu.id }}" data-menu-id="{{ menu.id }}" data-action="create">
+                                                    <label class="form-check-label" for="create_{{ menu.id }}">Create</label>
+                                                </div>
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" class="form-check-input action-checkbox" id="edit_{{ menu.id }}" data-menu-id="{{ menu.id }}" data-action="edit">
+                                                    <label class="form-check-label" for="edit_{{ menu.id }}">Edit</label>
+                                                </div>
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" class="form-check-input action-checkbox" id="delete_{{ menu.id }}" data-menu-id="{{ menu.id }}" data-action="delete">
+                                                    <label class="form-check-label" for="delete_{{ menu.id }}">Delete</label>
+                                                </div>
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" class="form-check-input action-checkbox" id="print_{{ menu.id }}" data-menu-id="{{ menu.id }}" data-action="print">
+                                                    <label class="form-check-label" for="print_{{ menu.id }}">Print</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <!-- Recursive Call for Children -->
+                                        <div class="ms-4">
+                                            {% for child in menu.children %}
+                                                <div class="form-check">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        class="form-check-input submenu-checkbox" 
+                                                        id="submenu_{{ child.id }}" 
+                                                        data-parent-id="{{ menu.id }}" 
+                                                        data-menu-id="{{ child.id }}" 
+                                                        {% if child.can_access %} checked {% endif %}
+                                                    >
+                                                    <label for="submenu_{{ child.id }}" class="form-check-label">{{ child.name }}</label>
+                                                    
+                                                    {% if not child.children %}
+                                                        <!-- Leaf Node - Add Action Checkboxes for Submenu -->
+                                                        <div class="ms-4">
+                                                            <div class="d-flex">
+                                                                <div class="form-check me-3">
+                                                                    <input type="checkbox" class="form-check-input all-action-checkbox" id="all_{{ child.id }}" data-menu-id="{{ child.id }}">
+                                                                    <label class="form-check-label" for="all_{{ child.id }}">All</label>
+                                                                </div>
+                                                                <div class="form-check me-3">
+                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="create_{{ child.id }}" data-menu-id="{{ child.id }}" data-action="create">
+                                                                    <label class="form-check-label" for="create_{{ child.id }}">Create</label>
+                                                                </div>
+                                                                <div class="form-check me-3">
+                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="edit_{{ child.id }}" data-menu-id="{{ child.id }}" data-action="edit">
+                                                                    <label class="form-check-label" for="edit_{{ child.id }}">Edit</label>
+                                                                </div>
+                                                                <div class="form-check me-3">
+                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="delete_{{ child.id }}" data-menu-id="{{ child.id }}" data-action="delete">
+                                                                    <label class="form-check-label" for="delete_{{ child.id }}">Delete</label>
+                                                                </div>
+                                                                <div class="form-check me-3">
+                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="print_{{ child.id }}" data-menu-id="{{ child.id }}" data-action="print">
+                                                                    <label class="form-check-label" for="print_{{ child.id }}">Print</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                    {% else %}
+                                                        <!-- Recursive Call for Sub-Children -->
+                                                        <div class="ms-4">
+                                                            {% for subChild in child.children %}
+                                                                <div class="form-check">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        class="form-check-input subsubmenu-checkbox" 
+                                                                        id="subsubmenu_{{ subChild.id }}" 
+                                                                        data-parent-id="{{ child.id }}" 
+                                                                        data-menu-id="{{ subChild.id }}" 
+                                                                        {% if subChild.can_access %} checked {% endif %}
+                                                                    >
+                                                                    <label for="subsubmenu_{{ subChild.id }}" class="form-check-label">{{ subChild.name }}</label>
+                                                                    
+                                                                    {% if not subChild.children %}
+                                                                        <!-- Leaf Node - Add Action Checkboxes for Subsubmenu -->
+                                                                        <div class="ms-4">
+                                                                            <div class="d-flex">
+                                                                                <div class="form-check me-3">
+                                                                                    <input type="checkbox" class="form-check-input all-action-checkbox" id="all_{{ subChild.id }}" data-menu-id="{{ subChild.id }}">
+                                                                                    <label class="form-check-label" for="all_{{ subChild.id }}">All</label>
+                                                                                </div>
+                                                                                <div class="form-check me-3">
+                                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="create_{{ subChild.id }}" data-menu-id="{{ subChild.id }}" data-action="create">
+                                                                                    <label class="form-check-label" for="create_{{ subChild.id }}">Create</label>
+                                                                                </div>
+                                                                                <div class="form-check me-3">
+                                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="edit_{{ subChild.id }}" data-menu-id="{{ subChild.id }}" data-action="edit">
+                                                                                    <label class="form-check-label" for="edit_{{ subChild.id }}">Edit</label>
+                                                                                </div>
+                                                                                <div class="form-check me-3">
+                                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="delete_{{ subChild.id }}" data-menu-id="{{ subChild.id }}" data-action="delete">
+                                                                                    <label class="form-check-label" for="delete_{{ subChild.id }}">Delete</label>
+                                                                                </div>
+                                                                                <div class="form-check me-3">
+                                                                                    <input type="checkbox" class="form-check-input action-checkbox" id="print_{{ subChild.id }}" data-menu-id="{{ subChild.id }}" data-action="print">
+                                                                                    <label class="form-check-label" for="print_{{ subChild.id }}">Print</label>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                
+                <script>
+                    // Permission Management System
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const roleDropdown = document.getElementById('roleDropdown');
+                        const menuPermissions = document.getElementById('menuPermissions');
+
+                        function setIndeterminateState(checkbox) {
+                            const menuId = checkbox.getAttribute('data-menu-id');
+                            const childCheckboxes = document.querySelectorAll(`[data-parent-id="${menuId}"]`);
+                            
+                            if (childCheckboxes.length > 0) {
+                                const checkedCount = Array.from(childCheckboxes).filter(cb => cb.checked).length;
+                                checkbox.indeterminate = checkedCount > 0 && checkedCount < childCheckboxes.length;
+                                checkbox.checked = checkedCount === childCheckboxes.length;
+                            }
+                        }
+
+                        function updateParentStates(checkbox) {
+                            let currentCheckbox = checkbox;
+                            while (currentCheckbox) {
+                                const parentId = currentCheckbox.getAttribute('data-parent-id');
+                                if (!parentId) break;
+
+                                const parentCheckbox = document.querySelector(`[data-menu-id="${parentId}"]`);
+                                if (parentCheckbox) {
+                                    setIndeterminateState(parentCheckbox);
+                                    currentCheckbox = parentCheckbox;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+
+                        function updateChildStates(checkbox, isChecked) {
+                            const menuId = checkbox.getAttribute('data-menu-id');
+                            
+                            // Update all child checkboxes
+                            const childCheckboxes = document.querySelectorAll(`[data-parent-id="${menuId}"]`);
+                            childCheckboxes.forEach(childCheckbox => {
+                                childCheckbox.checked = isChecked;
+                                childCheckbox.indeterminate = false;
+                                updateChildStates(childCheckbox, isChecked);
+                            });
+
+                            // If this is a leaf node, update action checkboxes
+                            const isLeafNode = childCheckboxes.length === 0;
+                            if (isLeafNode) {
+                                const actionCheckboxes = document.querySelectorAll(`[data-menu-id="${menuId}"].action-checkbox`);
+                                const allActionCheckbox = document.querySelector(`#all_${menuId}`);
+                                
+                                actionCheckboxes.forEach(actionCheckbox => {
+                                    actionCheckbox.checked = isChecked;
+                                });
+                                
+                                if (allActionCheckbox) {
+                                    allActionCheckbox.checked = isChecked;
+                                    allActionCheckbox.indeterminate = false;
+                                }
+                            }
+                        }
+
+                        function ensureParentAccess(checkbox) {
+                            let currentCheckbox = checkbox;
+                            while (currentCheckbox) {
+                                const parentId = currentCheckbox.getAttribute('data-parent-id');
+                                if (!parentId) break;
+
+                                const parentCheckbox = document.querySelector(`[data-menu-id="${parentId}"]`);
+                                if (parentCheckbox && !parentCheckbox.checked) {
+                                    parentCheckbox.checked = true;
+                                    currentCheckbox = parentCheckbox;
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+
+                        function updateActionStates(menuId) {
+                            const actionCheckboxes = document.querySelectorAll(`[data-menu-id="${menuId}"].action-checkbox`);
+                            const allActionCheckbox = document.querySelector(`#all_${menuId}`);
+                            
+                            if (actionCheckboxes.length > 0 && allActionCheckbox) {
+                                const checkedCount = Array.from(actionCheckboxes).filter(cb => cb.checked).length;
+                                allActionCheckbox.indeterminate = checkedCount > 0 && checkedCount < actionCheckboxes.length;
+                                allActionCheckbox.checked = checkedCount === actionCheckboxes.length;
+                            }
+                        }
+
+                        // Role selection handler
+                        roleDropdown.addEventListener('change', function () {
+                            const roleId = this.value;
+
+                            if (roleId) {
+                                menuPermissions.style.display = 'block';
+                                
+                                fetch(`/super_admin/fetch_permissions/${roleId}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Reset all checkboxes first
+                                        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                                            cb.checked = false;
+                                            cb.indeterminate = false;
+                                        });
+
+                                        // Update permissions
+                                        data.permissions.forEach(permission => {
+                                            // Update menu access
+                                            const menuCheckbox = document.querySelector(`[data-menu-id="${permission.menu_id}"]`);
+                                            if (menuCheckbox) {
+                                                menuCheckbox.checked = permission.can_access;
+                                            }
+
+                                            // Update action permissions
+                                            ['create', 'edit', 'delete', 'print'].forEach(action => {
+                                                const actionCheckbox = document.querySelector(`#${action}_${permission.menu_id}`);
+                                                if (actionCheckbox) {
+                                                    actionCheckbox.checked = permission[`can_${action}`];
+                                                }
+                                            });
+                                        });
+
+                                        // Update all states after setting initial values
+                                        document.querySelectorAll('.menu-checkbox, .submenu-checkbox, .subsubmenu-checkbox').forEach(cb => {
+                                            setIndeterminateState(cb);
+                                            updateActionStates(cb.getAttribute('data-menu-id'));
+                                        });
+                                    });
+                            }
+                        });
+
+                        // Menu checkbox handler
+                        document.querySelectorAll('.menu-checkbox, .submenu-checkbox, .subsubmenu-checkbox').forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                const isChecked = this.checked;
+                                const roleId = roleDropdown.value;
+                                const menuId = this.getAttribute('data-menu-id');
+
+                                if (isChecked) {
+                                    ensureParentAccess(this);
+                                }
+
+                                updateChildStates(this, isChecked);
+                                updateParentStates(this);
+
+                                // Prepare payload
+                                const payload = {
+                                    role_id: roleId,
+                                    menu_id: menuId,
+                                    can_access: isChecked
+                                };
+
+                                // If this is a leaf node, include action permissions
+                                const isLeafNode = !document.querySelector(`[data-parent-id="${menuId}"]`);
+                                if (isLeafNode) {
+                                    ['create', 'edit', 'delete', 'print'].forEach(action => {
+                                        payload[`can_${action}`] = isChecked;
+                                    });
+                                }
+
+                                updatePermissions(payload);
+                            });
+                        });
+
+                        // "All" action checkbox handler
+                        document.querySelectorAll('.all-action-checkbox').forEach(allCheckbox => {
+                            allCheckbox.addEventListener('change', function() {
+                                const menuId = this.getAttribute('data-menu-id');
+                                const isChecked = this.checked;
+                                const roleId = roleDropdown.value;
+
+                                // Update all action checkboxes
+                                const actionCheckboxes = document.querySelectorAll(`[data-menu-id="${menuId}"].action-checkbox`);
+                                actionCheckboxes.forEach(checkbox => {
+                                    checkbox.checked = isChecked;
+                                });
+
+                                // Ensure menu access is enabled when any action is selected
+                                const menuCheckbox = document.querySelector(`[data-menu-id="${menuId}"]`);
+                                if (isChecked && menuCheckbox && !menuCheckbox.checked) {
+                                    menuCheckbox.checked = true;
+                                    ensureParentAccess(menuCheckbox);
+                                }
+
+                                const payload = {
+                                    role_id: roleId,
+                                    menu_id: menuId,
+                                    can_access: true,
+                                    can_create: isChecked,
+                                    can_edit: isChecked,
+                                    can_delete: isChecked,
+                                    can_print: isChecked
+                                };
+
+                                updatePermissions(payload);
+                            });
+                        });
+
+                        // Individual action checkbox handler
+                        document.querySelectorAll('.action-checkbox').forEach(actionCheckbox => {
+                            actionCheckbox.addEventListener('change', function() {
+                                const menuId = this.getAttribute('data-menu-id');
+                                const isChecked = this.checked;
+                                const roleId = roleDropdown.value;
+
+                                // Ensure menu access is enabled when any action is selected
+                                const menuCheckbox = document.querySelector(`[data-menu-id="${menuId}"]`);
+                                if (isChecked && menuCheckbox && !menuCheckbox.checked) {
+                                    menuCheckbox.checked = true;
+                                    ensureParentAccess(menuCheckbox);
+                                }
+
+                                updateActionStates(menuId);
+
+                                // Create payload with all current action states
+                                const payload = {
+                                    role_id: roleId,
+                                    menu_id: menuId,
+                                    can_access: true
+                                };
+
+                                document.querySelectorAll(`[data-menu-id="${menuId}"].action-checkbox`).forEach(cb => {
+                                    const actionType = cb.getAttribute('data-action');
+                                    payload[`can_${actionType}`] = cb.checked;
+                                });
+
+                                updatePermissions(payload);
+                            });
+                        });
+                    });
+
+                    function updatePermissions(payload) {
+                        fetch('/super_admin/update_permission', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => console.log(data.message))
+                        .catch(error => console.error('Error updating permissions:', error));
+                    }
+
+                </script>
+
+                <script>
+                    // Add event listener for the "All" checkbox
+                    document.querySelectorAll('.all-action-checkbox').forEach(allCheckbox => {
+                        allCheckbox.addEventListener('change', function () {
+                            const subChildId = this.id.split('_')[1]; // Get the subChild id from the "All" checkbox ID
+                            const isChecked = this.checked;
+
+                            // Select or deselect all action checkboxes based on the "All" checkbox state
+                            document.querySelectorAll(`#create_${subChildId}, #edit_${subChildId}, #delete_${subChildId}, #print_${subChildId}`).forEach(checkbox => {
+                                checkbox.checked = isChecked;
+                            });
+                        });
+                    });
+                </script>
+                <script>
+                    // Add event listener for the "All" checkbox
+                    document.querySelectorAll('.all-action-checkbox').forEach(allCheckbox => {
+                        allCheckbox.addEventListener('change', function () {
+                            const childId = this.id.split('_')[1]; // Get the child id from the "All" checkbox ID
+                            const isChecked = this.checked;
+
+                            // Select or deselect all action checkboxes based on the "All" checkbox state
+                            document.querySelectorAll(`#create_${childId}, #edit_${childId}, #delete_${childId}, #print_${childId}`).forEach(checkbox => {
+                                checkbox.checked = isChecked;
+                            });
+                        });
+                    });
+                </script>
+                <script>
+                    // Add event listener for "All" checkbox to select or deselect all action checkboxes
+                    document.querySelectorAll('.all-action-checkbox').forEach(allCheckbox => {
+                        allCheckbox.addEventListener('change', function () {
+                            const menuId = this.id.split('_')[1]; // Extract the menu ID
+                            const isChecked = this.checked;
+
+                            // Select or deselect all related action checkboxes based on the "All" checkbox
+                            document.querySelectorAll(`#create_${menuId}, #edit_${menuId}, #delete_${menuId}, #print_${menuId}`).forEach(checkbox => {
+                                checkbox.checked = isChecked;
+                            });
+                        });
+                    });
+                </script>
+
+            </div>
+            <!-- container-fluid -->
+        </div>
+        <!-- End Page-content -->
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+{% endblock content %}

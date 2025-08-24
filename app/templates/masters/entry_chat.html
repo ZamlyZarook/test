@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}Entry Chat{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-modern">
+                <div class="card-header">
+                    <h5 class="mb-0">Chat for Entry #{{ entry.docserial }}</h5>
+                </div>
+                <div class="card-body">
+                    <div id="chatMessages" class="chat-container" style="height: 400px; overflow-y: auto;">
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin me-2"></i>Loading chat history...
+                        </div>
+                    </div>
+                    <div id="replyPreview" class="reply-preview d-none mt-2 mb-2">
+                        <div class="d-flex align-items-center bg-light p-2 rounded">
+                            <div class="flex-grow-1">
+                                <small class="text-muted">Replying to:</small>
+                                <div id="replyContent" class="small"></div>
+                            </div>
+                            <button type="button" class="btn-close ms-2" onclick="clearReply()"></button>
+                        </div>
+                    </div>
+                    <div class="chat-input mt-3">
+                        <form id="chatForm" onsubmit="return sendMessage(event)">
+                            <div class="input-group">
+                                <input type="text" id="chatMessage" class="form-control"
+                                    placeholder="Type your message...">
+                                <button type="button" class="btn btn-light"
+                                    onclick="document.getElementById('chatFileInput').click()">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <button type="button" class="btn btn-light" id="voiceRecordBtn"
+                                    onclick="startVoiceRecording()">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                            <input type="file" id="chatFileInput" style="display: none;"
+                                onchange="handleFileUpload(this)">
+                        </form>
+                        <div id="voiceRecordingUI" class="d-none mt-2">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <div class="progress" style="height: 20px;">
+                                        <div id="recordingProgress"
+                                            class="progress-bar progress-bar-striped progress-bar-animated"
+                                            role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger ms-2" onclick="stopVoiceRecording()">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .chat-container {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .chat-message {
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        max-width: 80%;
+        clear: both;
+    }
+
+    .chat-message.sender {
+        background-color: #e3f2fd;
+        float: right;
+    }
+
+    .chat-message.receiver {
+        background-color: #fff;
+        float: left;
+    }
+
+    .chat-message .message-content {
+        word-wrap: break-word;
+    }
+
+    .chat-message .message-time {
+        font-size: 0.75rem;
+        color: #adb5bd;
+        margin-top: 0.25rem;
+    }
+
+    .chat-message .attachment-item {
+        margin-top: 0.5rem;
+    }
+
+    .chat-message .attachment-item a {
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+    .chat-message .attachment-item a:hover {
+        text-decoration: underline;
+    }
+
+    .reply-preview {
+        background-color: #f8f9fa;
+        border-left: 3px solid #0d6efd;
+    }
+
+    #voiceRecordingUI .progress {
+        border-radius: 20px;
+    }
+
+    .message-actions {
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .chat-message:hover .message-actions {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentEntryId = {{ entry.id }};
+    let currentThreadId = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let replyToMessageId = null;
+    let currentVoiceNotePath = null;
+    let currentAttachmentPath = null;
+
+    // Load chat history when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        loadChatHistory();
+    });
+
+    function loadChatHistory() {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Loading chat history...</div>';
+
+        fetch(`/masters/orders/${currentEntryId}/chat-history`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.messages && data.messages.length > 0) {
+                    currentThreadId = data.thread_id;
+                    chatMessages.innerHTML = data.messages.map(msg => formatMessage(msg)).join('');
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else {
+                    chatMessages.innerHTML = '<div class="text-center text-muted">No chat history available</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                chatMessages.innerHTML = '<div class="text-center text-danger"><i class="fas fa-exclamation-circle me-2"></i>Error loading chat history</div>';
+            });
+    }
+
+    function formatMessage(msg) {
+        return `
+            <div class="chat-message ${msg.is_sender ? 'sender' : 'receiver'} mb-3">
+                <div class="message-content p-3 rounded">
+                    ${msg.reply_to ? `
+                        <div class="reply-preview small mb-2 p-2 rounded bg-light">
+                            <div class="text-muted">Replying to ${msg.reply_to.sender_name}:</div>
+                            <div>${msg.reply_to.message}</div>
+                        </div>
+                    ` : ''}
+                    <div class="message-text">${msg.message || ''}</div>
+                    ${msg.message_type === 'voice' ? `
+                        <div class="mt-2">
+                            <audio controls class="w-100">
+                                <source src="/masters/view-document/${msg.attachments[0].file_path}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    ` : ''}
+                    ${msg.attachments && msg.attachments.length > 0 ? `
+                        <div class="mt-2">
+                            ${msg.attachments.map(att => `
+                                <div class="attachment-item">
+                                    <a href="/masters/view-document/${att.file_path}" target="_blank">
+                                        <i class="fas fa-paperclip"></i> ${att.file_name}
+                                    </a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="message-time small text-muted mt-1">
+                        ${new Date(msg.timestamp).toLocaleString()}
+                        <button class="btn btn-link btn-sm p-0 ms-2" onclick="replyToMessage(${msg.id}, '${msg.message}')">
+                            <i class="fas fa-reply"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function sendMessage(event) {
+        event.preventDefault();
+        const message = document.getElementById('chatMessage').value;
+        if (!message.trim() && !mediaRecorder && !document.getElementById('chatFileInput').files.length) return;
+
+        const formData = new FormData();
+        formData.append('message', message);
+        if (replyToMessageId) formData.append('reply_to', replyToMessageId);
+
+        // Add attachments if any
+        const attachments = [];
+        if (mediaRecorder) {
+            attachments.push({
+                type: 'voice',
+                path: currentVoiceNotePath,
+                name: 'voice_note.mp3'
+            });
+        }
+        const fileInput = document.getElementById('chatFileInput');
+        if (fileInput.files.length > 0) {
+            attachments.push({
+                type: 'document',
+                path: currentAttachmentPath,
+                name: fileInput.files[0].name,
+                size: fileInput.files[0].size
+            });
+        }
+        if (attachments.length > 0) {
+            formData.append('attachments', JSON.stringify(attachments));
+        }
+
+        fetch(`/masters/orders/${currentEntryId}/send-message`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear input and reply
+                    document.getElementById('chatMessage').value = '';
+                    clearReply();
+                    // Reset file input
+                    fileInput.value = '';
+                    currentAttachmentPath = null;
+                    // Reset voice recording
+                    currentVoiceNotePath = null;
+                    // Reload chat history
+                    loadChatHistory();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error sending message');
+            });
+
+        return false;
+    }
+
+    function replyToMessage(messageId, messageContent) {
+        replyToMessageId = messageId;
+        document.getElementById('replyPreview').classList.remove('d-none');
+        document.getElementById('replyContent').textContent = messageContent;
+        document.getElementById('chatMessage').focus();
+    }
+
+    function clearReply() {
+        replyToMessageId = null;
+        document.getElementById('replyPreview').classList.add('d-none');
+        document.getElementById('replyContent').textContent = '';
+    }
+
+    function startVoiceRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+                    const formData = new FormData();
+                    formData.append('voice', audioBlob, 'voice_note.mp3');
+
+                    fetch(`/masters/orders/${currentEntryId}/upload-voice`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                currentVoiceNotePath = data.path;
+                                // Send message with voice note
+                                const formData = new FormData();
+                                formData.append('message', 'Voice note');
+                                formData.append('message_type', 'voice');
+                                formData.append('attachments', JSON.stringify([{
+                                    type: 'voice',
+                                    path: data.path,
+                                    name: data.name
+                                }]));
+                                fetch(`/masters/orders/${currentEntryId}/send-message`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: formData
+                                })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            loadChatHistory();
+                                        }
+                                    });
+                            }
+                        });
+                };
+
+                mediaRecorder.start();
+                document.getElementById('voiceRecordingUI').classList.remove('d-none');
+                startRecordingTimer();
+            })
+            .catch(error => {
+                console.error('Error accessing microphone:', error);
+                alert('Error accessing microphone. Please check your permissions.');
+            });
+    }
+
+    function stopVoiceRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            document.getElementById('voiceRecordingUI').classList.add('d-none');
+            stopRecordingTimer();
+        }
+    }
+
+    function handleFileUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch(`/masters/orders/${currentEntryId}/upload-attachment`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentAttachmentPath = data.path;
+                    // Send message with attachment
+                    const formData = new FormData();
+                    formData.append('message', 'File attachment');
+                    formData.append('message_type', 'document');
+                    formData.append('attachments', JSON.stringify([{
+                        type: 'document',
+                        path: data.path,
+                        name: data.name,
+                        size: data.size
+                    }]));
+                    fetch(`/masters/orders/${currentEntryId}/send-message`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                loadChatHistory();
+                            }
+                        });
+                }
+            });
+    }
+
+    // Recording timer
+    let recordingTimer = null;
+    let recordingSeconds = 0;
+
+    function startRecordingTimer() {
+        recordingSeconds = 0;
+        recordingTimer = setInterval(() => {
+            recordingSeconds++;
+            const progress = (recordingSeconds % 60) / 60 * 100;
+            document.getElementById('recordingProgress').style.width = `${progress}%`;
+        }, 1000);
+    }
+
+    function stopRecordingTimer() {
+        if (recordingTimer) {
+            clearInterval(recordingTimer);
+            recordingTimer = null;
+            document.getElementById('recordingProgress').style.width = '0%';
+        }
+    }
+</script>
+{% endblock %}

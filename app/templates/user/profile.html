@@ -1,0 +1,271 @@
+{% extends "partials/base.html" %}
+{% block title %}Profile{% endblock title %}
+{% block extra_css %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.min.css" rel="stylesheet">
+<!-- Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+<style>
+/* Custom styles for the training request modal */
+#requestTrainingModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#requestTrainingModal .form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+#requestTrainingModal .form-control:focus,
+#requestTrainingModal .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#requestTrainingModal .is-invalid {
+    border-color: #dc3545;
+}
+
+#requestTrainingModal .is-valid {
+    border-color: #28a745;
+}
+
+/* Select2 custom styling */
+.select2-container--default .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px;
+    padding-left: 12px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+    right: 10px;
+}
+
+.debug-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6c757d;
+}
+</style>
+{% endblock extra_css %}
+{% block content %}
+
+    <div class="main-content">
+
+        <div class="page-content">
+            <div class="container-fluid">
+                <div class="profile-foreground position-relative mx-n4 mt-n4">
+                    <div class="profile-wid-bg">
+                        <img src="{{ url_for('static', filename='images/profile-bg.jpg') }}" alt="" class="profile-wid-img"/>
+                    </div>
+                </div>
+                <div class="pt-4 mb-4 mb-lg-3 pb-lg-4 profile-wrapper">
+                    <div class="row g-4">
+                        <div class="col-auto">
+                            <div class="avatar-lg">
+                                <img src="{{ url_for('static', filename='images/users/user-dummy-img.jpg') if not current_user.profile_picture else 'data:image/jpeg;base64,' + current_user.profile_picture_base64 }}" alt="user-img" class="img-thumbnail rounded-circle" />
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="p-2">
+                                <h3 class="text-white mb-1">{{ current_user.name }}</h3>
+                                <p class="text-white text-opacity-75">{{ current_user.assigned_role.role_name if current_user.assigned_role else '' }}</p>
+                                <div class="hstack text-white-50 gap-1">
+                                    <div class="me-2"><i class="ri-map-pin-user-line me-1 text-white text-opacity-75 fs-16 align-middle"></i>{{ current_user.address or '-' }}</div>
+                                    <div>
+                                        <i class="ri-building-line me-1 text-white text-opacity-75 fs-16 align-middle"></i>{{ current_user.company.company_name if current_user.company else '-' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-auto order-last order-lg-0">
+                            <a href="{{ url_for('user.edit_profile') }}" class="btn btn-success me-2">
+                                <i class="ri-edit-box-line align-bottom"></i> Edit Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                                <i class="ri-check-double-line"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endwith %}
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Info</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Full Name :</th>
+                                                <td class="text-muted">{{ current_user.name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Username :</th>
+                                                <td class="text-muted">{{ current_user.username }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Role :</th>
+                                                <td class="text-muted">{{ current_user.assigned_role.role_name if current_user.assigned_role else '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Company :</th>
+                                                <td class="text-muted">{{ current_user.company.company_name if current_user.company else '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">E-mail :</th>
+                                                <td class="text-muted">{{ current_user.email }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Gender :</th>
+                                                <td class="text-muted">{{ current_user.gender or '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Contact Number :</th>
+                                                <td class="text-muted">{{ current_user.contact_number or '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="ps-0" scope="row">Address :</th>
+                                                <td class="text-muted">{{ current_user.address or '-' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><!-- end card body -->
+                        </div><!-- end card -->
+                    </div>
+                </div>
+
+            </div><!-- container-fluid -->
+        </div><!-- End Page-content -->
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+
+
+    <!-- Add these script tags before closing body tag -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize select2 for both dropdowns
+            $('#company_id, #course_id').select2({
+                width: '100%',
+                dropdownParent: $('#trainingRequestModal')
+            });
+        
+            // Handle company change
+            $('#company_id').on('change', function() {
+                const companyId = $(this).val();
+                const courseSelect = $('#course_id');
+                
+                if (companyId) {
+                    courseSelect.prop('disabled', false);
+                    
+                    // Fetch courses for selected company
+                    fetch(`/training/api/course/company/${companyId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            courseSelect.empty();
+                            courseSelect.append('<option value="">Select Course</option>');
+                            
+                            data.forEach(course => {
+                                courseSelect.append(`<option value="${course.id}">${course.name} (${course.code})</option>`);
+                            });
+                            
+                            courseSelect.trigger('change');
+                        })
+                        .catch(error => {
+                            console.error('Error loading courses:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to load courses. Please try again.'
+                            });
+                        });
+                } else {
+                    courseSelect.prop('disabled', true);
+                    courseSelect.html('<option value="">Select Company First</option>');
+                    courseSelect.trigger('change');
+                }
+            });
+        
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('preferred_date').setAttribute('min', today);
+        });
+        
+        // Function to submit training request
+        function submitTrainingRequest() {
+            const formData = {
+                company_id: $('#company_id').val(),
+                course_id: $('#course_id').val(),
+                preferred_date: $('#preferred_date').val()
+            };
+        
+            if (!formData.company_id || !formData.course_id) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please select both Company and Course'
+                });
+                return;
+            }
+        
+            fetch('/training/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: data.message
+                    }).then(() => {
+                        $('#trainingRequestModal').modal('hide');
+                        $('#trainingRequestForm').trigger('reset');
+                        $('#course_id').prop('disabled', true).html('<option value="">Select Company First</option>').trigger('change');
+                    });
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Failed to submit request. Please try again.'
+                });
+            });
+        }
+        </script>
+{% endblock content %}
+
