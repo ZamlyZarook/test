@@ -1,0 +1,380 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Dashboard</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Home</a></li>
+                                <li class="breadcrumb-item active">Dashboard</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <!-- Statistics Cards -->
+            <!-- 1. UPDATE DASHBOARD CARDS IN index.html (Masters Dashboard) -->
+<!-- Replace the existing Statistics Cards section with clickable cards -->
+
+<div class="row">
+    <!-- All Shipments Card -->
+    <div class="col-xl-3 col-md-6">
+        <a href="{{ url_for('masters.orders') }}" class="text-decoration-none">
+            <div class="card card-animate card-hover shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                            <span class="avatar-title bg-soft-primary text-primary rounded-circle fs-3">
+                                <i class="ri-archive-line"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="text-muted text-uppercase fs-13 mb-1">All Shipments</h5>
+                            <h2 class="mb-0 ff-secondary fw-semibold">
+                                <span class="counter-value" data-target="{{ statistics.total_shipments }}">{{ statistics.total_shipments }}</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- New Shipments Card -->
+    <div class="col-xl-3 col-md-6">
+        <a href="{{ url_for('masters.orders', status='new') }}" class="text-decoration-none">
+            <div class="card card-animate card-hover shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                            <span class="avatar-title bg-soft-warning text-warning rounded-circle fs-3">
+                                <i class="ri-inbox-archive-line"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="text-muted text-uppercase fs-13 mb-1">New Shipments</h5>
+                            <h2 class="mb-0 ff-secondary fw-semibold">
+                                <span class="counter-value" data-target="{{ statistics.new_shipments }}">{{ statistics.new_shipments }}</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Ongoing Shipments Card -->
+    <div class="col-xl-3 col-md-6">
+        <a href="{{ url_for('masters.orders', status='ongoing') }}" class="text-decoration-none">
+            <div class="card card-animate card-hover shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                            <span class="avatar-title bg-soft-info text-info rounded-circle fs-3">
+                                <i class="ri-ship-line"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="text-muted text-uppercase fs-13 mb-1">Ongoing Shipments</h5>
+                            <h2 class="mb-0 ff-secondary fw-semibold">
+                                <span class="counter-value" data-target="{{ statistics.ongoing_shipments }}">{{ statistics.ongoing_shipments }}</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Completed Shipments Card -->
+    <div class="col-xl-3 col-md-6">
+        <a href="{{ url_for('masters.orders', status='completed') }}" class="text-decoration-none">
+            <div class="card card-animate card-hover shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                            <span class="avatar-title bg-soft-success text-success rounded-circle fs-3">
+                                <i class="ri-checkbox-circle-line"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="text-muted text-uppercase fs-13 mb-1">Completed Shipments</h5>
+                            <h2 class="mb-0 ff-secondary fw-semibold">
+                                <span class="counter-value" data-target="{{ statistics.completed_shipments }}">{{ statistics.completed_shipments }}</span>
+                            </h2>
+                        </div>
+                    </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <!-- Task Completion Chart -->
+                <div class="col-xl-4">
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Shipments</h4>
+                            <!-- <div>
+                                <select class="form-select form-select-sm" id="timeFilter">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div> -->
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="p-3">
+                                <canvas id="taskCompletionChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="col-xl-4">
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Recent Activity</h4>
+                        </div>
+                        <div class="card-body pt-2">
+                            <div>
+                                {% for activity in statistics.recent_activities %}
+                                    <div class="d-flex mb-2">
+                                        <div class="flex-grow-1">
+                                            <i class="ri-file-text-line"></i>
+                                            <h6 class="fw-semibold mb-1">{{ activity.user }}</h6>
+                                            <p class="text-muted mb-0">{{ activity.action }} <a href="#" class="link-primary">{{ activity.reference }}</a></p>
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <div class="text-muted">{{ activity.timestamp.strftime('%d %b, %H:%M') }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="col-xl-4">
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-chat-3-line text-muted me-1 align-bottom"></i> Messages
+                            </h4>
+                        </div>
+                        <div class="card-body pt-0">
+                            <!-- Tabs -->
+                            <ul class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#recent" role="tab">
+                                        Recent Chats
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#pending" role="tab">
+                                        Pending Reply
+                                        {% if statistics.pending_replies %}
+                                        <span class="badge bg-danger-subtle text-danger">{{ statistics.pending_replies|length }}</span>
+                                        {% endif %}
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="recent" role="tabpanel">
+                                    <div class="chat-message-list">
+                                        {% for chat in statistics.recent_chats %}
+                                        <a href="{{ url_for('customer_portal.sea_import') }}" class="text-reset">
+                                            <div class="d-flex align-items-start border-bottom py-3">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar-xs rounded-circle bg-light">
+                                                        <span class="avatar-title bg-soft-primary text-primary rounded-circle">
+                                                            <i class="ri-chat-3-line"></i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <p class="text-truncate mb-1">{{ chat.message }}</p>
+                                                    <p class="text-muted fs-12 mb-0">{{ chat.timestamp.strftime('%d %b, %H:%M') }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="pending" role="tabpanel">
+                                    <div class="chat-message-list">
+                                        {% for chat in statistics.pending_replies %}
+                                        <a href="{{ url_for('customer_portal.sea_import') }}" class="text-reset">
+                                            <div class="d-flex align-items-start border-bottom py-3">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar-xs rounded-circle bg-light">
+                                                        <span class="avatar-title bg-soft-danger text-danger rounded-circle">
+                                                            <i class="ri-chat-3-line"></i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <p class="text-truncate mb-1">{{ chat.message }}</p>
+                                                    <p class="text-muted fs-12 mb-0">{{ chat.timestamp.strftime('%d %b, %H:%M') }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+
+<!-- Chat Modal -->
+{% include 'chat/chat_modal.html' %}
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Task Completion Chart
+        const ctx = document.getElementById('taskCompletionChart').getContext('2d');
+        const shipmentTypes = {{ statistics.shipment_types| tojson | safe }};
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(shipmentTypes),
+                datasets: [{
+                    data: Object.values(shipmentTypes),
+                    backgroundColor: [
+                        '#36A2EB',  // Sea Export
+                        '#FF6384',  // Sea Import
+                        '#FFCE56',  // Air Export
+                        '#4BC0C0'   // Air Import
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 4,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: 20
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Time filter change handler
+        document.getElementById('timeFilter').addEventListener('change', function (e) {
+            // You can implement the time filter logic here
+            console.log('Time filter changed to:', e.target.value);
+        });
+    });
+
+    // Function to open chat modal
+    function openChatModal(moduleName, entryId, docSerial) {
+        // Set the chat modal title
+        document.getElementById('chatModalLabel').textContent = `Chat - Document #${docSerial}`;
+
+        // Initialize chat
+        initializeChat(moduleName, entryId);
+
+        // Show the modal
+        const chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+        chatModal.show();
+    }
+</script>
+<style>
+    /* Add this CSS to your masters dashboard index.html in the extra_css block or head */
+
+<style>
+/* Dashboard Card Hover Effects */
+.card-hover {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-animate {
+    transition: all 0.3s ease;
+}
+
+/* Remove text decoration from card links */
+a.text-decoration-none {
+    text-decoration: none !important;
+}
+
+a.text-decoration-none:hover {
+    text-decoration: none !important;
+}
+
+/* Ensure card text colors remain consistent */
+a.text-decoration-none .card {
+    color: inherit;
+}
+
+a.text-decoration-none .card h5 {
+    color: #6c757d !important;
+}
+
+a.text-decoration-none .card h2 {
+    color: #212529 !important;
+}
+
+/* Card active state */
+.card-hover:active {
+    transform: translateY(-2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-hover:hover {
+        transform: none;
+    }
+}
+</style>
+</style>
+{% endblock %}

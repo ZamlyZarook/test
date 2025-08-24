@@ -1,0 +1,471 @@
+{% extends "partials/base.html" %}
+{% block title %}Dashboard{% endblock title %}
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Dashboard</h4>
+                    </div>
+                </div>
+            </div>
+            <!-- Filters in a Card -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-none border mb-0">
+                        <div class="card-body">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-6">
+                                    <form class="d-flex align-items-center gap-2" method="GET" action="">
+                                        <label for="date_range" class="form-label mb-0">Date Range:</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+                                        <span class="mx-2">to</span>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+                                        <button type="submit" class="btn btn-primary ms-2">Filter</button>
+                                    </form>
+                                </div>
+                                <div class="col-md-4 ms-auto">
+                                    <form class="d-flex align-items-center gap-2 justify-content-md-end" method="GET" action="">
+                                        <label for="month" class="form-label mb-0">Select Month:</label>
+                                        <select class="form-control" name="month" id="month">
+                                            <option value="">All Months</option>
+                                            {% for m in month_names %}
+                                                <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <select class="form-control" name="year" id="year">
+                                            <option value="">Year</option>
+                                            {% for y in range(2020, 2031) %}
+                                                <option value="{{ y }}" {% if request.args.get('year', '') == y|string %}selected{% endif %}>{{ y }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-primary ms-2">Filter</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div> 
+                    </div>
+                </div>
+            </div>
+            <!-- Tabs Navbar in Card (Order Shipment Style) -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-none border mb-0">
+                        <div class="card-body p-0">
+                            <ul class="nav nav-tabs nav-tabs-custom nav-justified" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#tab-total-shipments" role="tab" aria-selected="true">
+                                        <span class="d-block d-sm-none"><i class="ri-file-list-line"></i></span>
+                                        <span class="d-none d-sm-block"><i class="ri-file-list-line"></i> Total shipments handled</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#tab-clearance-tracker" role="tab" aria-selected="false">
+                                        <span class="d-block d-sm-none"><i class="ri-rocket-line"></i></span>
+                                        <span class="d-none d-sm-block"><i class="ri-rocket-line"></i> Shipment Clearance tracker</span>
+                                    </a>
+                                </li>
+                                {% if current_user.role == 'customer' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#tab-cha-performance" role="tab" aria-selected="false">
+                                        <span class="d-block d-sm-none"><i class="ri-bar-chart-line"></i></span>
+                                        <span class="d-none d-sm-block"><i class="ri-bar-chart-line"></i> CHA Performance</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#tab-demurrage-reasons" role="tab" aria-selected="false">
+                                        <span class="d-block d-sm-none"><i class="ri-error-warning-line"></i></span>
+                                        <span class="d-none d-sm-block"><i class="ri-error-warning-line"></i> Reasons for demurrages</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- Tab Content -->
+                            <div class="tab-content pt-4">
+                                <div class="tab-pane fade show active" id="tab-total-shipments" role="tabpanel">
+                                    <div class="row justify-content-center">
+                                        <div class="col-12">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">Summary Table</h4>
+                                                </div>
+                                                <div class="card-body pt-2">
+                                                    <table class="table table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Job Type</th>
+                                                                <th>On Time Clearance</th>
+                                                                <th>Demurrage</th>
+                                                                <th>Total</th>
+                                                                <th>Demurrage %</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for row in summary_table %}
+                                                            <tr {% if row.job_type == 'Total' %}class="fw-bold table-secondary"{% endif %}>
+                                                                <td>{{ row.job_type }}</td>
+                                                                <td>{{ row.on_time }}</td>
+                                                                <td>{{ row.demurrage }}</td>
+                                                                <td>{{ row.total }}</td>
+                                                                <td>{{ row.percent }}%</td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">Shipments by Job Type</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="shipmentsPieChart" class="apex-charts" style="min-height:350px;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">FCL Demurrage vs On Time</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="fclPieChart" class="apex-charts" style="min-height:350px;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="tab-clearance-tracker" role="tabpanel">
+                                    <div class="row justify-content-center">
+                                        <div class="col-12">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">Shipment Clearance Tracker Table</h4>
+                                                </div>
+                                                <div class="card-body pt-2">
+                                                    <table class="table table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Job Type</th>
+                                                                <th>On Time Clearance</th>
+                                                                <th>Demurrage</th>
+                                                                <th>Total</th>
+                                                                <th>Demurrage %</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for row in clearance_table %}
+                                                            <tr {% if row.job_type == 'Total' %}class="fw-bold table-secondary"{% endif %}>
+                                                                <td>{{ row.job_type }}</td>
+                                                                <td>{{ row.on_time }}</td>
+                                                                <td>{{ row.demurrage }}</td>
+                                                                <td>{{ row.total }}</td>
+                                                                <td>{{ row.percent }}%</td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">On Time vs Demurrage by Job Type</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="clearanceBarChart" class="apex-charts" style="min-height:350px;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="tab-cha-performance" role="tabpanel">
+                                    <div class="row justify-content-center">
+                                        <div class="col-12">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">CHA Performance Table</h4>
+                                                </div>
+                                                <div class="card-body pt-2">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th rowspan="2" class="align-middle">CHA Company</th>
+                                                                    <th rowspan="2" class="align-middle">Total Shipments</th>
+                                                                    <th colspan="{{ job_types|length }}" class="text-center">Job Types</th>
+                                                                </tr>
+                                                                <tr>
+                                                                    {% for job_type in job_types %}
+                                                                    <th class="text-center">{{ job_type.name }}</th>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for row in cha_performance_table %}
+                                                                <tr>
+                                                                    <td class="fw-bold">{{ row.company_name }}</td>
+                                                                    <td class="text-center">{{ row.total_shipments }}</td>
+                                                                    {% for job_type in job_types %}
+                                                                    <td class="text-center">{{ row.job_types.get(job_type.name, 0) }}</td>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                                {% endfor %}
+                                                                {% if not cha_performance_table %}
+                                                                <tr>
+                                                                    <td colspan="{{ 2 + job_types|length }}" class="text-center text-muted">No data available</td>
+                                                                </tr>
+                                                                {% endif %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">CHA Performance by Job Type</h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chaPerformanceBarChart" class="apex-charts" style="min-height:400px;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="tab-demurrage-reasons" role="tabpanel">
+                                    <div class="row justify-content-center">
+                                        <div class="col-12">
+                                            <div class="card card-hover shadow-sm mb-4">
+                                                <div class="card-header border-0 align-items-center d-flex">
+                                                    <h4 class="card-title mb-0 flex-grow-1">FCL Demurrage Reasons Report</h4>
+                                                    <small class="text-muted">Showing demurrage records for FCL shipments only</small>
+                                                </div>
+                                                <div class="card-body pt-2">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered table-striped">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Customer</th>
+                                                                    <th>Job Number</th>
+                                                                    <th>BL No</th>
+                                                                    <th>Consignment</th>
+                                                                    <th>ETA</th>
+                                                                    <th>Cleared Date</th>
+                                                                    <th>Demurrage Amount</th>
+                                                                    <th>Currency</th>
+                                                                    <th>Reason</th>
+                                                                    <th>Demurrage Date</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for row in demurrage_reasons_table %}
+                                                                <tr>
+                                                                    <td>{{ row.company_name }}</td>
+                                                                    <td class="fw-bold text-primary">{{ row.job_number }}</td>
+                                                                    <td>{{ row.bl_no }}</td>
+                                                                    <td><span class="badge badge-soft-info">{{ row.consignment }}</span></td>
+                                                                    <td>{{ row.eta }}</td>
+                                                                    <td>{{ row.cleared_date }}</td>
+                                                                    <td class="text-end">
+                                                                        <span class="fw-bold text-primary">{{ row.demurrage_amount }}</span>
+                                                                    </td>
+                                                                    <td>{{ row.currency }}</td>
+                                                                    <td>
+                                                                        <span>{{ row.reason }}</span>
+                                                                    </td>
+                                                                    <td>{{ row.demurrage_date }}</td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                                {% if not demurrage_reasons_table %}
+                                                                <tr>
+                                                                    <td colspan="10" class="text-center text-muted py-4">
+                                                                        <i class="ri-information-line me-2"></i>
+                                                                        No demurrage records found for the selected period
+                                                                    </td>
+                                                                </tr>
+                                                                {% endif %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div id="demurrage-reasons-pie" style="max-width: 400px; margin: auto;"></div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Demurrage Reasons Pie Chart -->
+                                    
+                                </div>
+                            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='libs/apexcharts/dist/apexcharts.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Main job type pie chart
+    var options = {
+        series: {{ pie_data|tojson }},
+        chart: {
+            type: 'pie',
+            height: 350
+        },
+        labels: {{ pie_labels|tojson }},
+        legend: {
+            position: 'bottom'
+        }
+    };
+    var chart = new ApexCharts(document.querySelector("#shipmentsPieChart"), options);
+    chart.render();
+
+    // FCL demurrage/on-time pie chart
+    var fclOptions = {
+        series: {{ fcl_pie_data|tojson }},
+        chart: {
+            type: 'pie',
+            height: 350
+        },
+        labels: {{ fcl_pie_labels|tojson }},
+        legend: {
+            position: 'bottom'
+        }
+    };
+    var fclChart = new ApexCharts(document.querySelector("#fclPieChart"), fclOptions);
+    fclChart.render();
+
+    // Clearance Tracker Bar Chart
+    var clearanceBarOptions = {
+        series: [
+            {
+                name: 'On Time Clearance',
+                data: {{ bar_on_time|tojson }}
+            },
+            {
+                name: 'Demurrage',
+                data: {{ bar_demurrage|tojson }}
+            }
+        ],
+        chart: {
+            type: 'bar',
+            height: 350,
+            stacked: false
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '50%',
+                endingShape: 'rounded'
+            }
+        },
+        dataLabels: {
+            enabled: true
+        },
+        xaxis: {
+            categories: {{ bar_labels|tojson }},
+            title: {
+                text: 'Job Type'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Number of Shipments'
+            }
+        },
+        legend: {
+            position: 'top'
+        },
+        fill: {
+            opacity: 1
+        },
+        colors: ['#28a745', '#dc3545']
+    };
+    var clearanceBarChart = new ApexCharts(document.querySelector("#clearanceBarChart"), clearanceBarOptions);
+    clearanceBarChart.render();
+
+    // CHA Performance Bar Chart (only for customer role)
+    {% if current_user.role == 'customer' %}
+    var chaBarOptions = {
+        series: {{ cha_bar_data|tojson }},
+        chart: {
+            type: 'bar',
+            height: 400,
+            stacked: false
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '60%',
+                endingShape: 'rounded'
+            }
+        },
+        dataLabels: {
+            enabled: true
+        },
+        xaxis: {
+            categories: {{ cha_bar_labels|tojson }},
+            title: {
+                text: 'CHA Companies'
+            },
+            labels: {
+                rotate: -45,
+                maxHeight: 120
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Number of Shipments'
+            }
+        },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'left'
+        },
+        fill: {
+            opacity: 1
+        },
+        colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#F86624', '#A5978B', '#4ECDC4', '#C7F464', '#FF6B6B']
+    };
+    var chaBarChart = new ApexCharts(document.querySelector("#chaPerformanceBarChart"), chaBarOptions);
+    chaBarChart.render();
+    {% endif %}
+});
+</script>
+<script>
+    var demurragePieOptions = {
+        chart: {
+            type: 'pie',
+            width: 400,
+            height: 350
+        },
+        series: {{ demurrage_pie_data|tojson }},
+        labels: {{ demurrage_pie_labels|tojson }},
+        colors: [
+            '#FF4560', '#775DD0', '#3F51B5', '#546E7A', '#008FFB', '#00E396', '#FEB019', '#D4526E', '#8D5B4C', '#F86624', '#2E294E', '#1B998B'
+        ],
+        legend: { position: 'bottom' }
+    };
+    var demurragePieChart = new ApexCharts(document.querySelector("#demurrage-reasons-pie"), demurragePieOptions);
+    demurragePieChart.render();
+</script>
+{% endblock %}

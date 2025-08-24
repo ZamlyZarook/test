@@ -1,0 +1,968 @@
+{% extends "partials/base.html" %}
+{% block title %}Edit Knowledge Base{% endblock title %}
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Custom Select2 styling -->
+<style>
+    .field-row {
+        border: 1px solid #e9e9ef;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+    .table-card {
+        margin-bottom: 20px;
+    }
+    /* Modified to show by default and hide conditionally with JS */
+    .fk-options {
+        display: block;
+    }
+    /* Add this class to dynamically hide FK options when not checked */
+    .fk-hidden {
+        display: none;
+    }  
+</style>
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Edit Knowledge Base</h4>
+
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('knowledge_base.list_categories') }}">Knowledge Base</a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('knowledge_base.view_category', category_id=kb.category_id) }}">{{ kb.category_id.category_id }}</a></li>
+                                    <li class="breadcrumb-item active">Edit</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end page title -->
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Knowledge Base Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="knowledge-base-form">
+                                    <input type="hidden" id="kb-id" value="{{ kb.id }}">
+                                    <input type="hidden" id="category-id" value="{{ kb.category_id }}">
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="connection" class="form-label">Data Source Connection</label>
+                                            <select class="form-select select2" id="connection" required>
+                                                <option value="">Select Connection</option>
+                                                {% for connection in current_user.available_connections %}
+                                                <option value="{{ connection.id }}" {% if connection.id == kb.source_connection_id %}selected{% endif %}>{{ connection.connection_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="database" class="form-label">Database</label>
+                                            <select class="form-select select2" id="database" required {% if not kb.source_database_id %}disabled{% endif %}>
+                                                <option value="">Select Database</option>
+                                                {% if kb.source_database_id %}
+                                                <option value="{{ kb.source_database_id }}" selected>{{ kb.source_database.database_name }}</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Status</label>
+                                            <div class="form-check form-switch form-switch-sm">
+                                                <input type="checkbox" class="form-check-input" id="activeStatus" {% if kb.activeYN %}checked{% endif %}>
+                                                <label class="form-check-label" for="activeStatus">Active</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Table Mappings</h5>
+                                <button type="button" class="btn btn-soft-primary btn-sm" id="add-table-btn">
+                                    <i class="ri-add-line align-middle me-1"></i> Add Table
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="tables-container">
+                                    <!-- Table cards will be loaded here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3 mb-5">
+                    <div class="col-12 text-md-end">
+                        <a href="{{ url_for('knowledge_base.view_knowledge_base', kb_id=kb.id) }}" class="btn btn-light me-2">Cancel</a>
+                        <button type="button" class="btn btn-success" id="update-kb-btn">
+                            <i class="ri-save-line align-middle me-1"></i> Update Knowledge Base
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- container-fluid -->
+        </div>
+        <!-- End Page-content -->
+
+        <!-- Table Template -->
+        <template id="table-template">
+            <div class="card table-card" data-table-id="${tableId}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center col-md-6">
+                        <h5 class="card-title mb-0">Table: </h5>
+                        <select class="form-select table-select ms-2" required>
+                            <option value="">Select Table</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="form-check form-check-inline me-2">
+                            <input class="form-check-input add-all-fields" type="checkbox" id="addAllFields-${tableId}">
+                            <label class="form-check-label" for="addAllFields-${tableId}">Add All Fields</label>
+                        </div>
+                        <button type="button" class="btn btn-soft-success btn-sm add-field-btn">
+                            <i class="ri-add-line align-middle"></i> Add Field
+                        </button>
+                        <button type="button" class="btn btn-soft-danger btn-sm remove-table-btn">
+                            <i class="ri-delete-bin-line align-middle"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="fields-container">
+                        <!-- Fields will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Field Template -->
+        <template id="field-template">
+            <div class="field-row" data-field-id="${fieldId}">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <label class="form-label">Field</label>
+                        <select class="form-select field-select" required>
+                            <option value="">Select Field</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control field-description" placeholder="Field description">
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            <div class="col-6 pe-0">
+                                <label class="form-label small">Unique</label>
+                                <div class="form-check form-switch form-switch-sm">
+                                    <input class="form-check-input is-unique" type="checkbox">
+                                </div>
+                                <label class="form-label small">Foreign Key</label>
+                                <div class="form-check form-switch form-switch-sm">
+                                    <input class="form-check-input is-foreign-key" type="checkbox">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 fk-options">
+                        <label class="form-label">Ref Table</label>
+                        <select class="form-select ref-table-select">
+                            <option value="">Select Table</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 fk-options">
+                        <label class="form-label">Ref Field</label>
+                        <select class="form-select ref-field-select" disabled>
+                            <option value="">Select Field</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label d-none d-md-block">Actions</label>
+                        <button type="button" class="btn btn-sm btn-danger remove-field-btn">
+                            <i class="ri-delete-bin-line align-middle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+        
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- jQuery first -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- AG Grid -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/dist/ag-grid-community.min.js"></script>
+<!-- Sweet Alerts js -->
+<script src="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<script>
+$(document).ready(function() {
+    let tableCounter = 0;
+    let fieldCounter = 0;
+    let tableData = {};
+    let currentConnection = $('#connection').val();
+    let currentDatabase = $('#database').val();
+    let availableTables = [];
+    let existingTables = {};  // Store existing table mappings
+    
+    // Initialize Select2
+    $('.select2').select2();
+    
+    // Load existing knowledge base data
+    loadKnowledgeBaseData();
+    
+    // Handle connection change
+    $('#connection').change(function() {
+        console.log('Connection changed:', $(this).val());
+        const connectionId = $(this).val();
+        if (connectionId) {
+            currentConnection = connectionId;
+            // Enable database select
+            $('#database').prop('disabled', false);
+            
+            // Fetch databases for this connection
+            fetchDatabasesForConnection(connectionId);
+        } else {
+            resetForm('connection');
+        }
+    });
+    
+    // Handle database change
+    $('#database').change(function() {
+        const databaseId = $(this).val();
+        if (databaseId) {
+            currentDatabase = databaseId;
+            // Fetch tables for this database
+            fetchTablesForDatabase(currentConnection, databaseId);
+        } else {
+            resetForm('database');
+        }
+    });
+    
+    // Add table button
+    $('#add-table-btn').click(function() {
+        const databaseId = $('#database').val();
+        if (!databaseId) {
+            showToast('warning', 'Please select a database first');
+            return;
+        }
+        
+        addTable();
+    });
+    
+    // Update knowledge base
+    $('#update-kb-btn').click(function() {
+        if (!validateForm()) {
+            return;
+        }
+        
+        const formData = {
+            kb_id: $('#kb-id').val(),
+            category_id: $('#category-id').val(),
+            connection_id: $('#connection').val(),
+            database_id: $('#database').val(),
+            active: $('#activeStatus').is(':checked'),
+            tables: []
+        };
+        
+        // Gather table data
+        $('.table-card').each(function() {
+            const tableId = $(this).data('table-id');
+            const tableName = $(this).find('.table-select').val();
+            const dbTableId = $(this).data('db-table-id'); // Store the database table ID if it exists
+            
+            const tableData = {
+                table_name: tableName,
+                db_table_id: dbTableId, // Pass this back to update existing records
+                fields: []
+            };
+            
+            // Gather fields for this table
+            $(this).find('.field-row').each(function() {
+                const fieldName = $(this).find('.field-select').val();
+                const fieldDesc = $(this).find('.field-description').val();
+                const isUnique = $(this).find('.is-unique').is(':checked');
+                const isForeignKey = $(this).find('.is-foreign-key').is(':checked');
+                const dbFieldId = $(this).data('db-field-id'); // Store the database field ID if it exists
+                
+                const fieldData = {
+                    source_field: fieldName,
+                    description: fieldDesc,
+                    is_unique: isUnique,
+                    is_foreign_key: isForeignKey,
+                    db_field_id: dbFieldId // Pass this back to update existing records
+                };
+                
+                if (isForeignKey) {
+                    fieldData.referenced_table = $(this).find('.ref-table-select').val();
+                    fieldData.referenced_field = $(this).find('.ref-field-select').val();
+                }
+                
+                tableData.fields.push(fieldData);
+            });
+            
+            formData.tables.push(tableData);
+        });
+        
+        // Submit form data
+        updateKnowledgeBase(formData);
+    });
+    
+    // Dynamic event handlers
+    
+    // Add field button
+    $(document).on('click', '.add-field-btn', function() {
+        const tableCard = $(this).closest('.table-card');
+        const tableId = tableCard.data('table-id');
+        const tableName = tableCard.find('.table-select').val();
+        
+        if (!tableName) {
+            showToast('warning', 'Please select a table first');
+            return;
+        }
+        
+        addField(tableId);
+    });
+    
+    // Remove table button
+    $(document).on('click', '.remove-table-btn', function() {
+        $(this).closest('.table-card').remove();
+    });
+    
+    // Remove field button
+    $(document).on('click', '.remove-field-btn', function() {
+        $(this).closest('.field-row').remove();
+    });
+    
+    // Table select change
+    $(document).on('change', '.table-select', function() {
+        const tableCard = $(this).closest('.table-card');
+        const tableId = tableCard.data('table-id');
+        const tableName = $(this).val();
+        
+        // Clear existing fields when table changes
+        tableCard.find('.fields-container').empty();
+        
+        // Uncheck the "Add All Fields" checkbox
+        tableCard.find('.add-all-fields').prop('checked', false);
+        
+        if (tableName) {
+            // Fetch fields for this table
+            fetchFieldsForTable(tableId, tableName);
+        }
+    });
+    
+    // Foreign key checkbox change
+    $(document).on('change', '.is-foreign-key', function() {
+        const fkOptions = $(this).closest('.field-row').find('.fk-options');
+        if ($(this).is(':checked')) {
+            fkOptions.removeClass('fk-hidden');
+            
+            // Populate the referenced table dropdown with all available tables
+            const refTableSelect = fkOptions.find('.ref-table-select');
+            refTableSelect.empty().append('<option value="">Select Table</option>');
+            
+            // Add all available tables from the database, not just mapped tables
+            availableTables.forEach(function(table) {
+                refTableSelect.append(`<option value="${table}">${table}</option>`);
+            });
+        } else {
+            fkOptions.addClass('fk-hidden');
+        }
+    });
+    
+    // Referenced table select change
+    $(document).on('change', '.ref-table-select', function() {
+        const fieldRow = $(this).closest('.field-row');
+        const refTableName = $(this).val();
+        const refFieldSelect = fieldRow.find('.ref-field-select');
+        
+        refFieldSelect.empty().append('<option value="">Select Field</option>');
+        
+        if (refTableName) {
+            // Fetch fields for the referenced table directly from the API
+            const connectionId = $('#connection').val();
+            const databaseId = $('#database').val();
+            
+            showLoading();
+            
+            fetch(`/knowledge_base/api/columns?connection_id=${connectionId}&database_id=${databaseId}&table=${refTableName}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.status === 'success') {
+                    // Populate the referenced field dropdown with fields from the referenced table
+                    data.columns.forEach(function(column) {
+                        // Handle different possible column data structures
+                        const columnName = typeof column === 'string' ? column : 
+                                          column.name ? column.name : 
+                                          column.column_name ? column.column_name : 
+                                          'Unknown';
+                        
+                        refFieldSelect.append(`<option value="${columnName}">${columnName}</option>`);
+                    });
+                    refFieldSelect.prop('disabled', false);
+                } else {
+                    showToast('error', data.message || 'Failed to load fields');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showToast('error', 'Error fetching fields: ' + error.message);
+                console.error('Error fetching fields:', error);
+            });
+        } else {
+            refFieldSelect.prop('disabled', true);
+        }
+    });
+    
+    // Add All Fields checkbox change
+    $(document).on('change', '.add-all-fields', function() {
+        if ($(this).is(':checked')) {
+            const tableCard = $(this).closest('.table-card');
+            const tableId = tableCard.data('table-id');
+            const tableName = tableCard.find('.table-select').val();
+            
+            if (!tableName) {
+                showToast('warning', 'Please select a table first');
+                $(this).prop('checked', false);
+                return;
+            }
+            
+            // Clear existing fields
+            tableCard.find('.fields-container').empty();
+            
+            // Add all fields from the selected table
+            if (tableData[tableId] && tableData[tableId].fields) {
+                tableData[tableId].fields.forEach(function(field) {
+                    // Handle different possible API responses
+                    const fieldName = field.name || field.column_name || field;
+                    if (fieldName && typeof fieldName === 'string') {
+                        const fieldId = addField(tableId);
+                        const fieldRow = $(`[data-field-id="${fieldId}"]`);
+                        
+                        // Select the field in the dropdown
+                        fieldRow.find('.field-select').val(fieldName);
+                    }
+                });
+            }
+        }
+    });
+    
+    // Helper functions
+    
+    function loadKnowledgeBaseData() {
+        const kbId = $('#kb-id').val();
+        
+        showLoading();
+        
+        fetch(`/knowledge_base/api/knowledge-base/${kbId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                // Set current connection and database
+                currentConnection = data.kb.source_connection_id;
+                currentDatabase = data.kb.source_database_id;
+                
+                // Fetch tables for the database
+                fetchTablesForDatabase(currentConnection, currentDatabase);
+                
+                // Render existing table mappings
+                data.tables.forEach(function(table) {
+                    const tableId = addTable();
+                    const tableCard = $(`[data-table-id="${tableId}"]`);
+                    
+                    // Store the table ID for updating
+                    tableCard.attr('data-db-table-id', table.id);
+                    
+                    // Remember this existing table
+                    existingTables[table.id] = tableId;
+                    
+                    // Fetch table fields and then populate the table data
+                    fetch(`/knowledge_base/api/columns?connection_id=${currentConnection}&database_id=${currentDatabase}&table=${table.table_name}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(fieldsData => {
+                        if (fieldsData.status === 'success') {
+                            // Store fields for this table
+                            tableData[tableId] = {
+                                name: table.table_name,
+                                fields: fieldsData.columns
+                            };
+                            
+                            // Set the table name
+                            tableCard.find('.table-select').append(`<option value="${table.table_name}" selected>${table.table_name}</option>`);
+                            
+                            // Add fields
+                            table.fields.forEach(function(field) {
+                                const fieldId = addField(tableId);
+                                const fieldRow = $(`[data-field-id="${fieldId}"]`);
+                                
+                                // Store the field ID for updating
+                                fieldRow.attr('data-db-field-id', field.id);
+                                
+                                // Populate field select
+                                const fieldSelect = fieldRow.find('.field-select');
+                                fieldsData.columns.forEach(function(column) {
+                                    const columnName = typeof column === 'string' ? column : 
+                                                     column.name ? column.name : 
+                                                     column.column_name ? column.column_name : 'Unknown';
+                                    
+                                    const selected = columnName === field.source_field_name ? 'selected' : '';
+                                    fieldSelect.append(`<option value="${columnName}" ${selected}>${columnName}</option>`);
+                                });
+                                
+                                // Set field description
+                                fieldRow.find('.field-description').val(field.field_description);
+                                
+                                // Set unique and foreign key flags
+                                fieldRow.find('.is-unique').prop('checked', field.is_unique);
+                                
+                                // Handle foreign key setup if needed
+                                if (field.is_foreign_key) {
+                                    fieldRow.find('.is-foreign-key').prop('checked', true);
+                                    fieldRow.find('.fk-options').removeClass('fk-hidden');
+                                    
+                                    // We'll need to load referenced table and field
+                                    if (field.referenced_table_map) {
+                                        const refTableSelect = fieldRow.find('.ref-table-select');
+                                        refTableSelect.append(`<option value="${field.referenced_table_map.table_name}" selected>${field.referenced_table_map.table_name}</option>`);
+                                        
+                                        // Load referenced fields
+                                        fetch(`/knowledge_base/api/columns?connection_id=${currentConnection}&database_id=${currentDatabase}&table=${field.referenced_table_map.table_name}`, {
+                                            method: 'GET',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        })
+                                        .then(response => response.json())
+                                        .then(refFieldsData => {
+                                            if (refFieldsData.status === 'success') {
+                                                const refFieldSelect = fieldRow.find('.ref-field-select');
+                                                refFieldSelect.empty().append('<option value="">Select Field</option>');
+                                                
+                                                refFieldsData.columns.forEach(function(column) {
+                                                    const columnName = typeof column === 'string' ? column : 
+                                                                     column.name ? column.name : 
+                                                                     column.column_name ? column.column_name : 'Unknown';
+                                                    
+                                                    const selected = field.referenced_field && columnName === field.referenced_field.source_field_name ? 'selected' : '';
+                                                    refFieldSelect.append(`<option value="${columnName}" ${selected}>${columnName}</option>`);
+                                                });
+                                                
+                                                refFieldSelect.prop('disabled', false);
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    fieldRow.find('.fk-options').addClass('fk-hidden');
+                                }
+                            });
+                        }
+                    });
+                });
+            } else {
+                showToast('error', data.message || 'Failed to load knowledge base');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error loading knowledge base: ' + error.message);
+            console.error('Error loading knowledge base:', error);
+        });
+    }
+    
+    function fetchDatabasesForConnection(connectionId) {
+        showLoading();
+        
+        fetch(`/knowledge_base/api/databases?connection_id=${connectionId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                const databaseSelect = $('#database');
+                databaseSelect.empty().append('<option value="">Select Database</option>');
+                
+                data.databases.forEach(function(db) {
+                    const selected = db.id == currentDatabase ? 'selected' : '';
+                    databaseSelect.append(`<option value="${db.id}" ${selected}>${db.name}</option>`);
+                });
+                
+                // Enable the select
+                databaseSelect.prop('disabled', false);
+                
+                // Refresh Select2
+                databaseSelect.trigger('change.select2');
+            } else {
+                showToast('error', data.message || 'Failed to load databases');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching databases: ' + error.message);
+            console.error('Error fetching databases:', error);
+        });
+    }
+    
+    function fetchTablesForDatabase(connectionId, databaseId) {
+        showLoading();
+        
+        fetch(`/knowledge_base/api/tables?connection_id=${connectionId}&database_id=${databaseId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                availableTables = data.tables;
+                // Enable the add table button
+                $('#add-table-btn').prop('disabled', false);
+                
+                // Update the table select options in existing tables
+                $('.table-select').each(function() {
+                    const currentVal = $(this).val();
+                    $(this).empty().append('<option value="">Select Table</option>');
+                    
+                    availableTables.forEach(function(table) {
+                        const selected = table === currentVal ? 'selected' : '';
+                        $(this).append(`<option value="${table}" ${selected}>${table}</option>`);
+                    });
+                });
+            } else {
+                showToast('error', data.message || 'Failed to load tables');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching tables: ' + error.message);
+            console.error('Error fetching tables:', error);
+        });
+    }
+    
+    function fetchFieldsForTable(tableId, tableName) {
+        const databaseId = $('#database').val();
+        const connectionId = $('#connection').val();
+        
+        showLoading();
+        
+        fetch(`/knowledge_base/api/columns?connection_id=${connectionId}&database_id=${databaseId}&table=${tableName}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                // Store fields for this table
+                tableData[tableId] = {
+                    name: tableName,
+                    fields: data.columns // Using the API response directly
+                };
+                
+                // Add fields for this table
+                const fieldsContainer = $(`[data-table-id="${tableId}"]`).find('.fields-container');
+                fieldsContainer.empty();
+                
+                // Add at least one field by default
+                addField(tableId);
+            } else {
+                showToast('error', data.message || 'Failed to load fields');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching fields: ' + error.message);
+            console.error('Error fetching fields:', error);
+        });
+    }
+    
+    function updateKnowledgeBase(formData) {
+    showLoading();
+    
+    fetch('/knowledge_base/api/update-knowledge-base', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        if (data.status === 'success') {
+            showToast('success', 'Knowledge base updated successfully');
+            // Redirect to the view page after a short delay
+            setTimeout(() => {
+                window.location.href = `/knowledge_base/view/${formData.kb_id}`;
+            }, 1500);
+        } else {
+            showToast('error', data.message || 'Failed to update knowledge base');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showToast('error', 'Error updating knowledge base: ' + error.message);
+        console.error('Error updating knowledge base:', error);
+    });
+}
+
+function addTable() {
+    tableCounter++;
+    const tableId = 'table-' + tableCounter;
+    
+    // Clone the template and replace placeholders
+    const tableTemplate = $('#table-template').html()
+        .replace(/\${tableId}/g, tableId);
+    
+    // Add the table card to the container
+    $('#tables-container').append(tableTemplate);
+    
+    // Populate the table select with available tables
+    const tableSelect = $(`[data-table-id="${tableId}"]`).find('.table-select');
+    tableSelect.empty().append('<option value="">Select Table</option>');
+    
+    if (availableTables && availableTables.length) {
+        availableTables.forEach(function(table) {
+            tableSelect.append(`<option value="${table}">${table}</option>`);
+        });
+    }
+    
+    return tableId;
+}
+
+function addField(tableId) {
+    fieldCounter++;
+    const fieldId = 'field-' + fieldCounter;
+    
+    // Clone the template and replace placeholders
+    const fieldTemplate = $('#field-template').html()
+        .replace(/\${fieldId}/g, fieldId);
+    
+    // Add the field row to the table
+    $(`[data-table-id="${tableId}"]`).find('.fields-container').append(fieldTemplate);
+    
+    // Populate the field select with available fields for this table
+    if (tableData[tableId] && tableData[tableId].fields) {
+        const fieldSelect = $(`[data-field-id="${fieldId}"]`).find('.field-select');
+        fieldSelect.empty().append('<option value="">Select Field</option>');
+        
+        tableData[tableId].fields.forEach(function(field) {
+            // Handle different possible field data structures
+            const fieldName = typeof field === 'string' ? field : 
+                              field.name ? field.name : 
+                              field.column_name ? field.column_name : 'Unknown';
+            
+            fieldSelect.append(`<option value="${fieldName}">${fieldName}</option>`);
+        });
+    }
+    
+    // Initialize foreign key options as hidden by default
+    $(`[data-field-id="${fieldId}"]`).find('.fk-options').addClass('fk-hidden');
+    
+    return fieldId;
+}
+
+function resetForm(level) {
+    if (level === 'connection') {
+        // Reset database
+        $('#database').empty().append('<option value="">Select Database</option>').prop('disabled', true);
+        currentDatabase = null;
+        
+        // Clear tables
+        resetForm('database');
+    } else if (level === 'database') {
+        // Clear tables container
+        $('#tables-container').empty();
+        
+        // Reset table data
+        tableData = {};
+        availableTables = [];
+        
+        // Disable add table button
+        $('#add-table-btn').prop('disabled', true);
+    }
+}
+
+function validateForm() {
+    // Check if connection and database are selected
+    if (!$('#connection').val()) {
+        showToast('warning', 'Please select a connection');
+        return false;
+    }
+    
+    if (!$('#database').val()) {
+        showToast('warning', 'Please select a database');
+        return false;
+    }
+    
+    // Check if at least one table is added
+    if ($('.table-card').length === 0) {
+        showToast('warning', 'Please add at least one table');
+        return false;
+    }
+    
+    // Check if all tables have names and at least one field
+    let valid = true;
+    $('.table-card').each(function() {
+        const tableName = $(this).find('.table-select').val();
+        if (!tableName) {
+            showToast('warning', 'Please select a name for all tables');
+            valid = false;
+            return false; // Break the loop
+        }
+        
+        // Check if the table has at least one field
+        if ($(this).find('.field-row').length === 0) {
+            showToast('warning', `Please add at least one field to table: ${tableName}`);
+            valid = false;
+            return false; // Break the loop
+        }
+        
+        // Check if all fields are properly configured
+        $(this).find('.field-row').each(function() {
+            const fieldName = $(this).find('.field-select').val();
+            if (!fieldName) {
+                showToast('warning', `Please select a name for all fields in table: ${tableName}`);
+                valid = false;
+                return false; // Break the loop
+            }
+            
+            // Check if foreign key fields are properly configured
+            if ($(this).find('.is-foreign-key').is(':checked')) {
+                const refTable = $(this).find('.ref-table-select').val();
+                const refField = $(this).find('.ref-field-select').val();
+                
+                if (!refTable || !refField) {
+                    showToast('warning', `Please select referenced table and field for foreign key: ${fieldName}`);
+                    valid = false;
+                    return false; // Break the loop
+                }
+            }
+        });
+        
+        if (!valid) {
+            return false; // Break the outer loop if inner validation failed
+        }
+    });
+    
+    return valid;
+}
+
+function showLoading() {
+    // Show a loading indicator
+    if (!$('#loading-overlay').length) {
+        $('body').append('<div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+    } else {
+        $('#loading-overlay').show();
+    }
+}
+
+function hideLoading() {
+    // Hide the loading indicator
+    $('#loading-overlay').hide();
+}
+
+function showToast(type, message) {
+    // Use SweetAlert2 for notifications
+    Swal.fire({
+        text: message,
+        icon: type,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+}
+});
+</script>
+{% endblock extra_js %}

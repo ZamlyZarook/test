@@ -1,0 +1,301 @@
+{% extends "partials/base.html" %}
+
+{% block title %}View Demurrage Rate Card - {{ rate_card.rate_card_name }}{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">View Demurrage Rate Card</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('demurrage.rate_cards') }}">Rate Cards</a></li>
+                                <li class="breadcrumb-item active">View Rate Card</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3 gap-2">
+                        <a href="{{ url_for('demurrage.edit_rate_card', rate_card_id=rate_card.id) }}" class="btn btn-primary">
+                            <i class="ri-edit-line me-1"></i> Edit Rate Card
+                        </a>
+                        <a href="{{ url_for('demurrage.rate_cards') }}" class="btn btn-secondary">
+                            <i class="ri-arrow-left-line me-1"></i> Back to List
+                        </a>
+                    </div>
+
+                    <!-- Rate Card Details -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-eye-line me-1 align-bottom"></i>
+                                Rate Card Details
+                            </h5>
+                            <span class="badge badge-soft-{{ 'success' if rate_card.is_active else 'danger' }} fs-6">
+                                {{ 'Active' if rate_card.is_active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Basic Information -->
+                            <div class="row mb-4">
+                                <div class="col-lg-12">
+                                    <div class="card shadow-none border">
+                                        <div class="card-header bg-soft-primary">
+                                            <h6 class="card-title mb-0">Basic Information</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Rate Card Name:</label>
+                                                        <p class="mb-0">{{ rate_card.rate_card_name }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Country:</label>
+                                                        <p class="mb-0">{{ rate_card.country.countryName if rate_card.country else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Company:</label>
+                                                        <p class="mb-0">{{ rate_card.company.name if rate_card.company else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Port Code:</label>
+                                                        <p class="mb-0">{{ rate_card.port_code or 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Description:</label>
+                                                <p class="mb-0">{{ rate_card.description or 'No description provided' }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Container & Rate Information -->
+                            <div class="row mb-4">
+                                <div class="col-lg-12">
+                                    <div class="card shadow-none border">
+                                        <div class="card-header bg-soft-info">
+                                            <h6 class="card-title mb-0">Container & Rate Information</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Container Size:</label>
+                                                        <p class="mb-0">{{ rate_card.container_size.name if rate_card.container_size else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Container Type:</label>
+                                                        <p class="mb-0">{{ rate_card.container_type.name if rate_card.container_type else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Currency:</label>
+                                                        <p class="mb-0">{{ rate_card.currency.CurrencyCode if rate_card.currency else 'N/A' }} - {{ rate_card.currency.CurrencyName if rate_card.currency else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Demurrage Reason:</label>
+                                                <p class="mb-0">{{ rate_card.demurrage_reason.reason_name if rate_card.demurrage_reason else 'N/A' }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tiered Rate Structure -->
+                            <div class="row mb-4">
+                                <div class="col-lg-12">
+                                    <div class="card shadow-none border">
+                                        <div class="card-header bg-soft-warning">
+                                            <h6 class="card-title mb-0">Tiered Rate Structure ({{ rate_card.tiers|length }} Tiers)</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if rate_card.tiers %}
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Tier</th>
+                                                            <th>Day Range</th>
+                                                            <th>Amount ({{ rate_card.currency.CurrencyCode if rate_card.currency else 'N/A' }})</th>
+                                                            <th>Description</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for tier in rate_card.tiers %}
+                                                        <tr>
+                                                            <td>
+                                                                <span class="badge bg-primary">Tier {{ tier.tier_number }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <strong>{{ tier.day_range_display }}</strong>
+                                                            </td>
+                                                            <td>
+                                                                <strong>{{ "%.2f"|format(tier.rate_amount) }}</strong>
+                                                            </td>
+                                                            <td>
+                                                                {% if tier.to_day %}
+                                                                    {% if tier.from_day == tier.to_day %}
+                                                                        Single day rate for day {{ tier.from_day }}
+                                                                    {% else %}
+                                                                        Rate for days {{ tier.from_day }} to {{ tier.to_day }}
+                                                                    {% endif %}
+                                                                {% else %}
+                                                                    Rate for day {{ tier.from_day }} onwards (unlimited)
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <!-- Tier Summary -->
+                                            <div class="mt-3">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="card bg-light">
+                                                            <div class="card-body p-3">
+                                                                <h6 class="card-title mb-2">Rate Summary</h6>
+                                                                <ul class="list-unstyled mb-0">
+                                                                    <li><strong>Lowest Rate:</strong> {{ rate_card.currency.CurrencyCode }} {{ "%.2f"|format(rate_card.tiers|map(attribute='rate_amount')|min) }}</li>
+                                                                    <li><strong>Highest Rate:</strong> {{ rate_card.currency.CurrencyCode }} {{ "%.2f"|format(rate_card.tiers|map(attribute='rate_amount')|max) }}</li>
+                                                                    <li><strong>Total Tiers:</strong> {{ rate_card.tiers|length }}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card bg-light">
+                                                            <div class="card-body p-3">
+                                                                <h6 class="card-title mb-2">Coverage</h6>
+                                                                <ul class="list-unstyled mb-0">
+                                                                    <li><strong>Starts from:</strong> Day {{ rate_card.tiers[0].from_day if rate_card.tiers else 'N/A' }}</li>
+                                                                    <li><strong>Unlimited tier:</strong> 
+                                                                        {% set unlimited_tier = rate_card.tiers|selectattr('to_day', 'none')|list %}
+                                                                        {{ 'Yes' if unlimited_tier else 'No' }}
+                                                                    </li>
+                                                                    {% if unlimited_tier %}
+                                                                    <li><strong>Unlimited from:</strong> Day {{ unlimited_tier[0].from_day }}</li>
+                                                                    {% endif %}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <div class="text-center py-4">
+                                                <i class="ri-information-line fs-1 text-muted mb-2"></i>
+                                                <p class="text-muted mb-0">No tiers configured for this rate card</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Authority Information -->
+                            <div class="row mb-4">
+                                <div class="col-lg-12">
+                                    <div class="card shadow-none border">
+                                        <div class="card-header bg-soft-success">
+                                            <h6 class="card-title mb-0">Authority Information</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Set By Authority:</label>
+                                                        <p class="mb-0">
+                                                            <span class="badge bg-soft-primary">{{ rate_card.set_by_authority }}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Approved By:</label>
+                                                        <p class="mb-0">{{ rate_card.approved_by or 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Approval Reference:</label>
+                                                        <p class="mb-0">{{ rate_card.approval_reference or 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Audit Information -->
+                            <div class="row mb-4">
+                                <div class="col-lg-12">
+                                    <div class="card shadow-none border">
+                                        <div class="card-header bg-soft-secondary">
+                                            <h6 class="card-title mb-0">Audit Information</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Created At:</label>
+                                                        <p class="mb-0">{{ rate_card.created_at.strftime('%Y-%m-%d %H:%M:%S') if rate_card.created_at else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Updated At:</label>
+                                                        <p class="mb-0">{{ rate_card.updated_at.strftime('%Y-%m-%d %H:%M:%S') if rate_card.updated_at else 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}

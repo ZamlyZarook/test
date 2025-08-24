@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Validation Results</title>
+    <style type="text/css">
+        /* Base styles */
+        body {
+            margin: 0;
+            padding: 0;
+            min-width: 100%;
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            color: #333333;
+            background-color: #f9f9f9;
+            -webkit-text-size-adjust: none;
+        }
+        
+        /* Email container */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header */
+        .header {
+            background-color: #0056b3;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* Content */
+        .content {
+            padding: 20px;
+        }
+        
+        /* Entry card */
+        .entry-card {
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .entry-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #dddddd;
+        }
+        
+        .entry-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #333333;
+        }
+        
+        .entry-header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #666666;
+        }
+        
+        /* Document section */
+        .document {
+            padding: 15px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        
+        .document:last-child {
+            border-bottom: none;
+        }
+        
+        .document h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333333;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .badge-required {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .badge-accepted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        /* Progress bars */
+        .progress-container {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .progress-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .progress-col {
+            width: 50%;
+            padding: 0 10px;
+        }
+        
+        .progress-col:first-child {
+            padding-left: 0;
+        }
+        
+        .progress-col:last-child {
+            padding-right: 0;
+        }
+        
+        .progress-label {
+            margin: 0 0 5px 0;
+            font-size: 13px;
+            color: #555555;
+        }
+        
+        .progress-bg {
+            background-color: #e9ecef;
+            height: 20px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+        }
+        
+        .progress-bar-success {
+            background-color: #28a745;
+        }
+        
+        .progress-bar-warning {
+            background-color: #ffc107;
+        }
+        
+        .progress-bar-danger {
+            background-color: #dc3545;
+        }
+        
+        .progress-value {
+            text-align: right;
+            font-size: 12px;
+            margin: 5px 0 0 0;
+            color: #777777;
+        }
+        
+        /* Alert boxes */
+        .alert {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        /* Document details */
+        .document-details {
+            margin: 10px 0;
+            font-size: 13px;
+            color: #666666;
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 20px;
+            text-align: center;
+            background-color: #f8f9fa;
+            color: #888888;
+            font-size: 12px;
+            border-top: 1px solid #eeeeee;
+        }
+        
+        .footer p {
+            margin: 0 0 5px 0;
+        }
+
+        /* Mobile responsiveness */
+        @media screen and (max-width: 600px) {
+            .progress-row {
+                flex-direction: column;
+            }
+            
+            .progress-col {
+                width: 100%;
+                padding: 0 0 10px 0;
+            }
+        }
+        
+        /* Validation status specific styles */
+        .validation-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .validation-status-1 {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .validation-status-2,
+        .validation-status-5,
+        .validation-status-6,
+        .validation-status-7,
+        .validation-status-8 {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .validation-status-3,
+        .validation-status-4 {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Document Validation Results</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ customer.customer_name }},</p>
+            <p>We have completed the AI validation of your recently uploaded documents. Please find the validation results below:</p>
+            
+            <!-- Loop through each entry -->
+            {% for entry_id, entry in entries.items() %}
+            <div class="entry-card">
+                <div class="entry-header">
+                    <h2>Shipment: {{ entry.docserial }}</h2>
+                    <p>{{ entry.shipment_type }} | {{ entry.ship_category }}</p>
+                </div>
+                
+                <!-- Document results for this entry -->
+                {% for doc in entry.documents %}
+                <div class="document">
+                    <h3>
+                        {{ doc.description }}
+                        {% if doc.is_mandatory %}
+                        <span class="badge badge-required">Required</span>
+                        {% endif %}
+                    </h3>
+                    
+                    <p>
+                        {% if doc.validation_status == 1 %}
+                        <span class="badge badge-accepted">Accepted</span>
+                        {% elif doc.validation_status == 2 %}
+                        <span class="badge badge-rejected">Failed Validation</span>
+                        {% elif doc.validation_status == 3 %}
+                        <span class="badge badge-warning">No Sample Document</span>
+                        {% elif doc.validation_status == 4 %}
+                        <span class="badge badge-warning">Sample Document Error</span>
+                        {% elif doc.validation_status == 5 %}
+                        <span class="badge badge-rejected">Text Extraction Failed</span>
+                        {% elif doc.validation_status == 6 %}
+                        <span class="badge badge-rejected">Text Extraction Failed</span>
+                        {% elif doc.validation_status == 7 %}
+                        <span class="badge badge-rejected">Validation Error</span>
+                        {% elif doc.validation_status == 8 %}
+                        <span class="badge badge-rejected">Document Type Mismatch</span>
+                        {% else %}
+                        <span class="badge badge-info">Status: {{ doc.status }}</span>
+                        {% endif %}
+                    </p>
+                    
+                    <!-- Validation Message based on status -->
+                    <div class="validation-status validation-status-{{ doc.validation_status }}">
+                        {% if doc.validation_status == 1 %}
+                        <strong>Success:</strong> Document has been successfully validated.
+                        {% elif doc.validation_status == 2 %}
+                        <strong>Failed Validation:</strong> The document content does not match the required template.
+                        {% elif doc.validation_status == 3 %}
+                        <strong>No Sample:</strong> No sample document available for comparison. Document will be manually reviewed.
+                        {% elif doc.validation_status == 4 %}
+                        <strong>Sample Error:</strong> Error extracting text from the sample document. Document will be manually reviewed.
+                        {% elif doc.validation_status == 5 %}
+                        <strong>Extraction Failed:</strong> Error extracting text from your submitted document. Please upload a clearer document.
+                        {% elif doc.validation_status == 6 %}
+                        <strong>Extraction Failed:</strong> Error extracting text from both documents. Please upload a clearer document.
+                        {% elif doc.validation_status == 7 %}
+                        <strong>Validation Error:</strong> An error occurred during validation. Please contact support.
+                        {% elif doc.validation_status == 8 %}
+                        <strong>Document Type Mismatch:</strong> The submitted document is not the correct type.
+                        {% endif %}
+                        
+                        {% if doc.similarity_message %}
+                        <br><br>{{ doc.similarity_message }}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Only show match percentage for documents that were fully validated -->
+                    {% if doc.validation_status in [1, 2, 8] %}
+                    <!-- Validation Scores -->
+                    <div class="progress-container">
+                        <div class="progress-row">
+                            <div class="progress-col">
+                                <p class="progress-label">Content Match:</p>
+                                <div class="progress-bg">
+                                    <div class="progress-bar 
+                                        {% if doc.match_percentage >= 80 %}
+                                            progress-bar-success
+                                        {% elif doc.match_percentage >= 60 %}
+                                            progress-bar-warning
+                                        {% else %}
+                                            progress-bar-danger
+                                        {% endif %}"
+                                        style="width: {{ doc.match_percentage }}%;">
+                                    </div>
+                                </div>
+                                <p class="progress-value">{{ doc.match_percentage }}%</p>
+                            </div>
+                            
+                            <div class="progress-col">
+                                <p class="progress-label">Document Type Match:</p>
+                                <div class="progress-bg">
+                                    <div class="progress-bar 
+                                        {% if doc.document_type_similarity >= 80 %}
+                                            progress-bar-success
+                                        {% elif doc.document_type_similarity >= 60 %}
+                                            progress-bar-warning
+                                        {% else %}
+                                            progress-bar-danger
+                                        {% endif %}"
+                                        style="width: {{ doc.document_type_similarity }}%;">
+                                    </div>
+                                </div>
+                                <p class="progress-value">{{ doc.document_type_similarity }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if doc.validation_details and doc.validation_details.document_type %}
+                    <div class="document-details">
+                        <p><strong>Document Type:</strong> 
+                            Expected "{{ doc.validation_details.document_type.expected_type }}", 
+                            Detected "{{ doc.validation_details.document_type.detected_type }}"
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if doc.validation_status in [2, 5, 6, 8] %}
+                    <div class="alert alert-danger">
+                        <strong>Action Required:</strong> Please resubmit this document with the correct content according to the provided template.
+                    </div>
+                    {% elif doc.validation_status in [3, 4, 7] %}
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> Your document will be manually reviewed by our team. No action is required at this time.
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <p>You can review these results in detail and take necessary actions by logging into your customer portal.</p>
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            <p style="margin-top: 20px;">Best regards,<br>Navitrax Support Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification. Please do not reply to this email.</p>
+            <p>&copy; {{ current_year }} Navitrax. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

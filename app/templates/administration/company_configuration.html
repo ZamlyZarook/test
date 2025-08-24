@@ -1,0 +1,351 @@
+{% extends "partials/base.html" %}
+{% block title %}Company Configuration{% endblock title %}
+{% block extra_css %}
+<style>
+    .logo-preview {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+    }
+    .logo-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .logo-upload-area:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    .logo-upload-area.dragover {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
+</style>
+{% endblock extra_css %}
+{% block content %}
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Company Configuration</h4>
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="javascript: void(0);">Administration</a></li>
+                                    <li class="breadcrumb-item active">Company Configuration</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">{{ company.company_name }} - Company Information</h5>
+                                <p class="text-muted mb-0">Update your company details and settings</p>
+                            </div>
+                            <div class="card-body">
+                                <form id="companyConfigForm" method="POST" enctype="multipart/form-data" 
+                                      action="{{ url_for('admin_panel.update_company') }}">
+                                    <div class="row">
+                                        <!-- Company Logo -->
+                                        <div class="col-lg-4">
+                                            <div class="mb-3">
+                                                <label for="company_logo" class="form-label">Company Logo</label>
+                                                
+                                                <!-- Current Logo Display -->
+                                                <div class="mb-3">
+                                                    {% if company.logo_data_url %}
+                                                        <img id="currentLogo" src="{{ company.logo_data_url }}" 
+                                                             alt="Current Logo" class="logo-preview">
+                                                    {% else %}
+                                                        <div id="currentLogo" class="logo-preview d-flex align-items-center justify-content-center bg-light">
+                                                            <i class="ri-building-line text-muted" style="font-size: 3rem;"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Upload Area -->
+                                                <div class="logo-upload-area" id="logoUploadArea">
+                                                    <i class="ri-upload-cloud-2-line" style="font-size: 2rem; color: #6c757d;"></i>
+                                                    <p class="mt-2 mb-1">Drop logo here or click to upload</p>
+                                                    <p class="text-muted small">PNG, JPG, JPEG, GIF (Max 2MB)</p>
+                                                    <input type="file" class="form-control d-none" id="company_logo" 
+                                                           name="company_logo" accept="image/*">
+                                                </div>
+
+                                                <!-- Preview Area -->
+                                                <div id="logoPreview" class="mt-3 d-none">
+                                                    <img id="previewImage" src="" alt="Logo Preview" class="logo-preview">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger mt-2" 
+                                                            onclick="clearLogoPreview()">
+                                                        <i class="ri-delete-bin-line"></i> Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Company Information -->
+                                        <div class="col-lg-8">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" id="company_name" 
+                                                               name="company_name" value="{{ company.company_name }}" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="email" class="form-label">Email</label>
+                                                        <input type="email" class="form-control" id="email" 
+                                                               name="email" value="{{ company.email or '' }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="country" class="form-label">Country</label>
+                                                        <select class="form-control" id="country" name="country" required>
+                                                            <option value="">Select a country</option>
+                                                            {% for country in countries %}
+                                                                <option value="{{ country.countryID }}" {% if company.country == country.countryID %}selected{% endif %}>
+                                                                    {{ country.countryName }}
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="contact_num" class="form-label">Contact Number</label>
+                                                        <input type="text" class="form-control" id="contact_num" 
+                                                               name="contact_num" value="{{ company.contact_num or '' }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="website" class="form-label">Website</label>
+                                                        <input type="text" class="form-control" id="website" 
+                                                               name="website" value="{{ company.website or '' }}" 
+                                                               placeholder="www.example.com or https://example.com">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="vat_identification_number" class="form-label">VAT Identification Number</label>
+                                                        <input type="text" class="form-control" id="vat_identification_number" 
+                                                               name="vat_identification_number" value="{{ company.vat_identification_number or '' }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="address" class="form-label">Address</label>
+                                                <textarea class="form-control" id="address" name="address" 
+                                                          rows="3" placeholder="Enter company address">{{ company.address or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Company Statistics (Read-only) -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <h6 class="mb-3">Company Information</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h5 class="card-title">{{ company.users|length }}</h5>
+                                                    <p class="card-text text-muted">Total Users</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h5 class="card-title">{{ company.created_at.strftime('%B %Y') }}</h5>
+                                                    <p class="card-text text-muted">Registered</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h5 class="card-title">{{ company.updated_at.strftime('%d %b %Y') if company.updated_at else 'Never' }}</h5>
+                                                    <p class="card-text text-muted">Last Updated</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h5 class="card-title">
+                                                        <span class="badge bg-success">Active</span>
+                                                    </h5>
+                                                    <p class="card-text text-muted">Status</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Form Actions -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="reset" class="btn btn-light" onclick="resetForm()">
+                                                    <i class="ri-refresh-line me-1"></i> Reset
+                                                </button>
+                                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                                    <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
+                                                    <i class="ri-save-line me-1"></i> Update Company
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+
+<script>
+    // Logo upload functionality
+    const logoUploadArea = document.getElementById('logoUploadArea');
+    const logoInput = document.getElementById('company_logo');
+    const logoPreview = document.getElementById('logoPreview');
+    const previewImage = document.getElementById('previewImage');
+
+    // Click to upload
+    logoUploadArea.addEventListener('click', () => logoInput.click());
+
+    // File input change
+    logoInput.addEventListener('change', handleFileSelect);
+
+    // Drag and drop
+    logoUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        logoUploadArea.classList.add('dragover');
+    });
+
+    logoUploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        logoUploadArea.classList.remove('dragover');
+    });
+
+    logoUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        logoUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            logoInput.files = files;
+            handleFileSelect();
+        }
+    });
+
+    function handleFileSelect() {
+        const file = logoInput.files[0];
+        if (file) {
+            // Validate file size (2MB max)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('File size must be less than 2MB');
+                logoInput.value = '';
+                return;
+            }
+
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Only PNG, JPG, JPEG, and GIF files are allowed');
+                logoInput.value = '';
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                logoPreview.classList.remove('d-none');
+                document.getElementById('currentLogo').style.opacity = '0.5';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearLogoPreview() {
+        logoInput.value = '';
+        logoPreview.classList.add('d-none');
+        document.getElementById('currentLogo').style.opacity = '1';
+    }
+
+    function resetForm() {
+        document.getElementById('companyConfigForm').reset();
+        clearLogoPreview();
+    }
+
+    // Form submission with loading state
+    document.getElementById('companyConfigForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const submitSpinner = document.getElementById('submitSpinner');
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitSpinner.classList.remove('d-none');
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span><i class="ri-save-line me-1"></i> Updating...';
+    });
+
+    // Auto-save functionality (optional)
+    let autoSaveTimeout;
+    function setupAutoSave() {
+        const inputs = document.querySelectorAll('#companyConfigForm input, #companyConfigForm textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'file') {
+                input.addEventListener('input', () => {
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = setTimeout(() => {
+                        // You can implement auto-save here if needed
+                        console.log('Auto-save triggered');
+                    }, 2000);
+                });
+            }
+        });
+    }
+
+    // Initialize auto-save (optional)
+    // setupAutoSave();
+</script>
+{% endblock content %}

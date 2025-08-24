@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h3 class="text-center">Import Data</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="data_type" class="form-label">Select Data Type</label>
+                            <select class="form-select" id="data_type" name="data_type" required>
+                                <option value="">Choose...</option>
+                                <option value="customers">Customers</option>
+                                <option value="departments">Departments</option>
+                                <option value="shipment_types">Shipment Types</option>
+                                <option value="bl_status">BL Status</option>
+                                <option value="freight_terms">Freight Terms</option>
+                                <option value="request_types">Request Types</option>
+                                <option value="document_types">Document Types</option>
+                                <option value="shipping_lines">Shipping Lines</option>
+                                <option value="countries">Countries</option>
+                                <option value="currencies">Currencies</option>
+                                <option value="terminals">Terminals</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Excel File</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".xlsx" required>
+                            <div class="form-text">
+                                Please upload an Excel file (.xlsx) with the following columns:<br>
+                                <strong>For Customers:</strong> name, country, address, email, telephone, website<br>
+                                <strong>For Departments:</strong> name<br>
+                                <strong>For Shipment Types:</strong> name<br>
+                                <strong>For BL Status:</strong> name<br>
+                                <strong>For Freight Terms:</strong> name<br>
+                                <strong>For Request Types:</strong> name<br>
+                                <strong>For Document Types:</strong> name<br>
+                                <strong>For Shipping Lines:</strong> name<br>
+                                <strong>For Countries:</strong> name<br>
+                                <strong>For Currencies:</strong> name, code<br>
+                                <strong>For Terminals:</strong> name
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Import Data</button>
+                        </div>
+                    </form>
+                    <div class="mt-4">
+                        <h4>Sample Excel Format</h4>
+                        <p>Here's an example of how your Excel file should be formatted:</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>name</th>
+                                        <th>country</th>
+                                        <th>address</th>
+                                        <th>email</th>
+                                        <th>telephone</th>
+                                        <th>website</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Example Name</td>
+                                        <td>Example Country</td>
+                                        <td>Example Address</td>
+                                        <td>example@email.com</td>
+                                        <td>1234567890</td>
+                                        <td>www.example.com</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h3 class="text-center">{{ title }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="form-container">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.module_name.label(class="form-label") }}
+                            {{ form.module_name(class="form-control") }}
+                            {% if form.module_name.errors %}
+                            {% for error in form.module_name.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.module_code.label(class="form-label") }}
+                            {{ form.module_code(class="form-control") }}
+                            {% if form.module_code.errors %}
+                            {% for error in form.module_code.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                            {% for error in form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.icon.label(class="form-label") }}
+                            {{ form.icon(class="form-control") }}
+                            {% if form.icon.errors %}
+                            {% for error in form.icon.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            <small class="form-text text-muted">Enter a Font Awesome icon class (e.g., fas
+                                fa-user)</small>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.route.label(class="form-label") }}
+                            {{ form.route(class="form-control") }}
+                            {% if form.route.errors %}
+                            {% for error in form.route.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.parent_module.label(class="form-label") }}
+                            {{ form.parent_module(class="form-control") }}
+                            {% if form.parent_module.errors %}
+                            {% for error in form.parent_module.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            <small class="form-text text-muted">Leave empty if this is a top-level module</small>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.order.label(class="form-label") }}
+                            {{ form.order(class="form-control") }}
+                            {% if form.order.errors %}
+                            {% for error in form.order.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            <small class="form-text text-muted">Enter a number to determine the display order</small>
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            {{ form.is_active.label(class="form-check-label") }}
+                        </div>
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('admin.modules') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            margin-bottom: 20px;
+        }
+        .coupon-container { 
+            margin: 20px 0; 
+        }
+        .coupon {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #ffffff;
+        }
+        .coupon-code { 
+            font-weight: bold;
+            color: #333;
+        }
+        .coupon-value { 
+            color: #007bff;
+            font-size: 18px;
+        }
+        .validity { 
+            color: #dc3545;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>ZALVO</h2>
+        <p>Your E-Coupons</p>
+    </div>
+    
+    <h2>Hello {{ customer.name }},</h2>
+    <p>Please find your e-coupons attached below.</p>
+    
+    <div class="coupon-container">
+        {% for issue in ecoupon_issues %}
+        <div class="coupon">
+            <p><span class="coupon-code">Coupon Code:</span> {{ issue.coupon_code }}</p>
+            <p><span class="coupon-value">Value:</span> {{ issue.coupon.coupon_face_value }} 
+               {% if issue.coupon.currency %}{{ issue.coupon.currency.CurrencyCode }}{% endif %}</p>
+            <p><span class="validity">Valid until:</span> 
+               {% if issue.validity_date %}{{ issue.validity_date.strftime('%d %b, %Y') }}{% else %}N/A{% endif %}</p>
+            <p>To use this coupon, click on the link below:</p>
+            <p><a href="{{ host_url }}{{ issue.img_url }}" class="btn">View Coupon</a></p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <p>Thank you for your business!</p>
+    
+    <div class="footer">
+        <p>&copy; {{ current_year }} Zalvo. All rights reserved.</p>
+    </div>
+</body>
+</html>

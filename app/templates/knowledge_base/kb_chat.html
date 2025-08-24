@@ -1,0 +1,1522 @@
+{% extends "partials/base.html" %}
+{% block title %}AI Knowledge Base Chat{% endblock title %}
+
+{% block extra_css %}
+<!-- Add any additional CSS if needed -->
+<style>
+    .loading-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+    }
+    .loading-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .chart-container {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .chart-container img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Enhanced Card Styling */
+    .card {
+        border: none;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+
+    /* Enhanced Form Controls */
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #4318FF;
+        box-shadow: 0 0 0 2px rgba(67, 24, 255, 0.1);
+    }
+
+    /* Button Styling */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4318FF 0%, #868CFF 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(67, 24, 255, 0.2);
+    }
+
+    /* Voice Button Enhancement */
+    #voiceButton {
+        border-radius: 0 8px 8px 0;
+        padding: 12px 15px;
+    }
+
+    /* Chart Type Selection */
+    .btn-group .btn {
+        padding: 8px 16px;
+    }
+
+    .btn-check:checked + .btn-outline-primary {
+        background: linear-gradient(135deg, #4318FF 0%, #868CFF 100%);
+        border: none;
+    }
+
+    /* Table Enhancements */
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table td {
+        padding: 12px;
+        vertical-align: middle;
+    }
+
+    /* Loading Animation Enhancement */
+    .loading-popup {
+        backdrop-filter: blur(5px);
+    }
+
+    .loading-content {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Responsive Chart Container */
+    .chart-container {
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Custom styles for chat input section */
+    .chat-input-section {
+        background-color: var(--vz-card-bg);
+        border-top: 1px solid var(--vz-border-color);
+    }
+
+    .chat-input-feedback {
+        display: none;
+        font-size: 12px;
+        color: var(--vz-danger);
+        margin-bottom: 6px;
+    }
+
+    .form-control:focus {
+        border-color: var(--vz-primary);
+        box-shadow: none;
+    }
+
+    .btn-soft-primary {
+        color: var(--vz-primary);
+        background-color: rgba(var(--vz-primary-rgb), 0.1);
+        border-color: transparent;
+    }
+
+    .btn-soft-primary:hover {
+        color: #fff;
+        background-color: var(--vz-primary);
+    }
+
+    .btn-check:checked + .btn-soft-primary {
+        color: #fff;
+        background-color: var(--vz-primary);
+    }
+
+    .btn-check:checked + .btn-outline-primary {
+        color: #fff;
+        background-color: var(--vz-primary);
+        border-color: var(--vz-primary);
+    }
+
+    /* Animated microphone button */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    #voiceCommand.recording {
+        animation: pulse 1.5s infinite;
+        background-color: var(--vz-danger);
+        color: #fff;
+    }
+
+    /* Chart options styling */
+    .chart-options {
+        transition: all 0.3s ease;
+    }
+
+    .chart-options .btn {
+        padding: 0.5rem 1rem;
+    }
+
+    .chart-options .btn i {
+        font-size: 1.1rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0.25rem !important;
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    /* Action buttons styling */
+    .action-btn {
+        min-width: 42px;
+        height: 42px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .action-btn.btn-icon {
+        width: 42px;
+    }
+
+    .action-btn:not(.btn-icon) {
+        padding: 0 1.25rem;
+    }
+
+    .action-btn i {
+        font-size: 1.15rem;
+    }
+
+    /* Loading state for send button */
+    .action-btn .spinner-border {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    /* Hover effects */
+    .action-btn:hover {
+        transform: translateY(-1px);
+        transition: transform 0.2s ease;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 576px) {
+        .action-btn:not(.btn-icon) span:last-child {
+            display: none;
+        }
+        
+        .action-btn:not(.btn-icon) {
+            width: 42px;
+            padding: 0;
+        }
+        
+        .action-btn:not(.btn-icon) i {
+            margin: 0 !important;
+        }
+    }
+</style>
+
+<!-- Add List.js CSS -->
+<link href="{{ url_for('static', filename='libs/list.js/list.min.css') }}" rel="stylesheet" type="text/css" />
+
+<!-- ApexCharts CSS -->
+<link href="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.css" rel="stylesheet">
+
+<!-- Add SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Knowledge Base Chat</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ url_for('knowledge_base.list_categories') }}">Knowledge Base</a></li>
+                                <li class="breadcrumb-item active">AI Chat</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="chat-wrapper">
+                                <div class="chat-conversation p-3" id="chat-conversation" data-simplebar>
+                                    <ul class="list-unstyled chat-conversation-list" id="users-conversation">
+                                        <!-- Initial AI greeting -->
+                                        <li class="chat-list left">
+                                            <div class="conversation-list">
+                                                <div class="chat-avatar">
+                                                    <img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI Assistant">
+                                                </div>
+                                                <div class="user-chat-content">
+                                                    <div class="ctext-wrap">
+                                                        <div class="ctext-wrap-content">
+                                                            <p class="mb-0">Hello! I'm your AI assistant. How can I help you analyze your data today?</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="conversation-name"><small class="text-muted time">AI Assistant</small></div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Chat Input Section -->
+                                <div class="chat-input-section p-3 p-lg-4">
+                                    <form id="queryForm" class="row g-0">
+                                        <div class="col-12 mb-3">
+                                            <div class="chat-input-feedback">
+                                                Please enter your question
+                                            </div>
+                                            
+                                            <textarea
+                                                id="prompt"
+                                                name="prompt"
+                                                class="form-control bg-light border-light"
+                                                placeholder="Type your question here..."
+                                                rows="1"
+                                                required
+                                            ></textarea>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <!-- Output Type Toggle -->
+                                                <div class="btn-group flex-grow-1" role="group" aria-label="Output type">
+                                                    <input type="radio" class="btn-check" name="output_type" id="textOnly" value="text">
+                                                    <label class="btn btn-soft-primary" for="textOnly">
+                                                        <i class="ri-text me-1"></i> Text Only
+                                                    </label>
+                                                    
+                                                    <input type="radio" class="btn-check" name="output_type" id="tableOnly" value="table" checked>
+                                                    <label class="btn btn-soft-primary" for="tableOnly">
+                                                        <i class="ri-table-2 me-1"></i> Table Only
+                                                    </label>
+                                                    
+                                                    <input type="radio" class="btn-check" name="output_type" id="withViz" value="visualization">
+                                                    <label class="btn btn-soft-primary" for="withViz">
+                                                        <i class="ri-bar-chart-2-line me-1"></i> With Chart
+                                                    </label>
+                                                </div>
+
+                                                <!-- Voice Command Button -->
+                                                <button type="button" class="btn btn-soft-primary btn-icon action-btn" id="voiceCommand" data-bs-toggle="tooltip" title="Voice Command">
+                                                    <i class="ri-mic-line"></i>
+                                                </button>
+
+                                                <!-- Clear Button -->
+                                                <button type="button" class="btn btn-soft-danger btn-icon action-btn" id="clearChat" data-bs-toggle="tooltip" title="Clear Chat">
+                                                    <i class="ri-refresh-line"></i>
+                                                </button>
+
+                                                <!-- Send Button -->
+                                                <button type="submit" class="btn btn-primary action-btn">
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="ri-send-plane-fill me-1"></i>
+                                                        <span>Send</span>
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Chart Options (Initially Hidden) -->
+                                            <div class="chart-options mt-3" style="display: none;">
+                                                <div class="btn-group w-100" role="group" aria-label="Chart type">
+                                                    <input type="radio" class="btn-check" name="chart_type" id="barChart" value="bar" checked>
+                                                    <label class="btn btn-outline-primary" for="barChart">
+                                                        <i class="ri-bar-chart-fill me-1"></i> Bar
+                                                    </label>
+
+                                                    <input type="radio" class="btn-check" name="chart_type" id="lineChart" value="line">
+                                                    <label class="btn btn-outline-primary" for="lineChart">
+                                                        <i class="ri-line-chart-fill me-1"></i> Line
+                                                    </label>
+
+                                                    <input type="radio" class="btn-check" name="chart_type" id="pieChart" value="pie">
+                                                    <label class="btn btn-outline-primary" for="pieChart">
+                                                        <i class="ri-pie-chart-fill me-1"></i> Pie
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="row" id="chartSection" style="display: none;">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-sm">
+                                    <h4 class="card-title mb-0">Visualization</h4>
+                                </div>
+                                <div class="col-sm-auto">
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-soft-primary btn-icon" id="downloadChartBtn">
+                                            <i class="ri-download-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="chartContainer" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="row" id="resultsSection" style="display: none;">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header border-0">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-sm">
+                                    <h4 class="card-title mb-0 flex-grow-1">Query Results</h4>
+                                </div>
+                                <div class="col-sm-auto">
+                                    <div class="d-flex gap-2">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" placeholder="Search results...">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                        <button type="button" class="btn btn-soft-primary btn-icon" id="copyBtn">
+                                            <i class="ri-file-copy-line"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-soft-success btn-icon" id="excelBtn">
+                                            <i class="ri-file-excel-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive table-card">
+                                <table class="table align-middle table-nowrap mb-0" id="customerTable">
+                                    <thead class="table-light">
+                                        <tr id="tableHeaders">
+                                            <!-- Headers will be dynamically inserted -->
+                                        </tr>
+                                    </thead>
+                                    <tbody class="list" id="tableBody">
+                                        <!-- Data will be dynamically inserted -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-end mt-3">
+                                <div class="pagination-wrap hstack gap-2">
+                                    <ul class="pagination listjs-pagination mb-0"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <lord-icon
+                    src="https://cdn.lordicon.com/xjovhxra.json"
+                    trigger="loop"
+                    colors="primary:#4318FF,secondary:#868CFF"
+                    style="width:120px;height:120px">
+                </lord-icon>
+                <div class="mt-4">
+                    <h4 class="mb-3">Please wait...</h4>
+                    <p class="text-muted mb-4">I am analyzing your request and preparing the results.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- First, add this modal for expanded view right before the loading modal -->
+<div class="modal fade" id="expandedViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detailed View</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="expandedContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this button near your chart display area -->
+<div class="chart-actions mt-2">
+    <button class="btn btn-sm btn-primary save-visualization" style="display: none;">
+        <i class="ri-save-line align-bottom me-1"></i> Save as Dashboard Widget
+    </button>
+</div>
+
+<!-- Add this modal -->
+<div class="modal fade" id="saveVisualizationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save Visualization</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saveVisualizationForm">
+                    <div class="mb-3">
+                        <label class="form-label">Widget Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveVisualization">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move the script section before the button -->
+<script>
+// First, let's add this to where you process the chart response
+function processChartResponse(response) {
+    // Store the response globally
+    window.currentResponse = response;
+    console.log("Stored response:", window.currentResponse); // For debugging
+}
+
+function addToDashboard(data) {
+    // Validate data
+    if (!data) {
+        Swal.fire('Error', 'No data available to add to dashboard', 'error');
+        return;
+    }
+
+    // Prepare the data based on type (chart or table)
+    const isChart = data.type && data.labels && data.values;
+    const dashboardData = {
+        title: '',
+        description: '',
+        query: window.currentQuery || '',
+        knowledge_base_id: new URLSearchParams(window.location.search).get('kb_id'),
+        chart_config: isChart ? {
+            type: data.type,
+            labels: data.labels,
+            values: data.values,
+            xAxisLabel: data.xAxisLabel,
+            yAxisLabel: data.yAxisLabel
+        } : null,
+        table_config: !isChart ? {
+            columns: data.columns,
+            results: data.results
+        } : null
+    };
+
+    // Show the save dialog
+    Swal.fire({
+        title: 'Add to Dashboard',
+        html: `
+            <form id="addToDashboardForm" class="text-start">
+                <div class="mb-3">
+                    <label class="form-label">Widget Title</label>
+                    <input type="text" class="form-control" id="widgetTitle" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="widgetDescription" rows="3"></textarea>
+                </div>
+            </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Save',
+        cancelButtonText: 'Cancel',
+        confirmButtonClass: 'btn btn-primary',
+        cancelButtonClass: 'btn btn-light',
+        preConfirm: () => {
+            const title = document.getElementById('widgetTitle').value;
+            const description = document.getElementById('widgetDescription').value;
+            
+            if (!title) {
+                Swal.showValidationMessage('Please enter a title');
+                return false;
+            }
+
+            dashboardData.title = title;
+            dashboardData.description = description;
+            return dashboardData;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            Swal.fire({
+                title: 'Saving...',
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                allowOutsideClick: false
+            });
+
+            // Send to server
+            fetch('/ai_bi/save-visualization', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Widget has been added to your dashboard',
+                        icon: 'success',
+                        confirmButtonClass: 'btn btn-primary'
+                    });
+                } else {
+                    throw new Error(data.error || 'Failed to save widget');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving widget:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Failed to save widget',
+                    icon: 'error',
+                    confirmButtonClass: 'btn btn-primary'
+                });
+            });
+        }
+    });
+}
+
+// Add this where you handle the AI response and chart generation
+socket.on('chart_response', function(response) {
+    console.log("Received chart response:", response);
+    // Store the response globally
+    window.currentResponse = response;
+    
+    // Your existing chart display code...
+    displayChart(response);
+});
+</script>
+
+<!-- Then the button -->
+<button class="btn btn-sm btn-primary" onclick="addToDashboard()">
+    <i class="ri-add-line align-bottom me-1"></i> Add to Dashboard
+</button>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- List.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+<!-- XLSX for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- ApexCharts JS -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
+
+<!-- Add SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Add ECharts CDN instead of Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('queryForm');
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    const textarea = document.getElementById('prompt');
+    const chartOptions = document.querySelector('.chart-options');
+    const outputTypeRadios = document.querySelectorAll('input[name="output_type"]');
+    const conversationList = document.getElementById('users-conversation');
+    let listInstance = null; // Store List.js instance
+    let currentChartData = null; // Store the current chart data
+
+    // Add new function to create in-chat table view
+    function createInChatTable(columns, data) {
+        const tableHtml = `
+            <div class="table-preview mb-2" style="max-height: 200px; overflow: hidden; cursor: pointer">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            ${columns.map(col => `<th>${col}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.slice(0, 3).map(row => `
+                            <tr>
+                                ${row.map(cell => `<td>${cell || ''}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${data.length > 3 ? '<div class="text-center text-muted">Click to view full table</div>' : ''}
+            </div>
+        `;
+        return tableHtml;
+    }
+
+    // Update the createInChatChart function and chart handling
+    function createInChatChart(chartData) {
+        const chartPreviewId = 'chart-' + Date.now();
+        const chartHtml = `
+            <div class="chart-preview mb-2" style="cursor: pointer; background-color: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div id="${chartPreviewId}" style="height: 200px; width: 100%;"></div>
+                <div class="text-center text-muted mt-2">
+                    <small><i class="ri-fullscreen-line me-1"></i>Click to view detailed chart</small>
+                </div>
+            </div>
+        `;
+
+        // Return both the HTML and the chart ID
+        return { 
+            html: chartHtml, 
+            id: chartPreviewId,
+            init: function(element) {
+                const previewChart = echarts.init(element);
+                previewChart.setOption(getChartOptions(chartData, true));
+                
+                // Add click handler
+                element.parentElement.addEventListener('click', () => {
+                    handleChartPreviewClick(chartData);
+                });
+            }
+        };
+    }
+
+    // Modify the addMessageToChat function to handle rich content
+    function addMessageToChat(message, isUser = false, extraContent = null) {
+        const li = document.createElement('li');
+        li.className = `chat-list ${isUser ? 'right' : 'left'}`;
+        
+        let contentHtml = `
+            <div class="conversation-list">
+                <div class="chat-avatar">
+                    <img src="${isUser ? '/static/images/users/user-dummy-img.jpg' : '/static/images/ai-avatar.png'}" 
+                         alt="${isUser ? 'User' : 'AI Assistant'}">
+                </div>
+                <div class="user-chat-content">
+                    <div class="ctext-wrap">
+                        <div class="ctext-wrap-content">
+                            <p class="mb-0">${message}</p>
+                            ${extraContent ? extraContent : ''}
+                        </div>
+                    </div>
+                    <div class="conversation-name">
+                        <small class="text-muted time">${isUser ? 'You' : 'AI Assistant'}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        li.innerHTML = contentHtml;
+        conversationList.appendChild(li);
+        scrollToBottom();
+        return li;
+    }
+
+    // Function to scroll chat to bottom
+    function scrollToBottom() {
+        const chatContainer = document.getElementById('chat-conversation');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Function to update table with results
+    function updateTable(columns, data) {
+        const resultsSection = document.getElementById('resultsSection');
+        const tableHeaders = document.getElementById('tableHeaders');
+        const tableBody = document.getElementById('tableBody');
+
+        // Clear existing content
+        tableHeaders.innerHTML = '';
+        tableBody.innerHTML = '';
+
+        // Add headers
+        columns.forEach(column => {
+            const cleanColumn = column.replace(/[^a-zA-Z0-9]/g, '_');
+            tableHeaders.innerHTML += `
+                <th scope="col" class="sort" data-sort="${cleanColumn}">
+                    ${column}
+                    <i class="ri-arrow-up-down-line align-bottom"></i>
+                </th>`;
+        });
+
+        // Add data rows
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach((cell, index) => {
+                const cleanColumn = columns[index].replace(/[^a-zA-Z0-9]/g, '_');
+                tr.innerHTML += `<td class="${cleanColumn}">${cell || ''}</td>`;
+            });
+            tableBody.appendChild(tr);
+        });
+
+        // Show results section
+        resultsSection.style.display = 'block';
+
+        // Initialize List.js after a small delay to ensure DOM is ready
+        setTimeout(() => {
+            try {
+                if (listInstance) {
+                    listInstance.destroy();
+                }
+
+                listInstance = new List('customerTable', {
+                    valueNames: columns.map(col => col.replace(/[^a-zA-Z0-9]/g, '_')),
+                    page: 10,
+                    pagination: {
+                        paginationClass: "pagination",
+                        outerWindow: 2
+                    }
+                });
+            } catch (error) {
+                console.error('List.js initialization error:', error);
+                // Don't show error in chat, just log it
+            }
+        }, 100);
+    }
+
+    // Function to handle chart display
+    function displayChart(response) {
+        const chartSection = document.getElementById('chartSection');
+        const chartContainer = document.getElementById('chartContainer');
+        
+        // Show chart section
+        chartSection.style.display = 'block';
+        
+        // Clear previous chart if any
+        chartContainer.innerHTML = '';
+
+        // Initialize ECharts instance
+        const chart = echarts.init(chartContainer);
+
+        let option = {
+            title: {
+                text: response.title || ''
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                data: response.labels,
+                name: response.xAxisLabel || ''
+            },
+            yAxis: {
+                type: 'value',
+                name: response.yAxisLabel || ''
+            }
+        };
+
+        // Add specific options based on chart type
+        switch(response.type) {
+            case 'bar':
+                option.series = [{
+                    name: response.yAxisLabel || 'Value',
+                    type: 'bar',
+                    data: response.values,
+                    itemStyle: {
+                        color: '#4318FF'
+                    }
+                }];
+                break;
+
+            case 'line':
+                option.series = [{
+                    name: response.yAxisLabel || 'Value',
+                    type: 'line',
+                    data: response.values,
+                    smooth: true,
+                    lineStyle: {
+                        width: 3,
+                        color: '#4318FF'
+                    },
+                    itemStyle: {
+                        color: '#4318FF'
+                    }
+                }];
+                break;
+
+            case 'pie':
+                option = {
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'left'
+                    },
+                    series: [{
+                        name: response.yAxisLabel || 'Value',
+                        type: 'pie',
+                        radius: '50%',
+                        data: response.labels.map((label, index) => ({
+                            value: response.values[index],
+                            name: label
+                        })),
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+                break;
+        }
+
+        // Set the options and render the chart
+        chart.setOption(option);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            chart.resize();
+        });
+
+        // Make sure the Add to Dashboard button is associated with this specific chart
+        const addToDashboardBtn = response.chart_container.querySelector('.add-to-dashboard');
+        if (addToDashboardBtn) {
+            addToDashboardBtn.onclick = function() {
+                addToDashboard(response);  // Pass the response directly
+            }
+        }
+    }
+
+    // Auto-resize textarea
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Show/hide chart options with animation
+    document.querySelectorAll('input[name="output_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'visualization') {
+                chartOptions.style.display = 'block';
+                setTimeout(() => chartOptions.style.opacity = '1', 10);
+            } else {
+                chartOptions.style.opacity = '0';
+                setTimeout(() => chartOptions.style.display = 'none', 300);
+            }
+        });
+    });
+
+    // Voice command button animation
+    let isRecording = false;
+    const voiceButton = document.getElementById('voiceCommand');
+    voiceButton.addEventListener('click', function() {
+        isRecording = !isRecording;
+        this.classList.toggle('recording', isRecording);
+    });
+
+    // Modify the form submission handler
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const prompt = textarea.value.trim();
+        if (!prompt) {
+            alert('Please enter your question');
+            return;
+        }
+
+        // Add user message to chat
+        addMessageToChat(prompt, true);
+
+        // Get output type and chart type
+        const outputType = document.querySelector('input[name="output_type"]:checked').value;
+        const chartType = document.querySelector('input[name="chart_type"]:checked')?.value;
+
+        // Show loading state
+        loadingModal.show();
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <span class="d-flex align-items-center">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                <span>Sending...</span>
+            </span>
+        `;
+
+        // Submit form
+        const formData = new FormData(this);
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response data:', data); // Debug log
+            
+            if (data.status === 'success') {
+                if (outputType === 'text') {
+                    addMessageToChat(data.message);
+                } else if (data.columns && data.results && data.results.length > 0) {
+                    // Create preview table
+                    const tableHtml = createInChatTable(data.columns, data.results);
+                    
+                    // Store the full data for modal view
+                    const fullData = {
+                        columns: data.columns,
+                        results: data.results
+                    };
+
+                    const messageElement = addMessageToChat('Here are the results of your query:', false, tableHtml);
+                    
+                    // Add click handler for table preview
+                    const tablePreview = messageElement.querySelector('.table-preview');
+                    tablePreview.addEventListener('click', function() {
+                        const fullData = {
+                            columns: data.columns,
+                            results: data.results
+                        };
+                        
+                        const tableContent = `
+                            <div class="table-responsive">
+                                <table class="table" id="expandedTable">
+                                    <thead>
+                                        <tr>
+                                            ${fullData.columns.map(col => `<th>${col}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${fullData.results.map(row => `
+                                            <tr>
+                                                ${row.map(cell => `<td>${cell || ''}</td>`).join('')}
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                        
+                        updateExpandedView(tableContent, 'table', fullData);
+                        const expandedModal = new bootstrap.Modal(document.getElementById('expandedViewModal'));
+                        expandedModal.show();
+                    });
+
+                    if (outputType === 'visualization') {
+                        const chartType = document.querySelector('input[name="chart_type"]:checked').value;
+                        currentChartData = {
+                            type: chartType,
+                            labels: data.results.map(row => row[0]),
+                            values: data.results.map(row => parseFloat(row[1])),
+                            xAxisLabel: data.columns[0],
+                            yAxisLabel: data.columns[1],
+                            title: `${data.columns[1]} by ${data.columns[0]}`
+                        };
+
+                        const { html: chartHtml, id: chartId, init } = createInChatChart(currentChartData);
+                        const chartMessage = addMessageToChat('I\'ve generated a visualization based on your query:', false, chartHtml);
+
+                        // Initialize preview chart with a slight delay
+                        setTimeout(() => {
+                            const chartElement = document.getElementById(chartId);
+                            if (chartElement) {
+                                init(chartElement);
+                            }
+                        }, 100);
+                    }
+                } else {
+                    addMessageToChat('No results found for your query.');
+                }
+            } else {
+                addMessageToChat(`Error: ${data.message}`);
+            }
+
+            // Reset form state
+            textarea.value = '';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span class="d-flex align-items-center">
+                    <i class="ri-send-plane-fill me-1"></i>
+                    <span>Send</span>
+                </span>
+            `;
+            loadingModal.hide();
+            scrollToBottom();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            addMessageToChat('Sorry, there was an error processing your request. Please try again.');
+            currentChartData = null; // Clear stored chart data
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span class="d-flex align-items-center">
+                    <i class="ri-send-plane-fill me-1"></i>
+                    <span>Send</span>
+                </span>
+            `;
+            loadingModal.hide();
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('chartSection').style.display = 'none';
+        });
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Copy button handler with improved notification
+    document.getElementById('copyBtn').addEventListener('click', function() {
+        const table = document.getElementById('customerTable');
+        const range = document.createRange();
+        range.selectNode(table);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        
+        // Show success notification using Velzon's notification system
+        Swal.fire({
+            text: 'Table copied to clipboard!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            customClass: {
+                popup: 'animated fadeInDown'
+            }
+        });
+    });
+
+    // Update the Excel export handler
+    document.getElementById('excelBtn').addEventListener('click', function() {
+        // Get table headers
+        const headers = Array.from(document.querySelectorAll('#tableHeaders th'))
+            .map(th => th.textContent.trim());
+
+        // Get table data
+        const rows = Array.from(document.querySelectorAll('#tableBody tr'))
+            .map(row => Array.from(row.querySelectorAll('td'))
+                .map(cell => cell.textContent.trim())
+            );
+
+        // Create worksheet data
+        const wsData = [headers, ...rows];
+
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Query Results");
+
+        // Generate timestamp for filename
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        
+        // Export file
+        XLSX.writeFile(wb, `query_results_${timestamp}.xlsx`);
+
+        // Show success notification
+        Swal.fire({
+            text: 'Table exported to Excel successfully!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            customClass: {
+                popup: 'animated fadeInDown'
+            }
+        });
+    });
+
+    // Handle chart download
+    document.getElementById('downloadChartBtn').addEventListener('click', function() {
+        const chartContainer = document.getElementById('chartContainer');
+        // ApexCharts provides a built-in download feature through the toolbar
+    });
+
+    // Handle chart type changes
+    document.querySelectorAll('input[name="chart_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (currentChartData) {
+                currentChartData.type = this.value;
+                const chartContainer = document.getElementById('chartContainer');
+                if (chartContainer) {
+                    const chart = echarts.init(chartContainer);
+                    chart.setOption(getChartOptions(currentChartData, false));
+                }
+            }
+        });
+    });
+
+    // Add clear button functionality
+    const clearButton = document.getElementById('clearChat');
+    if (clearButton) {
+        clearButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Clear Chat',
+                text: 'Are you sure you want to clear the chat?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, clear it!',
+                cancelButtonText: 'No, cancel',
+                customClass: {
+                    confirmButton: 'btn btn-soft-primary',
+                    cancelButton: 'btn btn-soft-danger'
+                },
+                buttonsStyling: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.reload();
+                }
+            });
+        });
+    }
+
+    // Add the getChartOptions function
+    function getChartOptions(chartData, isPreview = false) {
+        const baseOption = {
+            title: {
+                text: chartData.title || '',
+                textStyle: {
+                    fontSize: isPreview ? 12 : 16
+                }
+            },
+            tooltip: {
+                trigger: chartData.type === 'pie' ? 'item' : 'axis',
+                formatter: chartData.type === 'pie' ? 
+                    '{a} <br/>{b}: {c} ({d}%)' : 
+                    '{b}: {c}'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                show: !isPreview,
+                feature: {
+                    saveAsImage: {},
+                    dataZoom: {},
+                    restore: {}
+                }
+            },
+            legend: {
+                show: !isPreview || chartData.type === 'pie',
+                orient: chartData.type === 'pie' ? 'vertical' : 'horizontal',
+                left: chartData.type === 'pie' ? 'left' : 'center',
+                top: chartData.type === 'pie' ? 'middle' : 'bottom'
+            }
+        };
+
+        // Add specific options based on chart type
+        switch(chartData.type) {
+            case 'bar':
+                return {
+                    ...baseOption,
+                    xAxis: {
+                        type: 'category',
+                        data: chartData.labels,
+                        name: chartData.xAxisLabel || '',
+                        axisLabel: {
+                            interval: 0,
+                            rotate: chartData.labels.length > 8 ? 45 : 0
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: chartData.yAxisLabel || ''
+                    },
+                    series: [{
+                        name: chartData.yAxisLabel || 'Value',
+                        type: 'bar',
+                        data: chartData.values,
+                        itemStyle: {
+                            color: '#4318FF'
+                        },
+                        label: {
+                            show: !isPreview,
+                            position: 'top'
+                        },
+                        barMaxWidth: '50%'
+                    }]
+                };
+
+            case 'line':
+                return {
+                    ...baseOption,
+                    xAxis: {
+                        type: 'category',
+                        data: chartData.labels,
+                        name: chartData.xAxisLabel || '',
+                        axisLabel: {
+                            interval: 0,
+                            rotate: chartData.labels.length > 8 ? 45 : 0
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: chartData.yAxisLabel || ''
+                    },
+                    series: [{
+                        name: chartData.yAxisLabel || 'Value',
+                        type: 'line',
+                        data: chartData.values,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        lineStyle: {
+                            width: 3,
+                            color: '#4318FF'
+                        },
+                        itemStyle: {
+                            color: '#4318FF'
+                        },
+                        label: {
+                            show: !isPreview,
+                            position: 'top'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [{
+                                    offset: 0,
+                                    color: 'rgba(67, 24, 255, 0.2)'
+                                }, {
+                                    offset: 1,
+                                    color: 'rgba(67, 24, 255, 0)'
+                                }]
+                            }
+                        }
+                    }]
+                };
+
+            case 'pie':
+                return {
+                    ...baseOption,
+                    series: [{
+                        name: chartData.yAxisLabel || 'Value',
+                        type: 'pie',
+                        radius: isPreview ? '65%' : '50%',
+                        center: ['50%', '50%'],
+                        data: chartData.labels.map((label, index) => ({
+                            value: chartData.values[index],
+                            name: label
+                        })),
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        },
+                        label: {
+                            show: !isPreview,
+                            formatter: '{b}: {d}%'
+                        },
+                        labelLine: {
+                            show: !isPreview
+                        }
+                    }]
+                };
+        }
+    }
+
+    // Update the expanded view handling
+    document.getElementById('expandedViewModal').addEventListener('shown.bs.modal', function () {
+        const expandedContainer = document.getElementById('expandedChart');
+        if (!expandedContainer) return;
+
+        // Set explicit dimensions for the container
+        expandedContainer.style.height = '400px';
+        expandedContainer.style.width = '100%';
+
+        // Initialize chart with a slight delay to ensure container is ready
+        setTimeout(() => {
+            const chart = echarts.init(expandedContainer);
+            chart.setOption(getChartOptions(currentChartData, false));
+
+            // Handle window resize
+            const resizeChart = () => {
+                chart.resize();
+            };
+            window.addEventListener('resize', resizeChart);
+
+            // Clean up event listener when modal is hidden
+            this.addEventListener('hidden.bs.modal', function () {
+                window.removeEventListener('resize', resizeChart);
+                chart.dispose();
+            }, { once: true });
+        }, 100);
+    });
+
+    // Update the chart preview click handler
+    function handleChartPreviewClick(chartData) {
+        const chartContent = `<div id="expandedChart" style="height: 400px; width: 100%;"></div>`;
+        updateExpandedView(chartContent, 'chart', chartData);
+        
+        const expandedModal = new bootstrap.Modal(document.getElementById('expandedViewModal'));
+        expandedModal.show();
+        
+        // Initialize chart after modal is shown
+        document.getElementById('expandedViewModal').addEventListener('shown.bs.modal', function () {
+            const expandedChart = echarts.init(document.getElementById('expandedChart'));
+            expandedChart.setOption(getChartOptions(chartData, false));
+
+            // Handle download button
+            document.getElementById('downloadChartBtn').addEventListener('click', function() {
+                const url = expandedChart.getDataURL({
+                    type: 'png',
+                    pixelRatio: 2,
+                    backgroundColor: '#fff'
+                });
+                const link = document.createElement('a');
+                link.download = `chart_${Date.now()}.png`;
+                link.href = url;
+                link.click();
+            });
+
+            // Handle fullscreen toggle
+            document.getElementById('toggleFullscreen').addEventListener('click', function() {
+                const chartContainer = document.getElementById('expandedChart');
+                if (!document.fullscreenElement) {
+                    chartContainer.requestFullscreen();
+                    chartContainer.style.height = '100vh';
+                } else {
+                    document.exitFullscreen();
+                    chartContainer.style.height = '400px';
+                }
+                // Resize chart after fullscreen change
+                setTimeout(() => expandedChart.resize(), 100);
+            });
+
+            // Handle window resize
+            const resizeChart = () => {
+                expandedChart.resize();
+            };
+            window.addEventListener('resize', resizeChart);
+
+            // Clean up when modal is hidden
+            this.addEventListener('hidden.bs.modal', function () {
+                window.removeEventListener('resize', resizeChart);
+                expandedChart.dispose();
+            }, { once: true });
+        }, { once: true });
+    }
+
+    // Update the expanded view content
+    function updateExpandedView(content, type, data) {
+        const expandedContent = document.getElementById('expandedContent');
+        expandedContent.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    ${content}
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        ${type === 'chart' ? `
+                            <button class="btn btn-sm btn-primary" id="downloadChartBtn">
+                                <i class="ri-download-line me-1"></i> Download
+                            </button>
+                            <button class="btn btn-sm btn-light" id="toggleFullscreen">
+                                <i class="ri-fullscreen-line"></i>
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-primary" id="copyBtn">
+                                <i class="ri-file-copy-line me-1"></i> Copy
+                            </button>
+                            <button class="btn btn-sm btn-success" id="excelBtn">
+                                <i class="ri-file-excel-line me-1"></i> Export
+                            </button>
+                        `}
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="addToDashboard(${JSON.stringify(data)})">
+                        <i class="ri-add-line me-1"></i> Add to Dashboard
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock extra_js %} 

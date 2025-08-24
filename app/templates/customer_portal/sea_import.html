@@ -1,0 +1,2572 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Shipment Management{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Shipment Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Customer</a></li>
+                                <li class="breadcrumb-item active">Shipment</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Action buttons -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <button class="btn btn-primary" onclick="openNewEntryModal()">
+                            <i class="ri-add-line me-1"></i> New Shipment
+                        </button>
+                    </div>
+
+                    <!-- Filters Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Filters</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="GET" class="row g-3">
+                                <div class="col-md-2">
+                                    <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                    <select class="form-select" id="entriesPerPage" name="per_page" onchange="updateEntriesPerPage(this.value)">
+                                        <option value="5" {% if entries.per_page==5 %}selected{% endif %}>5</option>
+                                        <option value="10" {% if entries.per_page==10 %}selected{% endif %}>10</option>
+                                        <option value="25" {% if entries.per_page==25 %}selected{% endif %}>25</option>
+                                        <option value="50" {% if entries.per_page==50 %}selected{% endif %}>50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="shipmentTypeFilter" class="form-label">Shipment Type</label>
+                                    <select class="form-select w-100" id="shipmentTypeFilter" name="shipment_type">
+                                        <option value="">All Types</option>
+                                        {% for shipment_type in available_shipment_types %}
+                                        <option value="{{ shipment_type.base_id }}" {% if request.args.get('shipment_type')==shipment_type.base_id|string %}selected{% endif %}>
+                                            {{ shipment_type.base_code.replace('_', ' ').title() }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                <label for="docLevelFilter" class="form-label">Doc Level</label>
+                                <select class="form-select w-100" id="docLevelFilter" name="doc_level">
+                                    <option value="">All Levels</option>
+                                    <option value="0" {% if request.args.get('doc_level')=='0' %}selected{% endif %}>Draft</option>
+                                    <option value="1" {% if request.args.get('doc_level')=='1' %}selected{% endif %}>Submitted</option>
+                                    <option value="2" {% if request.args.get('doc_level')=='2' %}selected{% endif %}>Referred Back</option>
+                                    <option value="5" {% if request.args.get('doc_level')=='5' %}selected{% endif %}>Resubmitted</option>
+                                    <!-- <option value="3" {% if request.args.get('doc_level')=='3' %}selected{% endif %}>Closed</option>
+                                    <option value="4" {% if request.args.get('doc_level')=='4' %}selected{% endif %}>Deleted</option> -->
+                                </select>
+                            </div>
+                                <div class="col-md-4">
+                                    <label for="searchInput" class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="searchInput" name="search"
+                                        value="{{ request.args.get('search', '') }}" placeholder="Search sea imports..." onkeyup="searchTable(this.value)">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-filter-3-line me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Replace the existing Status Filter Tabs section in sea_import.html with this -->
+
+                    <!-- Status Filter Tabs with Fixed Counts -->
+                    <div class="card mb-3">
+                        <div class="card-body p-0">
+                            <ul class="nav nav-tabs" id="statusTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-status="all" type="button" role="tab">
+                                        All <span class="badge bg-secondary">{{ status_counts.total if status_counts else entries.total }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="open-tab" data-bs-toggle="tab" data-status="open" type="button" role="tab">
+                                        Not Assigned to CHA <span class="badge bg-primary">{{ status_counts.open if status_counts else 0 }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-status="new" type="button" role="tab">
+                                        Assigned to CHA <span class="badge bg-info">{{ status_counts.new if status_counts else 0 }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-status="ongoing" type="button" role="tab">
+                                        Assigned & Ongoing <span class="badge bg-warning">{{ status_counts.ongoing if status_counts else 0 }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-status="completed" type="button" role="tab">
+                                        Completed <span class="badge bg-success">{{ status_counts.completed if status_counts else 0 }}</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Sea Import Table Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Shipment Entries</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-nowrap align-middle table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Job No</th>
+                                            <th>Custom House Agent</th>
+                                            <th>Created Date</th>
+                                            <th>Submitted Date</th>
+                                            <th>Shipment Type</th>
+                                            <th>Ship Category</th>
+                                            <th>Doc Level</th>
+                                            <th>Required Docs</th>
+                                            <th>Approved Docs</th>
+                                            <th>Deadline</th>
+                                            <th>Status</th>
+                                            <th class="text-center">Chat</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for entry in entries.items %}
+                                        <tr id="entry-row-{{ entry.id }}" class="entry-row" data-entry-id="{{ entry.id }}">
+                                            <td>{{ loop.index + (entries.page - 1) * entries.per_page }}</td>
+                                            <td>{{ entry.docserial }}</td>
+                                            <td>
+                                                <span class="badge badge-soft-primary">
+                                                    {{ entry.assigned_clearing_company.company_name if entry.assigned_clearing_company else 'Not Assigned' }}
+                                                </span>
+                                                <span id="alert-indicator-{{ entry.id }}" class="alert-icon" style="display: none;" 
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                    title="Documents expiring before shipment date">
+                                                    <i class="ri-error-warning-line"></i>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-soft-dark">
+                                                    {{ entry.dateCreated if entry.dateCreated else 'N/A' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-soft-secondary">
+                                                    {{ entry.dateSubmitted if entry.dateSubmitted else 'N/A' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if 'sea' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-info">
+                                                    <i class="ri-ship-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% elif 'air' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-warning">
+                                                    <i class="ri-plane-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% elif 'road' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-success">
+                                                    <i class="ri-truck-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% elif 'rail' in entry.shipment_type.shipment_name.lower() %}
+                                                <span class="badge badge-soft-danger">
+                                                    <i class="ri-train-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% else %}
+                                                <span class="badge badge-soft-secondary">
+                                                    <i class="ri-box-3-line me-1"></i> {{ entry.shipment_type.shipment_name }}
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            
+                                            <td>{{ entry.ship_category_rel.catname }}</td>
+                                            <td>
+                                                {% set level_map = {
+                                                0: 'Draft',
+                                                1: 'Submitted',
+                                                2: 'Referred Back',
+                                                3: 'Closed',
+                                                4: 'Deleted',
+                                                5: 'Resubmitted'
+                                                } %}
+                                                {% set level = entry.docLevel|default(0)|int %}
+                                                {% set level_text = level_map.get(level, 'Unknown') %}
+                                                <span class="badge {% if level == 0 %}badge-soft-secondary{% elif level == 1 %}badge-soft-success{% elif level == 2 %}badge-soft-warning blink-badge{% elif level == 3 %}badge-soft-info{% elif level == 4 %}badge-soft-primary{% elif level == 5 %}badge-soft-danger{% else %}badge-soft-secondary{% endif %}">
+                                                    {{ level_text }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <span class="badge badge-soft-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Required">
+                                                        <i class="ri-file-list-line me-1"></i>
+                                                        {{ entry.required_documents|selectattr('isMandatory', 'equalto', true)|list|length }}
+                                                    </span>
+                                                    <span class="badge badge-soft-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Uploaded">
+                                                        <i class="ri-send-plane-line me-1"></i>
+                                                        {{ entry.attachments|length }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                        <span class="badge badge-soft-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Approved">
+                                                            <i class="ri-thumb-up-line text-success me-1"></i>
+                                                            {{ entry.accepted_docs_count }}
+                                                        </span>
+                                                        <span class="badge badge-soft-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Rejected">
+                                                            <i class="ri-thumb-down-line text-danger me-1"></i>
+                                                            {{ entry.rejected_docs_count }}
+                                                        </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% set days_remaining = ((entry.dealineDate - now.date()).days if entry.dealineDate and now else 0) %}                                                
+                                                <span class="badge {% if days_remaining < 3 and days_remaining >= 0 %}badge-soft-danger{% elif days_remaining < 7 and days_remaining >= 0 %}badge-soft-warning{% else %}badge-soft-info{% endif %}">
+                                                    {{ entry.dealineDate.strftime('%Y-%m-%d') if entry.dealineDate else 'Not Set' }}
+                                        
+                                                </span>
+                                            </td>
+                                            <!-- In your HTML template, update the status column to include data attributes -->
+                                            <td>
+                                                <span class="badge 
+                                                    {% if entry.document_status.docStatusName == 'Completed' %}
+                                                        badge-soft-success
+                                                    {% elif entry.document_status.docStatusName == 'Open' %}
+                                                        badge-soft-primary
+                                                    {% elif entry.document_status.docStatusName == 'New' %}
+                                                        badge-soft-info
+                                                    {% else %}
+                                                        badge-soft-warning
+                                                    {% endif %}"
+                                                    data-actual-status="{{ entry.document_status.docStatusName.lower() }}">
+                                                    
+                                                    {% if entry.document_status.docStatusName == 'Open' %}
+                                                        Not assigned to CHA
+                                                    {% elif entry.document_status.docStatusName == 'New' %}
+                                                        Assigned to CHA
+                                                    {% elif entry.document_status.docStatusName == 'Ongoing' %}
+                                                        Assigned & Ongoing    
+                                                    {% else %}
+                                                        {{ entry.document_status.docStatusName }}
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="javascript:void(0)" 
+                                                   onclick="openChat('sea_import', '{{ entry.id }}')" 
+                                                   data-entry-id="{{ entry.id }}" 
+                                                   data-module-name="sea_import"
+                                                   class="btn btn-sm btn-outline-primary position-relative"
+                                                   title="Open Chat">
+                                                    <i class="ri-message-2-line"></i>
+                                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none chat-notification-badge" style="z-index: 1;">
+                                                        0
+                                                    </span>
+                                                </a>
+                                            </td>
+
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="actionDropdown{{ entry.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Actions
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="actionDropdown{{ entry.id }}">
+                                                        <li>
+                                                            <a class="dropdown-item text-primary" href="javascript:void(0)" onclick="editEntry('{{ entry.id }}')">
+                                                                <i class="ri-pencil-line me-2"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-warning" href="javascript:void(0)" onclick="openDocumentModal('{{ entry.id }}', '{{ entry.ship_category_rel.id }}', '{{ entry.shipment_type.id }}')">
+                                                                <i class="ri-attachment-line me-2"></i> Documents
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-info" href="{{ url_for('customer_portal.customer_order_shipment', order_id=entry.id) }}">
+                                                                <i class="ri-send-plane-line me-2"></i> Shipment
+                                                            </a>
+                                                        </li>
+                                                        
+                                                        {% if entry.docLevel|default(0)|int == 0 %}
+                                                        <li>
+                                                            <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="confirmDelete('{{ entry.id }}')">
+                                                                <i class="ri-delete-bin-line me-2"></i> Delete
+                                                            </a>
+                                                        </li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Empty state display when no entries found -->
+                            {% if entries.items|length == 0 %}
+                            <div class="text-center p-4">
+                                <i class="ri-inbox-line display-4 text-muted"></i>
+                                <p class="mt-3 text-muted">No entries found. Click "New Entry" to create one.</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <div>
+                                    Showing {{ entries.items|length }} of {{ entries.total }} entries
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination mb-0">
+                                        {% if entries.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('customer_portal.sea_import', 
+                                                page=entries.prev_num, 
+                                                per_page=request.args.get('per_page', 5),
+                                                shipment_type=request.args.get('shipment_type', ''),
+                                                doc_level=request.args.get('doc_level', ''),
+                                                search=request.args.get('search', '')) }}">Previous</a>
+                                        </li>
+                                        {% endif %}
+
+                                        {% for page_num in entries.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                        {% if page_num %}
+                                        <li class="page-item {% if page_num == entries.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('customer_portal.sea_import', 
+                                                page=page_num,
+                                                per_page=request.args.get('per_page', 5),
+                                                shipment_type=request.args.get('shipment_type', ''),
+                                                doc_level=request.args.get('doc_level', ''),
+                                                search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                        {% endif %}
+                                        {% endfor %}
+
+                                        {% if entries.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('customer_portal.sea_import', 
+                                                page=entries.next_num,
+                                                per_page=request.args.get('per_page', 5),
+                                                shipment_type=request.args.get('shipment_type', ''),
+                                                doc_level=request.args.get('doc_level', ''),
+                                                search=request.args.get('search', '')) }}">Next</a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <!-- Updated New Entry Modal with Clearance Company terminology -->
+    <div class="modal fade" id="newEntryModal" tabindex="-1" aria-labelledby="newEntryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newEntryModalLabel">
+                        <i class="ri-add-circle-line me-2"></i>Create New Entry
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newEntryForm" method="POST">
+                        {{ form.csrf_token }}
+                        <div class="row g-3">
+                            <!-- Updated: Clearance Company Dropdown -->
+                            <div class="col-md-6">
+                                <label for="assignedClearanceCompany" class="form-label">Connected Custom House Agents <span class="text-danger">*</span></label>
+                                <select class="form-select" id="assignedClearanceCompany" name="assignedClearanceCompany" required>
+                                    <option value="">Select Custom House Agent</option>
+                                    {% for agent in assigned_shipping_agents %}
+                                    <option value="{{ agent.id }}">{{ agent.company_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Modified: Shipment Type - now dependent on clearance company -->
+                            <div class="col-md-6">
+                                <label for="shipmentType" class="form-label">Shipment Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="shipTypeid" name="shipTypeid" required disabled>
+                                    <option value="">Select a Custom House Agent First</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Existing fields -->
+                            <div class="col-md-6">
+                                <label for="shipCategory" class="form-label">Ship Category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="shipCategory" name="shipCategory" required disabled>
+                                    <option value="">Select Shipment Type First</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="docStatusID" class="form-label">Document Status</label>
+                                <select class="form-select" id="docStatusID" name="docStatusID" disabled>
+                                    <option value="">Select Shipment Type First</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="dealineDate" class="form-label">Deadline Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="dealineDate" name="dealineDate" required>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="custComment" class="form-label">Comments</label>
+                                <textarea class="form-control" id="custComment" name="custComment" rows="3" placeholder="Enter any additional comments"></textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="cusOriginalReady" name="cusOriginalReady">
+                                    <label class="form-check-label" for="cusOriginalReady">
+                                        Original documents ready
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitNewEntry()">Create Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Management Modal -->
+    <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentModalLabel">
+                        <i class="ri-file-text-line me-2"></i>Document Management
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="documentSection">
+                        <!-- Document status and progress will be displayed here -->
+                        <div id="documentProgress"></div>
+                        
+                        <!-- Existing documents will be loaded here dynamically -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Uploaded Documents</h6>
+                            </div>
+                            <div class="card-body" id="existingDocuments">
+                                <!-- Existing documents will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- New Document Upload Section -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Required Documents</h6>
+                            </div>
+                            <div class="card-body" id="newDocuments">
+                                <form id="newDocumentsForm" enctype="multipart/form-data">
+                                    <div class="row g-3" id="documentInputs">
+                                        <!-- Dynamic document inputs will be added here -->
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-primary" onclick="submitNewDocuments()">
+                                            <i class="ri-upload-line me-1"></i>Upload Selected Documents
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Resubmission Modal -->
+    <div class="modal fade" id="resubmitDocumentModal" tabindex="-1" aria-labelledby="resubmitDocumentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resubmitDocumentModalLabel">
+                        <i class="ri-refresh-line me-2"></i>Resubmit Document
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="resubmitDocumentForm" enctype="multipart/form-data">
+                        <input type="hidden" id="resubmitDocId" name="docId">
+                        <input type="hidden" id="resubmitEntryId" name="entryId">
+                        
+                        <div class="mb-3">
+                            <label for="resubmitDocumentName" class="form-label">Document</label>
+                            <input type="text" class="form-control" id="resubmitDocumentName" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="resubmitDocumentFile" class="form-label">Upload New Document <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="resubmitDocumentFile" name="file" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="resubmitExpiryDate" class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="resubmitExpiryDate" name="expiryDate" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="resubmitNote" class="form-label">Note</label>
+                            <textarea class="form-control" id="resubmitNote" name="note" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitResubmission()">
+                        <i class="ri-upload-line me-1"></i>Resubmit Document
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="ri-alert-line me-2"></i>
+                        Are you sure you want to delete this entry? This action cannot be undone.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="ri-delete-bin-line me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'chat/chat_modal.html' %}
+
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+    // Global variables
+    let currentEntryId = null;
+    let currentShipCatId = null;
+    let currentShipTypeId = null;
+
+    // Utility Functions
+    function showAlert(message, type = 'info') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            icon: type,
+            title: message
+        });
+    }
+
+    // Entry Management Functions
+    function openNewEntryModal() {
+        console.log("Opening new entry modal");
+        const modal = new bootstrap.Modal(document.getElementById('newEntryModal'));
+        modal.show();
+        
+        // Reset all dropdowns to initial state
+        const clearanceCompanySelect = document.getElementById('assignedClearanceCompany');
+        const shipmentTypeSelect = document.getElementById('shipTypeid');
+        const shipCategorySelect = document.getElementById('shipCategory');
+        const docStatusSelect = document.getElementById('docStatusID');
+        
+        console.log("Resetting modal dropdowns...");
+        
+        if (clearanceCompanySelect) {
+            clearanceCompanySelect.selectedIndex = 0;
+            console.log("Reset clearance company dropdown");
+        }
+        if (shipmentTypeSelect) {
+            shipmentTypeSelect.innerHTML = '<option value="">Select Clearance Company First</option>';
+            shipmentTypeSelect.disabled = true;
+            console.log("Reset shipment type dropdown");
+        }
+        if (shipCategorySelect) {
+            shipCategorySelect.innerHTML = '<option value="">Select Shipment Type First</option>';
+            shipCategorySelect.disabled = true;
+            console.log("Reset ship category dropdown");
+        }
+        if (docStatusSelect) {
+            docStatusSelect.innerHTML = '<option value="">Select Shipment Type First</option>';
+            docStatusSelect.disabled = true;
+            console.log("Reset document status dropdown");
+        }
+    }
+
+    function submitNewEntry() {
+        const form = document.getElementById('newEntryForm');
+        
+        // Check if form is valid
+        if (!form.checkValidity()) {
+            console.log("Form validation failed");
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        // Get the button that was clicked
+        const submitBtn = document.querySelector('.modal-footer .btn-primary');
+        
+        // Disable submit button and show loading state
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+        }
+        
+        // Get form data
+        const formData = new FormData(form);
+        
+        // Log form data for debugging
+        console.log("Form data being submitted:");
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        // Use the new API endpoint
+        fetch("/customer_portal/sea-import/api/create", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log("Response status:", response.status);
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log("Response data:", data);
+            if (data.success) {
+                showAlert('New Entry Created Successfully', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showAlert(data.message || 'Error creating entry', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // Re-enable submit button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Entry';
+            }
+        });
+    }
+
+    function editEntry(entryId) {
+        window.location.href = `/customer_portal/sea-import/${entryId}`;
+    }
+
+    function confirmDelete(entryId) {
+        if (!entryId) {
+            showAlert('Invalid entry ID', 'error');
+            return;
+        }
+
+        currentEntryId = entryId;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        deleteModal.show();
+
+        document.getElementById('confirmDeleteBtn').onclick = function() {
+            deleteEntry(entryId);
+            deleteModal.hide();
+        };
+    }
+
+    function deleteEntry(entryId) {
+        // Get the delete button
+        const deleteBtn = document.querySelector(`button[onclick="confirmDelete('${entryId}')"]`);
+        const originalText = deleteBtn ? deleteBtn.innerHTML : '';
+
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+        }
+
+        fetch(`/customer_portal/sea-import/delete/${entryId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.status === 403 ? 'Unauthorized to delete this entry' : 'Error deleting entry');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showAlert('Entry Deleted Successfully', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'Error deleting entry');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An unexpected error occurred: ' + error.message, 'error');
+            // Reset button state
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalText;
+            }
+        });
+    }
+
+    function viewSampleDocument(path) {
+        if (!path) {
+            showAlert('No sample file available', 'warning');
+            return;
+        }
+        
+        // Ensure the path is properly encoded
+        const encodedPath = encodeURIComponent(path);
+        console.log('Opening sample document with path:', path);
+        console.log('Encoded path:', encodedPath);
+        
+        // Open the file in a new tab
+        window.open(`/customer_portal/view-sample-document/${encodedPath}`, '_blank');
+    }
+
+
+    // Document Management Functions
+    function openDocumentModal(entryId, shipCatId, shipTypeId) {
+        console.log('Opening document modal with:', { entryId, shipCatId, shipTypeId });
+        
+        if (!entryId || !shipCatId || !shipTypeId) {
+            showAlert('Invalid parameters for document management', 'error');
+            return;
+        }
+        
+        // Store current IDs for later use
+        currentEntryId = entryId;
+        currentShipCatId = shipCatId;
+        currentShipTypeId = shipTypeId;
+        
+        // Show loading state
+        const existingDocuments = document.getElementById('existingDocuments');
+        const newDocuments = document.getElementById('newDocuments');
+        
+        if (!existingDocuments || !newDocuments) {
+            console.error('Document modal container elements not found');
+            return;
+        }
+        
+        // Show loading indicators
+        existingDocuments.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading existing documents...</p></div>';
+        newDocuments.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading required documents...</p></div>';
+        
+        // Show the modal
+        const documentModal = new bootstrap.Modal(document.getElementById('documentModal'));
+        documentModal.show();
+        
+        // First, get the entry's docLevel
+        fetch(`/customer_portal/get-entry/${entryId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to get entry details: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(entryData => {
+                console.log('Entry data:', entryData);
+                
+                // Then fetch required documents and attachments
+                return fetch(`/customer_portal/get-required-documents/${shipCatId}/${shipTypeId}/${entryId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to get document requirements: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Make sure existing attachments include sample_file_path
+                        if (data.existing_attachments && data.existing_attachments.length > 0) {
+                            data.existing_attachments.forEach(doc => {
+                                // If we have the doc ID, try to get the sample file path from required docs
+                                if (data.new_required_documents) {
+                                    const requiredDoc = data.new_required_documents.find(
+                                        reqDoc => reqDoc.description === doc.description
+                                    );
+                                    if (requiredDoc && requiredDoc.sample_file_path) {
+                                        doc.sample_file_path = requiredDoc.sample_file_path;
+                                    }
+                                }
+                            });
+                        }
+                        
+                        return { entryData, documentData: data };
+                    });
+            })
+            .then(({ entryData, documentData }) => {
+                console.log('Document data with sample paths:', documentData);
+                
+                // Group existing attachments by description for multiple documents
+                const attachmentsByDescription = {};
+                if (documentData.existing_attachments) {
+                    documentData.existing_attachments.forEach(doc => {
+                        if (!attachmentsByDescription[doc.description]) {
+                            attachmentsByDescription[doc.description] = [];
+                        }
+                        attachmentsByDescription[doc.description].push(doc);
+                    });
+                }
+                
+                // Process existing attachments with the complete document configuration
+                if (documentData.existing_attachments && documentData.existing_attachments.length > 0) {
+                    let existingHtml = '';
+                    
+                    // Create a map of ALL required documents for easy lookup
+                    const allRequiredDocsMap = {};
+                    if (documentData.all_required_documents) {
+                        documentData.all_required_documents.forEach(reqDoc => {
+                            allRequiredDocsMap[reqDoc.description] = reqDoc;
+                        });
+                    }
+                    
+                    // Group attachments by description
+                    Object.keys(attachmentsByDescription).forEach(description => {
+                        const docs = attachmentsByDescription[description];
+                        
+                        existingHtml += `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="ri-file-text-line me-2"></i>
+                                            ${description}
+                                            ${docs[0].isMandatory ? '<span class="badge badge-soft-danger ms-2">Required</span>' : '<span class="badge badge-soft-success ms-2">Optional</span>'}
+                                            <span class="badge badge-soft-success ms-2">Uploaded (${docs.length})</span>
+                                        </span>
+                                    </h6>
+                                    
+                                    ${docs.map((doc, index) => {
+                                        // Find the original document configuration using the complete map
+                                        const originalDoc = allRequiredDocsMap[doc.description];
+                                        
+                                        // Determine document status based on docAccepted
+                                        let statusBadge = '';
+                                        let actionButton = '';
+                                        let aiValidationBadge = '';
+                                        let aiValidationMessage = '';
+                                        
+                                        if (doc.docAccepted === 'accepted') {
+                                            statusBadge = '<span class="badge badge-soft-success ms-2">Accepted by Company</span>';
+                                        } else if (doc.docAccepted === 'rejected') {
+                                            statusBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Rejected by Company</span>';
+                                            // Only show resubmit button for rejected documents if entry isn't submitted
+                                            if (entryData.docLevel !== 1) {
+                                                actionButton = `
+                                                    <button class="btn btn-sm btn-warning" onclick="resubmitDocument('${doc.id}', '${doc.description}')">
+                                                        <i class="ri-refresh-line me-1"></i>Resubmit
+                                                    </button>`;
+                                            }
+                                        } else if (doc.ai_validated == 2 || doc.ai_validated == 5 || doc.ai_validated == 6 || doc.ai_validated == 7 || doc.ai_validated == 8) {
+                                            if (entryData.docLevel !== 1) {
+                                                actionButton = `
+                                                    <button class="btn btn-sm btn-warning" onclick="resubmitDocument('${doc.id}', '${doc.description}')">
+                                                        <i class="ri-refresh-line me-1"></i>Resubmit
+                                                    </button>`;
+                                            }
+                                        } else {
+                                            statusBadge = '<span class="badge badge-soft-secondary ms-2">Company Review Pending</span>';
+                                        }
+
+                                        // AI validation logic based on both ai_validated and ai_validate
+                                        // Use the complete document configuration
+                                        if (originalDoc) {
+                                            if (originalDoc.ai_validate === 1) {
+                                                // AI validation is required for this document type
+                                                if (doc.ai_validated === 0) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-info ms-2 blink-badge">AI Validation in Progress</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-info mt-2 mb-2 py-2">
+                                                        <i class="ri-information-line me-1"></i>
+                                                        <small><strong>AI Validation in Progress:</strong> Our AI agent is currently validating this document. This process may take 2-3 minutes to complete. You will receive an email notification once the validation is finished. Please check your inbox for the results.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 1) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-success ms-2">AI Validation Successful</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-success mt-2 mb-2 py-2">
+                                                        <i class="ri-check-double-line me-1"></i>
+                                                        <small><strong>AI Validation Successful:</strong> The document has been successfully validated by our AI system.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 2) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">AI Validation Failed</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                                        <i class="ri-close-circle-line me-1"></i>
+                                                        <small><strong>AI Validation Failed:</strong> The document has been rejected by our AI system. Please review the validation results and resubmit.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 3) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-warning ms-2">No Sample Document</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-warning mt-2 mb-2 py-2">
+                                                        <i class="ri-file-warning-line me-1"></i>
+                                                        <small><strong>No Sample Document:</strong> No sample document has been provided by the company. Therefore, no AI validation could be performed. The document will be directly reviewed by company personnel.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 4) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-warning ms-2">Sample Document Error</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-warning mt-2 mb-2 py-2">
+                                                        <i class="ri-file-damage-line me-1"></i>
+                                                        <small><strong>Sample Document Error:</strong> Error in extracting text from the sample document provided by company. Your document has been submitted for manual validation by company personnel.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 5) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Text Extraction Failed</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                                        <i class="ri-error-warning-line me-1"></i>
+                                                        <small><strong>Document Error:</strong> The AI agent is unable to extract text from the document you provided. Please upload a clearer document with extractable text content.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 6) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Text Extraction Failed</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                                        <i class="ri-error-warning-line me-1"></i>
+                                                        <small><strong>Document Error:</strong> Error in extracting text from both the sample and submitted documents. Please provide a clearer document with extractable text content.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 7) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Unknown Error</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                                        <i class="ri-alert-line me-1"></i>
+                                                        <small><strong>Validation Error:</strong> Unknown error in AI validation. Please contact company support for assistance.</small>
+                                                    </div>`;
+                                                } else if (doc.ai_validated === 8) {
+                                                    aiValidationBadge = '<span class="badge badge-soft-danger ms-2 blink-badge">Document Type Mismatch</span>';
+                                                    aiValidationMessage = `
+                                                    <div class="alert alert-danger mt-2 mb-2 py-2">
+                                                        <i class="ri-file-forbid-line me-1"></i>
+                                                        <small><strong>Document Type Mismatch:</strong> The submitted document doesn't match the required document type. Please ensure you are uploading the correct document type.</small>
+                                                    </div>`;
+                                                }
+                                            } else {
+                                                // AI validation is not required for this document type (ai_validate = 0)
+                                                aiValidationBadge = '<span class="badge badge-soft-secondary ms-2">AI Validation Not Required</span>';
+                                                aiValidationMessage = `
+                                                <div class="alert alert-secondary mt-2 mb-2 py-2">
+                                                    <i class="ri-information-line me-1"></i>
+                                                    <small><strong>AI Validation Not Required:</strong> This document type does not require AI validation and will be reviewed directly by company personnel.</small>
+                                                </div>`;
+                                            }
+                                        } else {
+                                            // This shouldn't happen anymore with the complete document list
+                                            aiValidationBadge = '<span class="badge badge-soft-warning ms-2">Config Not Found</span>';
+                                            aiValidationMessage = `
+                                            <div class="alert alert-warning mt-2 mb-2 py-2">
+                                                <i class="ri-error-warning-line me-1"></i>
+                                                <small><strong>Configuration Not Found:</strong> Unable to determine AI validation requirements for this document type.</small>
+                                            </div>`;
+                                        }
+                                        
+                                        return `
+                                            <div class="border rounded p-3 mb-3 bg-light">
+                                                <h6 class="mb-2">
+                                                    Document ${index + 1}
+                                                    ${aiValidationBadge}
+                                                    ${statusBadge}
+                                                </h6>
+                                                ${aiValidationMessage}
+                                                
+                                                <p class="card-text">
+                                                    <small class="text-muted">Note: ${doc.note || 'No notes added'}</small>
+                                                </p>
+                                                ${doc.docAccepteComments ? `
+                                                <div class="alert alert-${doc.docAccepted === 'rejected' ? 'danger' : 'info'} mt-2 mb-2 py-2">
+                                                    <small><strong>Company Feedback:</strong> ${doc.docAccepteComments}</small>
+                                                </div>` : ''}
+                                                ${doc.docAccepteDate ? `
+                                                <p class="card-text">
+                                                    <small class="text-muted">Reviewed on: ${new Date(doc.docAccepteDate).toLocaleDateString()}</small>
+                                                </p>` : ''}
+                                                ${doc.expiry_date ? `
+                                                <p class="card-text">
+                                                    <small class="text-muted">Expires on: ${new Date(doc.expiry_date).toLocaleDateString()}</small>
+                                                </p>` : ''}
+                                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                                    <!-- Left side buttons -->
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        <button class="btn btn-sm btn-info" onclick="viewDocument('${doc.attachement_path}')">
+                                                            <i class="ri-eye-line me-1"></i>View
+                                                        </button>
+
+                                                        ${doc.sample_file_path ? `
+                                                        <button class="btn btn-sm btn-secondary" onclick="viewSampleDocument('${doc.sample_file_path}')">
+                                                            <i class="ri-file-text-line me-1"></i>View Sample
+                                                        </button>` : ''}
+
+                                                        <button class="btn btn-sm btn-primary" onclick="downloadDocument('${doc.sample_file_path}')">
+                                                            <i class="ri-download-line me-1"></i>Download
+                                                        </button>
+
+                                                        ${entryData.docLevel !== 1 ? `
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteDocument('${doc.id}', '${entryId}')">
+                                                            <i class="ri-delete-bin-line me-1"></i>Delete
+                                                        </button>` : ''}
+                                                    </div>
+
+                                                    <!-- Right side buttons -->
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        ${(doc.ai_validated === 1 || doc.ai_validated === 2) && originalDoc && originalDoc.ai_validate === 1 ? `
+                                                        <button class="btn btn-sm btn-secondary" onclick="viewAIValidationResults('${doc.id}')">
+                                                            <i class="ri-ai-generate me-1"></i>AI Document Validation Results
+                                                        </button>` : ''}
+
+                                                        ${actionButton}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    existingDocuments.innerHTML = existingHtml;
+                } else {
+                    existingDocuments.innerHTML = '<div class="alert alert-info">No documents have been uploaded yet.</div>';
+                }
+
+
+                                
+                // Count required documents
+                let totalRequired = 0;
+                let uploadedRequired = 0;
+                
+                if (documentData.new_required_documents) {
+                    documentData.new_required_documents.forEach(doc => {
+                        if (doc.isMandatory) {
+                            totalRequired++;
+                        }
+                    });
+                }
+                
+                // Count uploaded required documents by checking if any exist for each description
+                if (documentData.existing_attachments) {
+                    const requiredDescriptions = new Set();
+                    documentData.existing_attachments.forEach(doc => {
+                        if (doc.isMandatory) {
+                            requiredDescriptions.add(doc.description);
+                        }
+                    });
+                    uploadedRequired = requiredDescriptions.size;
+                }
+                
+                // Add progress bar for required documents
+                let progressHtml = '';
+                if (totalRequired > 0 || uploadedRequired > 0) {
+                    const totalDocs = totalRequired;
+                    const progressPercentage = Math.round((uploadedRequired / totalDocs) * 100);
+                    progressHtml = `
+                        <div class="mb-4">
+                            <h5>Document Upload Progress</h5>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${progressPercentage < 100 ? 'bg-warning' : 'bg-success'}" role="progressbar" 
+                                    style="width: ${progressPercentage}%;" aria-valuenow="${progressPercentage}" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    ${uploadedRequired} of ${totalDocs} required documents
+                                </div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">
+                                ${progressPercentage < 100 ? 
+                                    `Upload the remaining ${totalRequired - uploadedRequired} required document(s) before submitting the entry.` : 
+                                    'All required documents have been uploaded. You can now submit the entry.'}
+                            </small>
+                        </div>
+                    `;
+                }
+                
+                // Process required documents that need to be uploaded
+                if (documentData.new_required_documents && documentData.new_required_documents.length > 0) {
+                    const formHtml = `
+                        ${progressHtml}
+                        <form id="newDocumentsForm" enctype="multipart/form-data">
+                            <div class="row g-3" id="documentInputs">
+                                ${documentData.new_required_documents.map(doc => {
+                                    // Check if this document already has attachments
+                                    const hasAttachments = attachmentsByDescription[doc.description] && attachmentsByDescription[doc.description].length > 0;
+                                    
+                                    return `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card h-100 ${doc.isMandatory ? 'border-danger' : ''}">
+                                                <div class="card-body">
+                                                <h6 class="card-title mb-3">
+                                                        ${doc.description}
+                                                        ${doc.isMandatory 
+                                                            ? '<span class="badge badge-soft-danger ms-2">Required</span>' 
+                                                            : '<span class="badge badge-soft-success ms-2">Optional</span>'}
+                                                        ${hasAttachments 
+                                                            ? `<span class="badge badge-soft-success ms-2">Uploaded (${attachmentsByDescription[doc.description].length})</span>` 
+                                                            : '<span class="badge badge-soft-warning ms-2">Missing</span>'}
+                                                        ${doc.multiple_document === 1 
+                                                            ? '<span class="badge badge-soft-info ms-2">Multiple Allowed</span>' 
+                                                            : ''}
+                                                    </h6>
+                                                    ${doc.sample_file_path ? `
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="viewSampleDocument('${doc.sample_file_path}')">
+                                                            <i class="ri-file-text-line me-1"></i>View Sample
+                                                        </button>
+                                                    </div>
+                                                    ` : ''}
+                                                    ${(!hasAttachments || doc.multiple_document === 1) ? `
+                                                    <div class="document-upload-container" data-doc-id="${doc.id}">
+                                                        <div class="document-upload-item mb-3">
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <label class="form-label">Upload Document</label>
+                                                                    <input type="file" class="form-control" name="document_${doc.id}_1" data-doc-id="${doc.id}" data-index="1">
+                                                                    <input type="hidden" name="doc_id_${doc.id}_1" value="${doc.id}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="row mt-2">
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Expiry Date</label>
+                                                                    <input type="date" class="form-control" name="expiry_date_${doc.id}_1" min="${new Date().toISOString().split('T')[0]}">
+                                                                    <small class="text-muted">Document expiry date must be in the future</small>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label">Note</label>
+                                                                    <textarea class="form-control" name="note_${doc.id}_1" rows="2"></textarea>
+                                                                </div>
+                                                            </div>
+                                                            ${doc.multiple_document === 1 ? `
+                                                            <div class="mt-2">
+                                                                <button type="button" class="btn btn-sm btn-success me-2" onclick="addDocumentInput(${doc.id}, '${doc.description}')">
+                                                                    <i class="ri-add-line me-1"></i>Add Another Document
+                                                                </button>
+                                                            </div>
+                                                            ` : ''}
+                                                        </div>
+                                                    </div>
+                                                    ` : `
+                                                    <div class="alert alert-warning">
+                                                        <i class="ri-alert-line me-2"></i>
+                                                        Document already uploaded
+                                                    </div>
+                                                    `}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="button" class="btn btn-primary" onclick="submitNewDocuments()">
+                                    <i class="ri-upload-line me-1"></i>Upload Selected Documents
+                                </button>
+                            </div>
+                        </form>`;
+                    
+                    newDocuments.innerHTML = formHtml;
+                } else {
+                    newDocuments.innerHTML = `
+                        ${progressHtml}
+                        <div class="alert alert-success">
+                            <i class="ri-check-double-line me-2"></i>
+                            All required documents have been uploaded. You can now proceed with submitting the entry once the AI Validation is successful.
+                        </div>
+                    `;
+                }
+                
+                // Add hidden input for entry ID
+                const form = document.getElementById('newDocumentsForm');
+                if (form) {
+                    const entryIdInput = document.createElement('input');
+                    entryIdInput.type = 'hidden';
+                    entryIdInput.name = 'entryId';
+                    entryIdInput.value = entryId;
+                    form.appendChild(entryIdInput);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                existingDocuments.innerHTML = `<div class="alert alert-danger">
+                    <i class="ri-error-warning-line me-2"></i>${error.message || 'Failed to load documents'}
+                </div>`;
+                newDocuments.innerHTML = '';
+                showAlert('Error loading document information', 'error');
+            });
+    }
+
+    function addDocumentInput(docId, description) {
+        const container = document.querySelector(`.document-upload-container[data-doc-id="${docId}"]`);
+        if (!container) {
+            console.error('Container not found for document ID:', docId);
+            return;
+        }
+        
+        // Find the current number of items
+        const existingItems = container.querySelectorAll('.document-upload-item');
+        const nextIndex = existingItems.length + 1;
+        
+        // Create new document input HTML
+        const newItemHtml = `
+            <div class="document-upload-item mb-3 border-top pt-3">
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label">Upload Document ${nextIndex}</label>
+                        <input type="file" class="form-control" name="document_${docId}_${nextIndex}" data-doc-id="${docId}" data-index="${nextIndex}">
+                        <input type="hidden" name="doc_id_${docId}_${nextIndex}" value="${docId}">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="expiry_date_${docId}_${nextIndex}" required min="${new Date().toISOString().split('T')[0]}">
+                        <small class="text-muted">Document expiry date must be in the future</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Note</label>
+                        <textarea class="form-control" name="note_${docId}_${nextIndex}" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeDocumentInput(this)">
+                        <i class="ri-delete-bin-line me-1"></i>Remove
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Create a temporary div to hold the HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newItemHtml;
+        
+        // Append the new item to the container
+        container.appendChild(tempDiv.firstElementChild);
+        
+        console.log(`Added new document input for ${description}, index: ${nextIndex}`);
+    }
+
+    // Add function to remove document input
+    function removeDocumentInput(button) {
+        const item = button.closest('.document-upload-item');
+        if (item) {
+            // Check if this is the last remaining item in the container
+            const container = item.closest('.document-upload-container');
+            const items = container.querySelectorAll('.document-upload-item');
+            
+            if (items.length > 1) {
+                item.remove();
+                console.log('Removed document input');
+            } else {
+                showAlert('At least one document input must remain', 'warning');
+            }
+        }
+    }
+
+
+    // Final fixed viewAIValidationResults function
+    function viewAIValidationResults(docId) {
+    // First, close the document modal if it's open
+    const documentModal = bootstrap.Modal.getInstance(document.getElementById('documentModal'));
+    if (documentModal) {
+        documentModal.hide();
+    }
+    
+    // Add a small delay to ensure the modal is fully closed before showing the SweetAlert
+    setTimeout(() => {
+        // Show loading state
+        Swal.fire({
+            title: 'Loading validation results...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch validation results
+        fetch(`/customer_portal/get-document-validation/${docId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to load validation results'
+                    });
+                    return;
+                }
+
+                // Extract validation data
+                const results = data.results;
+                const validationResults = results.validation_results || {};
+                const matchPercentage = results.match_percentage || 0;
+                const hasError = results.error || false;
+                const errorMessage = results.document_similarity_message || '';
+                
+                // Use document_similarity from backend
+                let documentSimilarity = 0;
+                
+                if (results.document_similarity !== undefined) {
+                    // Convert to percentage if it's in decimal form (0-1)
+                    documentSimilarity = results.document_similarity <= 1 ? 
+                        results.document_similarity * 100 : results.document_similarity;
+                }
+                
+                // Ensure documentSimilarity is a number between 0-100
+                documentSimilarity = Math.max(0, Math.min(100, parseFloat(documentSimilarity)));
+                
+                // Determine colors for progress bars
+                const docSimilarityColor = documentSimilarity >= 70 ? 'success' : 
+                                         documentSimilarity >= 50 ? 'warning' : 'danger';
+                const matchPercentageColor = matchPercentage >= 80 ? 'success' : 
+                                           matchPercentage >= 50 ? 'warning' : 'danger';
+
+                // Build the HTML content for detailed field validation
+                let fieldValidationHtml = '';
+                
+                if (Object.keys(validationResults).length > 0) {
+                    fieldValidationHtml = `
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Field Name</th>
+                                    <th>Status</th>
+                                    <th>Similarity Score</th>
+                                    <th>Matched With</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    for (const [fieldName, field] of Object.entries(validationResults)) {
+                        // Skip if not a valid field object or if it's the document_type field
+                        if (!field || typeof field !== 'object' || field.matched === undefined || fieldName === 'document_type') continue;
+                        
+                        const matched = field.matched || false;
+                        const similarity = (field.similarity || 0) * 100;
+                        const matchedWith = field.matched_with || 'N/A';
+                        
+                        fieldValidationHtml += `
+                            <tr>
+                                <td>${fieldName}</td>
+                                <td>
+                                    ${matched ? 
+                                    '<span class="badge bg-success">Matched</span>' : 
+                                    '<span class="badge bg-danger">Not Matched</span>'}
+                                </td>
+                                <td>${similarity.toFixed(2)}%</td>
+                                <td>${matchedWith}</td>
+                            </tr>
+                        `;
+                    }
+                    
+                    fieldValidationHtml += `
+                            </tbody>
+                        </table>
+                    </div>`;
+                } else {
+                    fieldValidationHtml = `
+                    <div class="alert alert-info mt-3">
+                        <i class="ri-information-line me-2"></i>
+                        No detailed field validation results available.
+                    </div>`;
+                }
+
+                // Build the HTML content for the modal
+                let swalContent = `
+                <div class="validation-results">
+                    <h5>Document Type Similarity</h5>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-${docSimilarityColor}" 
+                             role="progressbar" 
+                             style="width: ${documentSimilarity.toFixed(2)}%;" 
+                             aria-valuenow="${documentSimilarity.toFixed(2)}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            ${documentSimilarity.toFixed(2)}%
+                        </div>
+                    </div>
+                    
+                    ${errorMessage ? `
+                    <div class="alert alert-${docSimilarityColor === 'danger' ? 'danger' : 'warning'} mt-2 mb-3">
+                        <i class="ri-error-warning-line me-2"></i>
+                        <strong>Document Type Issue:</strong> ${errorMessage}
+                    </div>` : ''}
+                    
+                    <h5 class="mt-4">Field Match Percentage</h5>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-${matchPercentageColor}" 
+                             role="progressbar" 
+                             style="width: ${matchPercentage.toFixed(2)}%;" 
+                             aria-valuenow="${matchPercentage.toFixed(2)}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            ${matchPercentage.toFixed(2)}%
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-4">Field Validation Details</h5>
+                    ${fieldValidationHtml}
+                </div>
+                `;
+
+                // Show the validation results with fixed UI
+                Swal.fire({
+                    title: 'AI Validation Results',
+                    html: swalContent,
+                    icon: 'info',
+                    width: '800px',
+                    heightAuto: true,
+                    scrollbarPadding: true,
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#3085d6',
+                    allowOutsideClick: true,
+                    didClose: () => {
+                        // Optionally reopen the document modal when this is closed
+                        setTimeout(() => {
+                            openDocumentModal(currentEntryId, currentShipCatId, currentShipTypeId);
+                        }, 100);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching validation results:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load validation results: ' + error.message
+                });
+            });
+    }, 300); // Short delay to ensure modal is closed
+}
+
+
+    // Function to open the resubmission modal
+    function resubmitDocument(docId, docName) {
+        // Set values in the resubmission form
+        document.getElementById('resubmitDocId').value = docId;
+        document.getElementById('resubmitEntryId').value = currentEntryId;
+        document.getElementById('resubmitDocumentName').value = docName;
+        
+        // Set minimum date for expiry date to today
+        const today = new Date().toISOString().split('T')[0];
+        const expiryDateInput = document.getElementById('resubmitExpiryDate');
+        expiryDateInput.min = today;
+        expiryDateInput.value = today;
+        
+        // Clear previous note
+        document.getElementById('resubmitNote').value = '';
+        
+        // Open the modal
+        const resubmitModal = new bootstrap.Modal(document.getElementById('resubmitDocumentModal'));
+        resubmitModal.show();
+    }
+
+    // Function to handle document resubmission
+    function submitResubmission() {
+        const form = document.getElementById('resubmitDocumentForm');
+        
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        const formData = new FormData(form);
+        
+        // Add current entry ID
+        formData.append('entryId', currentEntryId);
+        
+        // Get the CSRF token
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+        if (csrfToken) {
+            formData.append('csrf_token', csrfToken);
+        }
+        
+        // Get the submit button
+        const submitBtn = document.querySelector('#resubmitDocumentModal .btn-primary');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
+        
+        // Send the resubmission
+        fetch('/customer_portal/resubmit-document', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close the modal
+                bootstrap.Modal.getInstance(document.getElementById('resubmitDocumentModal')).hide();
+                
+                // Show success message
+                showAlert('Document resubmitted successfully', 'success');
+                
+                // Refresh document modal
+                openDocumentModal(currentEntryId, currentShipCatId, currentShipTypeId);
+            } else {
+                throw new Error(data.message || 'Failed to resubmit document');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert(error.message || 'An error occurred during resubmission', 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    }
+
+
+    function viewDocument(path) {
+        if (!path) {
+            showAlert('No file path provided', 'warning');
+            return;
+        }
+        
+        // Ensure the path is properly encoded
+        const encodedPath = encodeURIComponent(path);
+        console.log('Opening document with path:', path);
+        console.log('Encoded path:', encodedPath);
+        
+        // Open the file in a new tab
+        window.open(`/customer_portal/view-document/${encodedPath}`, '_blank');
+    }
+    
+    function downloadDocument(path) {
+        if (!path) {
+            showAlert('No file path provided', 'warning');
+            return;
+        }
+
+        const encodedPath = encodeURIComponent(path);
+        
+        window.open(`/customer_portal/download-document/${encodedPath}`, '_blank');
+    }
+    
+    function deleteDocument(docId, entryId) {
+        if (!docId || !entryId) {
+            showAlert('Invalid document or entry ID', 'error');
+            return;
+        }
+        
+        Swal.fire({
+            title: 'Delete Document',
+            text: 'Are you sure you want to delete this document?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Get CSRF token from the form
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+                
+                fetch(`/customer_portal/delete-document/${docId}/${entryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken || '',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(response.status === 403 ? 'Unauthorized to delete this document' : 'Error deleting document');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Document deleted successfully', 'success');
+                        
+                        // Reload document modal with fresh data
+                        openDocumentModal(entryId, currentShipCatId, currentShipTypeId);
+                    } else {
+                        throw new Error(data.message || 'Unknown error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert(error.message || 'Failed to delete document', 'error');
+                });
+            }
+        });
+    }
+    
+    function submitNewDocuments() {
+        const form = document.getElementById('newDocumentsForm');
+        if (!form) {
+            showAlert('Form not found', 'error');
+            return;
+        }
+        
+        // Check if any files are selected
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        let hasFiles = false;
+        let allValid = true;
+        let validationMessage = '';
+        
+        // First, check if any files are selected and validate them
+        for (let i = 0; i < fileInputs.length; i++) {
+            const input = fileInputs[i];
+            if (input.files.length > 0) {
+                hasFiles = true;
+                // Get the document ID and index from the input name
+                const nameMatch = input.name.match(/document_(\d+)_(\d+)/);
+                if (nameMatch) {
+                    const docId = nameMatch[1];
+                    const index = nameMatch[2];
+                    
+                    // Check if expiry date is filled
+                    const expiryDateInput = form.querySelector(`input[name="expiry_date_${docId}_${index}"]`);
+                    // if (!expiryDateInput || !expiryDateInput.value) {
+                    //     validationMessage = `Please provide expiry date for all documents`;
+                    //     allValid = false;
+                    //     break; // Exit the loop immediately
+                    // }
+                    
+                    // // Validate that expiry date is in the future
+                    // const today = new Date();
+                    // today.setHours(0, 0, 0, 0);
+                    // const expiryDate = new Date(expiryDateInput.value);
+                    // if (expiryDate <= today) {
+                    //     validationMessage = `Expiry date must be in the future for all documents`;
+                    //     allValid = false;
+                    //     break; // Exit the loop immediately
+                    // }
+                }
+            }
+        }
+        
+        if (!hasFiles) {
+            showAlert('Please select at least one file to upload', 'warning');
+            return;
+        }
+        
+        if (!allValid) {
+            showAlert(validationMessage, 'warning');
+            return;
+        }
+        
+        if (!currentEntryId) {
+            showAlert('Entry ID not found', 'error');
+            return;
+        }
+        
+        // Get the submit button
+        const submitBtn = form.querySelector('.btn-primary');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        // Disable the button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading...';
+        
+        // Get form data - only include fields that have files
+        const formData = new FormData();
+        
+        // Add entry ID
+        formData.append('entryId', currentEntryId);
+        
+        // Only add file inputs that have files selected
+        fileInputs.forEach(input => {
+            if (input.files.length > 0) {
+                const fieldName = input.name;
+                const nameMatch = fieldName.match(/document_(\d+)_(\d+)/);
+                
+                if (nameMatch) {
+                    const docId = nameMatch[1];
+                    const index = nameMatch[2];
+                    
+                    formData.append(fieldName, input.files[0]);
+                    
+                    // Get the corresponding doc_id hidden field
+                    const docIdField = form.querySelector(`input[name="doc_id_${docId}_${index}"]`);
+                    if (docIdField) {
+                        formData.append(docIdField.name, docIdField.value);
+                        
+                        // Add the expiry date
+                        const expiryDateInput = form.querySelector(`input[name="expiry_date_${docId}_${index}"]`);
+                        if (expiryDateInput) {
+                            formData.append(expiryDateInput.name, expiryDateInput.value);
+                        }
+                        
+                        // Get the corresponding note textarea
+                        const noteTextarea = form.querySelector(`textarea[name="note_${docId}_${index}"]`);
+                        if (noteTextarea) {
+                            formData.append(noteTextarea.name, noteTextarea.value);
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+        if (csrfToken) {
+            formData.append('csrf_token', csrfToken);
+        }
+        
+        // Debug: Log all form data entries
+        console.log('Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
+        
+        fetch('/customer_portal/upload-documents', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showAlert('Documents uploaded successfully', 'success');
+                
+                // Refresh the document modal
+                openDocumentModal(currentEntryId, currentShipCatId, currentShipTypeId);
+            } else {
+                throw new Error(data.message || 'Error uploading documents');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert(error.message || 'An error occurred while uploading documents', 'error');
+        })
+        .finally(() => {
+            // Re-enable the button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    }
+
+    // Chat Functions
+
+    // Pagination and Filtering
+    function updateEntriesPerPage(value) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('per_page', value);
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    function filterByStatus(status) {
+        const currentUrl = new URL(window.location.href);
+        if (status) {
+            currentUrl.searchParams.set('status', status);
+        } else {
+            currentUrl.searchParams.delete('status');
+        }
+        window.location.href = currentUrl.toString();
+    }
+    
+    function filterByDocLevel(docLevel) {
+        const currentUrl = new URL(window.location.href);
+        if (docLevel !== '') {
+            currentUrl.searchParams.set('doc_level', docLevel);
+        } else {
+            currentUrl.searchParams.delete('doc_level');
+        }
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    function filterByShipmentType(shipmentTypeId) {
+        const currentUrl = new URL(window.location.href);
+        if (shipmentTypeId) {
+            currentUrl.searchParams.set('shipment_type', shipmentTypeId);
+        } else {
+            currentUrl.searchParams.delete('shipment_type');
+        }
+        // Reset to first page when filtering
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    function searchTable(query) {
+        if (query.length < 2) return; // Don't search for very short queries
+        
+        const tableRows = document.querySelectorAll('.table tbody tr');
+        const lowerQuery = query.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            if (rowText.includes(lowerQuery)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded");
+    
+// Replace your existing status filtering JavaScript with this:
+
+// Function to check if a row matches the selected status filter using actual database status
+function matchesStatusFilter(actualStatus, filterStatus) {
+    const lowerActualStatus = actualStatus.toLowerCase();
+    
+    switch (filterStatus.toLowerCase()) {
+        case 'open':
+            // Backend status is "Open" -> Frontend shows "Not assigned to CHA"
+            return lowerActualStatus === 'open';
+        
+        case 'new':
+            // Backend status is "New" -> Frontend shows "Assigned to CHA"
+            return lowerActualStatus === 'new';
+        
+        case 'ongoing':
+            // Backend status is "Ongoing" -> Frontend shows "Assigned & Ongoing"
+            return lowerActualStatus === 'ongoing';
+        
+        case 'completed':
+            return lowerActualStatus === 'completed' || lowerActualStatus === 'done';
+        
+        case 'all':
+            return true;
+        
+        default:
+            return false;
+    }
+}
+
+// AUTO-SELECT STATUS TAB BASED ON URL PARAMETER (UPDATED)
+const urlParams = new URLSearchParams(window.location.search);
+const statusFilter = urlParams.get('status');
+
+if (statusFilter) {
+    console.log('Auto-selecting status tab:', statusFilter);
+    
+    // Find the corresponding tab and activate it
+    const statusTabs = document.querySelectorAll('#statusTabs .nav-link');
+    
+    statusTabs.forEach(tab => {
+        const tabStatus = tab.getAttribute('data-status');
+        if (tabStatus === statusFilter.toLowerCase()) {
+            // Remove active class from all tabs
+            statusTabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to the matching tab
+            tab.classList.add('active');
+            return; // Exit the loop once we find the matching tab
+        }
+    });
+}
+
+// STATUS FILTER FUNCTIONALITY - SERVER-SIDE FILTERING ONLY
+const statusTabs = document.querySelectorAll('#statusTabs .nav-link');
+
+console.log('Total Tabs:', statusTabs.length);
+
+statusTabs.forEach(tab => {
+    tab.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const status = this.getAttribute('data-status');
+        console.log('Selected Tab Status:', status);
+
+        // Redirect to the same page with status filter parameter
+        const currentUrl = new URL(window.location.href);
+        
+        if (status === 'all') {
+            currentUrl.searchParams.delete('status');
+        } else {
+            currentUrl.searchParams.set('status', status);
+        }
+        
+        // Reset to page 1 when filtering
+        currentUrl.searchParams.set('page', '1');
+        
+        // Navigate to the filtered URL
+        window.location.href = currentUrl.toString();
+    });
+});
+
+// FORM ELEMENTS HANDLING
+    const clearanceCompanySelect = document.getElementById('assignedClearanceCompany');
+    const shipmentTypeSelect = document.getElementById('shipTypeid');
+    const shipCategorySelect = document.getElementById('shipCategory');
+    const docStatusSelect = document.getElementById('docStatusID');
+    
+    console.log("Elements found:", {
+        clearanceCompanySelect: !!clearanceCompanySelect,
+        shipmentTypeSelect: !!shipmentTypeSelect,
+        shipCategorySelect: !!shipCategorySelect,
+        docStatusSelect: !!docStatusSelect
+    });
+    
+    // 1. Handle Assigned Clearance Company change
+    if (clearanceCompanySelect) {
+        clearanceCompanySelect.addEventListener('change', function() {
+            const selectedCompanyId = this.value;
+            console.log("Clearance company changed to:", selectedCompanyId);
+            
+            // Reset dependent dropdowns
+            shipmentTypeSelect.innerHTML = '<option value="">Loading...</option>';
+            shipmentTypeSelect.disabled = true;
+            shipCategorySelect.innerHTML = '<option value="">Select Shipment Type First</option>';
+            shipCategorySelect.disabled = true;
+            docStatusSelect.innerHTML = '<option value="">Select Shipment Type First</option>';
+            docStatusSelect.disabled = true;
+            
+            if (!selectedCompanyId) {
+                shipmentTypeSelect.innerHTML = '<option value="">Select Clearance Company First</option>';
+                return;
+            }
+            
+            // Fetch shipment types for selected clearance company
+            const apiUrl = `/customer_portal/get-shipment-types-by-company/${selectedCompanyId}`;
+            console.log("Fetching from URL:", apiUrl);
+            
+            fetch(apiUrl)
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    console.log("Response headers:", response.headers);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch shipment types: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received shipment types data:", data);
+                    
+                    shipmentTypeSelect.innerHTML = '<option value="">Select Shipment Type</option>';
+                    
+                    if (!data || data.length === 0) {
+                        shipmentTypeSelect.innerHTML = '<option value="">No shipment types available</option>';
+                        shipmentTypeSelect.disabled = true;
+                        console.log("No shipment types found for company:", selectedCompanyId);
+                        return;
+                    }
+                    
+                    data.forEach(shipmentType => {
+                        console.log("Adding shipment type:", shipmentType);
+                        const option = document.createElement('option');
+                        option.value = shipmentType.id;
+                        option.textContent = shipmentType.shipment_name;
+                        shipmentTypeSelect.appendChild(option);
+                    });
+                    
+                    shipmentTypeSelect.disabled = false;
+                    console.log("Successfully populated shipment types dropdown");
+                })
+                .catch(error => {
+                    console.error("Error fetching shipment types:", error);
+                    shipmentTypeSelect.innerHTML = '<option value="">Error loading shipment types</option>';
+                    showAlert('Failed to load shipment types: ' + error.message, 'error');
+                });
+        });
+    } else {
+        console.error("Clearance company select element not found!");
+    }
+    
+    // 2. Handle Shipment Type change
+    if (shipmentTypeSelect) {
+        shipmentTypeSelect.addEventListener('change', function() {
+            const selectedTypeId = this.value;
+            console.log("Shipment type changed to:", selectedTypeId);
+            
+            // Reset dependent dropdowns
+            shipCategorySelect.innerHTML = '<option value="">Loading...</option>';
+            shipCategorySelect.disabled = true;
+            docStatusSelect.innerHTML = '<option value="">Loading...</option>';
+            docStatusSelect.disabled = true;
+            
+            if (!selectedTypeId) {
+                shipCategorySelect.innerHTML = '<option value="">Select Shipment Type First</option>';
+                docStatusSelect.innerHTML = '<option value="">Select Shipment Type First</option>';
+                return;
+            }
+            
+            // Fetch ship categories
+            const categoriesUrl = `/customer_portal/get-ship-categories/${selectedTypeId}`;
+            console.log("Fetching categories from URL:", categoriesUrl);
+            
+            fetch(categoriesUrl)
+                .then(response => {
+                    console.log("Categories response status:", response.status);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch ship categories: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received ship categories:", data);
+                    
+                    shipCategorySelect.innerHTML = '<option value="">Select Ship Category</option>';
+                    
+                    if (data.length === 0) {
+                        shipCategorySelect.innerHTML = '<option value="">No categories available</option>';
+                        shipCategorySelect.disabled = true;
+                    } else {
+                        data.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            shipCategorySelect.appendChild(option);
+                        });
+                        shipCategorySelect.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching categories:", error);
+                    shipCategorySelect.innerHTML = '<option value="">Error loading categories</option>';
+                    showAlert('Failed to load ship categories', 'error');
+                });
+            
+            // Fetch document statuses
+            const statusesUrl = `/customer_portal/get-document-statuses/${selectedTypeId}`;
+            console.log("Fetching statuses from URL:", statusesUrl);
+            
+            fetch(statusesUrl)
+                .then(response => {
+                    console.log("Statuses response status:", response.status);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch document statuses: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received document statuses:", data);
+                    
+                    docStatusSelect.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        docStatusSelect.innerHTML = '<option value="">No statuses available</option>';
+                        docStatusSelect.disabled = true;
+                    } else {
+                        data.forEach(status => {
+                            const option = document.createElement('option');
+                            option.value = status.id;
+                            option.textContent = status.name;
+                            // Set 'Open' status as default
+                            if (status.name.toLowerCase() === 'open') {
+                                option.selected = true;
+                            }
+                            docStatusSelect.appendChild(option);
+                        });
+                        docStatusSelect.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching document statuses:", error);
+                    docStatusSelect.innerHTML = '<option value="">Error loading statuses</option>';
+                    showAlert('Failed to load document statuses', 'error');
+                });
+        });
+    } else {
+        console.error("Shipment type select element not found!");
+    }
+
+    // FILTER HANDLERS
+    const shipTypeFilter = document.getElementById('shipmentTypeFilter');
+    if (shipTypeFilter) {
+        shipTypeFilter.addEventListener('change', function() {
+            filterByShipmentType(this.value);
+        });
+    }
+
+    // Doc level filter auto-apply
+    const docLevelFilter = document.getElementById('docLevelFilter');
+    if (docLevelFilter) {
+        docLevelFilter.addEventListener('change', function() {
+            filterByDocLevel(this.value);
+        });
+    }
+
+    // Entries per page auto-apply
+    const entriesPerPageSelect = document.getElementById('entriesPerPage');
+    if (entriesPerPageSelect) {
+        entriesPerPageSelect.addEventListener('change', function() {
+            updateEntriesPerPage(this.value);
+        });
+    }
+
+    // Search filter with debounce (optional - for auto-search while typing)
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterBySearch(this.value);
+            }, 800); // Wait 800ms after user stops typing
+        });
+    }
+
+    // Check for new messages on page load and at regular intervals
+    checkNewMessages();
+    setInterval(checkNewMessages, 30000);
+});
+
+    // Add this to both pages after including chat.js
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check for new messages on page load and at regular intervals
+        checkNewMessages();
+        setInterval(checkNewMessages, 30000);
+    });
+</script>
+
+<script>
+    // This function checks if all required documents are uploaded before allowing submission
+    function checkSubmissionReadiness() {
+        // Calculate if all required documents are uploaded
+        fetch(`/customer_portal/check-documents-complete/${currentEntryId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.complete) {
+                    // All required documents are uploaded, confirm submission
+                    Swal.fire({
+                        title: 'Submit Entry',
+                        text: 'Are you sure you want to submit this entry? This will lock the entry and you won\'t be able to make changes.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, submit it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            submitEntry(currentEntryId);
+                        }
+                    });
+                } else {
+                    // Not all required documents are uploaded yet
+                    Swal.fire({
+                        title: 'Missing Documents',
+                        html: `You still need to upload ${data.remaining} required document(s) before submitting.<br><br>Please upload all required documents first.`,
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error checking document completeness:', error);
+                showAlert('Error checking document status', 'error');
+            });
+    }
+    
+    // Function to submit the entry
+    function submitEntry(entryId) {
+        fetch(`/customer_portal/submit-entry/${entryId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Entry submitted successfully',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Close modal and refresh page
+                    bootstrap.Modal.getInstance(document.getElementById('documentModal')).hide();
+                    window.location.reload();
+                });
+            } else {
+                throw new Error(data.message || 'Error submitting entry');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error submitting entry: ' + error.message, 'error');
+        });
+    }
+    </script>
+
+<!-- Add this to the head of your page or in your CSS file -->
+<style>
+    /* Message layout styles */
+    .message.sent {
+        flex-direction: row-reverse;
+    }
+    
+    .message.sent .d-flex {
+        flex-direction: row-reverse;
+    }
+    
+    .message.sent .message-avatar {
+        display: flex !important;
+    }
+    
+    .message.sent .message-content {
+        text-align: right;
+    }
+    
+    .message.sent .message-bubble {
+        background-color: #dcf8c6;
+        border-radius: 18px 0px 18px 18px !important;
+        display: inline-block;
+        margin-left: auto;
+    }
+    
+    .message.received .message-bubble {
+        background-color: #f1f0f0;
+        border-radius: 0px 18px 18px 18px !important;
+        display: inline-block;
+    }
+    
+    .message.sent .message-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .message.sent .attachments {
+        justify-content: flex-end;
+    }
+    
+    /* Ensure the avatar shows correctly */
+    .message-avatar {
+        display: flex !important;
+    }
+
+
+
+    .swal2-popup {
+    font-size: 1rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+}
+
+.swal2-container {
+    z-index: 2000 !important;  /* Higher than the document modal */
+}
+
+.swal2-html-container {
+    overflow-x: hidden !important;
+}
+
+.validation-results .progress {
+    margin-bottom: 1rem;
+}
+
+.validation-results .table {
+    font-size: 0.9rem;
+}
+
+.validation-results h5 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+</style>
+
+<style>
+    .blink-badge {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+</style>
+
+<style>
+    /* Add these styles to handle multiple document uploads */
+.document-upload-container {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.document-upload-container.has-files {
+    border-color: #198754;
+    background-color: #d1e7dd;
+}
+
+.document-upload-item {
+    background-color: white;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.document-upload-item:not(:last-child) {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.document-upload-item .form-control {
+    border-radius: 4px;
+}
+
+/* Style for multiple document badges */
+.badge.badge-soft-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .document-upload-item .row {
+        margin-bottom: 10px;
+    }
+    
+    .document-upload-item .col-md-6 {
+        margin-bottom: 10px;
+    }
+}
+
+/* Animation for adding/removing document inputs */
+.document-upload-item {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style for the add/remove buttons */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Style for document sections in existing documents */
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Ensure proper spacing for document groups */
+.card-body > .border {
+    border: 1px solid #dee2e6 !important;
+}
+</style>
+
+<!-- Add this CSS to the <head> section of sea_import.html -->
+<style>
+    /* Alert row highlighting with blinking animation */
+    .alert-row {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+        animation: alertBlink 2s infinite;
+        border-left: 4px solid #dc3545;
+    }
+    
+    @keyframes alertBlink {
+        0%, 50% { 
+            background-color: rgba(220, 53, 69, 0.1); 
+        }
+        100% { 
+            background-color: rgba(220, 53, 69, 0.05); 
+        }
+    }
+    
+    .alert-icon {
+        color: #dc3545;
+        font-size: 16px;
+        margin-left: 5px;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .tooltip-inner {
+        background-color: secondary;
+        color: white;
+    }
+    
+    .tooltip .arrow::before {
+        border-top-color: #dc3545;
+    }
+</style>
+
+<script>
+// Alert system for sea import page
+let alertCheckInterval;
+
+function initializeAlertSystem() {
+    // Check alerts on page load
+    checkAllShipmentsAlerts();
+    
+    // Set up periodic checking (every 30 seconds)
+    alertCheckInterval = setInterval(checkAllShipmentsAlerts, 30000);
+    
+    // Initialize tooltips for alert icons
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+function checkAllShipmentsAlerts() {
+    fetch('/customer_portal/api/all-shipments-alert-status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateRowAlerts(data.alert_status);
+            } else {
+                console.error('Error checking shipment alerts:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking shipment alerts:', error);
+        });
+}
+
+function updateRowAlerts(alertStatus) {
+    // Remove existing alerts first
+    document.querySelectorAll('.entry-row').forEach(row => {
+        row.classList.remove('alert-row');
+        const entryId = row.getAttribute('data-entry-id');
+        const alertIndicator = document.getElementById(`alert-indicator-${entryId}`);
+        if (alertIndicator) {
+            alertIndicator.style.display = 'none';
+        }
+    });
+    
+    // Apply new alerts
+    Object.keys(alertStatus).forEach(entryId => {
+        const status = alertStatus[entryId];
+        const row = document.getElementById(`entry-row-${entryId}`);
+        const alertIndicator = document.getElementById(`alert-indicator-${entryId}`);
+        
+        if (status.has_alerts && row && alertIndicator) {
+            row.classList.add('alert-row');
+            alertIndicator.style.display = 'inline-block';
+            
+            // Update tooltip
+            alertIndicator.setAttribute('title', 'Documents expiring before shipment ETA/deadline');
+        }
+    });
+}
+
+function checkSpecificShipmentAlert(entryId) {
+    fetch(`/customer_portal/api/shipment-document-alerts/${entryId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.has_alerts) {
+                console.log(`Shipment ${entryId} has ${data.alert_count} document alerts`);
+                // You can add specific handling here if needed
+            }
+        })
+        .catch(error => {
+            console.error('Error checking specific shipment alerts:', error);
+        });
+}
+
+// Clean up interval when page unloads
+window.addEventListener('beforeunload', function() {
+    if (alertCheckInterval) {
+        clearInterval(alertCheckInterval);
+    }
+});
+
+// Initialize alert system when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAlertSystem();
+});
+</script>
+
+
+
+{% endblock extra_js %}

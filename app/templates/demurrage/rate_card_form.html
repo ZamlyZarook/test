@@ -1,0 +1,555 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if rate_card %}Edit{% else %}New{% endif %} Demurrage Rate Card{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if rate_card %}Edit{% else %}New{% endif %} Demurrage Rate Card</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('demurrage.rate_cards') }}">Rate Cards</a></li>
+                                <li class="breadcrumb-item active">{% if rate_card %}Edit{% else %}Add{% endif %} Rate Card</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Rate Card Form -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if rate_card %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Rate Card Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <!-- Basic Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Basic Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Rate Card Name *</label>
+                                                            <input type="text" class="form-control" name="rate_card_name" 
+                                                                   value="{{ rate_card.rate_card_name if rate_card else '' }}" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Country *</label>
+                                                            <select class="form-select" name="country_id" required>
+                                                                <option value="">Select Country</option>
+                                                                {% for country in countries %}
+                                                                <option value="{{ country.countryID }}" 
+                                                                        {% if rate_card and rate_card.country_id == country.countryID %}selected{% endif %}>
+                                                                    {{ country.countryName }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Company</label>
+                                                            <select class="form-select" name="company_id">
+                                                                <option value="">Select Company</option>
+                                                                {% for company in companies %}
+                                                                <option value="{{ company.id }}" 
+                                                                        {% if rate_card and rate_card.company_id == company.id %}selected{% endif %}>
+                                                                    {{ company.company_name }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Port Code</label>
+                                                            <input type="text" class="form-control" name="port_code" 
+                                                                   value="{{ rate_card.port_code if rate_card else '' }}" 
+                                                                   placeholder="e.g., LKCMB">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Description</label>
+                                                    <textarea class="form-control" name="description" rows="3">{{ rate_card.description if rate_card else '' }}</textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Container & Rate Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-info">
+                                                <h6 class="card-title mb-0">Container & Rate Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Container Size *</label>
+                                                            <select class="form-select" name="container_size_id" required>
+                                                                <option value="">Select Size</option>
+                                                                {% for size in container_sizes %}
+                                                                <option value="{{ size.id }}" 
+                                                                        {% if rate_card and rate_card.container_size_id == size.id %}selected{% endif %}>
+                                                                    {{ size.name }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Container Type *</label>
+                                                            <select class="form-select" name="container_type_id" required>
+                                                                <option value="">Select Type</option>
+                                                                {% for type in container_types %}
+                                                                <option value="{{ type.id }}" 
+                                                                        {% if rate_card and rate_card.container_type_id == type.id %}selected{% endif %}>
+                                                                    {{ type.name }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Currency *</label>
+                                                            <select class="form-select" name="currency_id" required>
+                                                                <option value="">Select Currency</option>
+                                                                {% for currency in currencies %}
+                                                                <option value="{{ currency.currencyID }}" 
+                                                                        {% if rate_card and rate_card.currency_id == currency.currencyID %}selected{% endif %}>
+                                                                    {{ currency.CurrencyCode }} - {{ currency.CurrencyName }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Demurrage Reason *</label>
+                                                    <select class="form-select" name="demurrage_reason_id" required>
+                                                        <option value="">Select Reason</option>
+                                                        {% for reason in demurrage_reasons %}
+                                                        <option value="{{ reason.id }}" 
+                                                                {% if rate_card and rate_card.demurrage_reason_id == reason.id %}selected{% endif %}>
+                                                            {{ reason.reason_name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tiered Rate Structure -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-warning d-flex justify-content-between align-items-center">
+                                                <h6 class="card-title mb-0">Tiered Rate Structure</h6>
+                                                <button type="button" class="btn btn-sm btn-primary" id="addTierBtn">
+                                                    <i class="ri-add-line me-1"></i>Add Tier
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="tiersContainer">
+                                                    {% if rate_card and rate_card.tiers %}
+                                                        {% for tier in rate_card.tiers %}
+                                                        <div class="tier-row border rounded p-3 mb-3">
+                                                            <div class="row align-items-end">
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">Tier Number</label>
+                                                                    <input type="number" class="form-control tier-number" name="tier_number[]" 
+                                                                        value="{{ tier.tier_number }}" readonly>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">From Day</label>
+                                                                    <input type="number" class="form-control from-day" name="from_day[]" 
+                                                                        value="{{ tier.from_day }}" min="1" required>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">To Day</label>
+                                                                    <input type="number" class="form-control to-day" name="to_day[]" 
+                                                                        value="{{ tier.to_day or '' }}" min="1" 
+                                                                        placeholder="Leave empty for unlimited">
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <label class="form-label">Rate Amount</label>
+                                                                    <input type="number" step="0.01" class="form-control rate-amount" name="rate_amount[]" 
+                                                                        value="{{ tier.rate_amount }}" min="0" required>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">Day Range</label>
+                                                                    <div class="form-control-plaintext day-range-display">{{ tier.day_range_display }}</div>
+                                                                </div>
+                                                                <div class="col-md-1">
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-tier">
+                                                                        <i class="ri-delete-bin-line"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <!-- Default first tier -->
+                                                        <div class="tier-row border rounded p-3 mb-3">
+                                                            <div class="row align-items-end">
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">Tier Number</label>
+                                                                    <input type="number" class="form-control tier-number" name="tier_number[]" 
+                                                                        value="1" readonly>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">From Day</label>
+                                                                    <input type="number" class="form-control from-day" name="from_day[]" 
+                                                                        value="1" min="1" required>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">To Day</label>
+                                                                    <input type="number" class="form-control to-day" name="to_day[]" 
+                                                                        value="" min="1" placeholder="Leave empty for unlimited">
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <label class="form-label">Rate Amount</label>
+                                                                    <input type="number" step="0.01" class="form-control rate-amount" name="rate_amount[]" 
+                                                                        value="" min="0" required>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <label class="form-label">Day Range</label>
+                                                                    <div class="form-control-plaintext day-range-display">-</div>
+                                                                </div>
+                                                                <div class="col-md-1">
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-tier">
+                                                                        <i class="ri-delete-bin-line"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div class="alert alert-info">
+                                                    <strong>Note:</strong> 
+                                                    <ul class="mb-0">
+                                                        <li>Leave "To Day" empty for unlimited days (last tier)</li>
+                                                        <li>Day ranges should not overlap</li>
+                                                        <li>Each day should be covered by exactly one tier</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Authority Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-success">
+                                                <h6 class="card-title mb-0">Authority Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Set By Authority *</label>
+                                                            <select class="form-select" name="set_by_authority" required>
+                                                                <option value="">Select Authority</option>
+                                                                <option value="SLPA" {% if rate_card and rate_card.set_by_authority == 'SLPA' %}selected{% endif %}>SLPA</option>
+                                                                <option value="SHIPPING_LINE" {% if rate_card and rate_card.set_by_authority == 'SHIPPING_LINE' %}selected{% endif %}>Shipping Line</option>
+                                                                <option value="TERMINAL" {% if rate_card and rate_card.set_by_authority == 'TERMINAL' %}selected{% endif %}>Terminal</option>
+                                                                <option value="GOVERNMENT" {% if rate_card and rate_card.set_by_authority == 'GOVERNMENT' %}selected{% endif %}>Government</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Approved By</label>
+                                                            <input type="text" class="form-control" name="approved_by" 
+                                                                   value="{{ rate_card.approved_by if rate_card else '' }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Approval Reference</label>
+                                                            <input type="text" class="form-control" name="approval_reference" 
+                                                                   value="{{ rate_card.approval_reference if rate_card else '' }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="is_active" value="1"
+                                                               {% if not rate_card or rate_card.is_active %}checked{% endif %}>
+                                                        <label class="form-check-label">Active</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('demurrage.rate_cards') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>
+                                        {% if rate_card %}Update{% else %}Save{% endif %} Rate Card
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+    });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let tierCounter = {{ rate_card.tiers|length if rate_card and rate_card.tiers else 1 }};
+    
+    // Add tier functionality
+    document.getElementById('addTierBtn').addEventListener('click', function() {
+        tierCounter++;
+        addTierRow(tierCounter);
+    });
+    
+    // Remove tier functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-tier') || e.target.closest('.remove-tier')) {
+            const tierRow = e.target.closest('.tier-row');
+            if (document.querySelectorAll('.tier-row').length > 1) {
+                tierRow.remove();
+                updateTierNumbers();
+                updateDayRangeDisplays();
+            } else {
+                alert('At least one tier is required');
+            }
+        }
+    });
+    
+    // Update day range displays when inputs change
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('from-day') || e.target.classList.contains('to-day')) {
+            updateDayRangeDisplays();
+            validateDayRanges();
+        }
+    });
+    
+    function addTierRow(tierNumber) {
+        const container = document.getElementById('tiersContainer');
+        const tierHtml = `
+            <div class="tier-row border rounded p-3 mb-3">
+                <div class="row align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label">Tier Number</label>
+                        <input type="number" class="form-control tier-number" name="tier_number[]" 
+                               value="${tierNumber}" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">From Day</label>
+                        <input type="number" class="form-control from-day" name="from_day[]" 
+                               value="" min="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">To Day</label>
+                        <input type="number" class="form-control to-day" name="to_day[]" 
+                               value="" min="1" placeholder="Leave empty for unlimited">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Rate Amount</label>
+                        <input type="number" step="0.01" class="form-control rate-amount" name="rate_amount[]" 
+                               value="" min="0" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Day Range</label>
+                        <div class="form-control-plaintext day-range-display">-</div>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger btn-sm remove-tier">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', tierHtml);
+        updateDayRangeDisplays();
+    }
+    
+    function updateTierNumbers() {
+        const tierRows = document.querySelectorAll('.tier-row');
+        tierRows.forEach((row, index) => {
+            row.querySelector('.tier-number').value = index + 1;
+        });
+        tierCounter = tierRows.length;
+    }
+    
+    function updateDayRangeDisplays() {
+       const tierRows = document.querySelectorAll('.tier-row');
+       tierRows.forEach(row => {
+           const fromDay = row.querySelector('.from-day').value;
+           const toDay = row.querySelector('.to-day').value;
+           const displayElement = row.querySelector('.day-range-display');
+           
+           if (fromDay) {
+               if (toDay) {
+                   if (fromDay === toDay) {
+                       displayElement.textContent = `Day ${fromDay}`;
+                   } else {
+                       displayElement.textContent = `Days ${fromDay}-${toDay}`;
+                   }
+               } else {
+                   displayElement.textContent = `Days ${fromDay}+`;
+               }
+           } else {
+               displayElement.textContent = '-';
+           }
+       });
+   }
+   
+   function validateDayRanges() {
+       const tierRows = document.querySelectorAll('.tier-row');
+       const ranges = [];
+       let hasErrors = false;
+       
+       // Clear previous errors
+       tierRows.forEach(row => {
+           row.classList.remove('border-danger');
+           const inputs = row.querySelectorAll('.from-day, .to-day');
+           inputs.forEach(input => input.classList.remove('is-invalid'));
+       });
+       
+       // Collect ranges
+       tierRows.forEach((row, index) => {
+           const fromDay = parseInt(row.querySelector('.from-day').value);
+           const toDay = row.querySelector('.to-day').value ? parseInt(row.querySelector('.to-day').value) : null;
+           
+           if (fromDay) {
+               if (toDay && fromDay > toDay) {
+                   // From day greater than to day
+                   row.classList.add('border-danger');
+                   row.querySelector('.from-day').classList.add('is-invalid');
+                   row.querySelector('.to-day').classList.add('is-invalid');
+                   hasErrors = true;
+               }
+               
+               ranges.push({
+                   index: index,
+                   from: fromDay,
+                   to: toDay,
+                   row: row
+               });
+           }
+       });
+       
+       // Check for overlaps and gaps
+       ranges.sort((a, b) => a.from - b.from);
+       
+       for (let i = 0; i < ranges.length - 1; i++) {
+           const current = ranges[i];
+           const next = ranges[i + 1];
+           
+           if (current.to) {
+               // Check overlap
+               if (current.to >= next.from) {
+                   current.row.classList.add('border-danger');
+                   next.row.classList.add('border-danger');
+                   hasErrors = true;
+               }
+               // Check gap
+               else if (current.to + 1 < next.from) {
+                   current.row.classList.add('border-warning');
+                   next.row.classList.add('border-warning');
+               }
+           } else {
+               // Current has unlimited range, shouldn't have next tier
+               if (i < ranges.length - 1) {
+                   current.row.classList.add('border-danger');
+                   next.row.classList.add('border-danger');
+                   hasErrors = true;
+               }
+           }
+       }
+       
+       return !hasErrors;
+   }
+   
+   // Form submission validation
+   document.querySelector('form').addEventListener('submit', function(e) {
+       if (!validateDayRanges()) {
+           e.preventDefault();
+           alert('Please fix the tier day range errors before submitting.');
+       }
+   });
+   
+   // Initial validation
+   updateDayRangeDisplays();
+   validateDayRanges();
+});
+</script>
+{% endblock extra_js %}

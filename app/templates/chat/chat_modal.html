@@ -1,0 +1,121 @@
+<!-- Chat Modal -->
+<div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chatModalLabel">Chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Message Container -->
+                <div class="chat-messages" style="height: 400px; overflow-y: auto;">
+                    <div id="messageContainer" class="d-flex flex-column gap-3">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Reply Preview -->
+                <div id="replyPreview" class="d-none bg-light p-2 mb-2 rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <small class="text-muted">Replying to:</small>
+                            <p class="mb-0" id="replyPreviewText"></p>
+                        </div>
+                        <button type="button" class="btn-close" onclick="cancelReply()"></button>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <form id="messageForm" class="mt-3" enctype="multipart/form-data">
+                    <input type="hidden" id="threadId" name="thread_id">
+                    <input type="hidden" id="parentMessageId" name="parent_message_id">
+                    
+                    <!-- File Preview -->
+                    <div id="filePreview" class="d-none mb-2">
+                        <div class="d-flex flex-wrap gap-2" id="filePreviewContainer"></div>
+                    </div>
+
+                    <!-- Voice Recording -->
+                    <div id="voiceRecording" class="d-none mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="recordingTime">00:00</span>
+                            <div class="flex-grow-1">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger"
+                                        role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="stopRecording()">
+                                <i class="ri-stop-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="messageInput" name="message"
+                            placeholder="Type your message...">
+
+                        <!-- Voice Record Button -->
+                        <button type="button" class="btn btn-outline-secondary" onclick="startRecording()"
+                            title="Record Voice Message">
+                            <i class="ri-mic-line"></i>
+                        </button>
+
+                        <!-- File Attachment -->
+                        <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.getElementById('fileInput').click()" title="Attach Files">
+                            <i class="ri-attachment-2"></i>
+                        </button>
+                        <input type="file" id="fileInput" multiple style="display: none"
+                            onchange="handleFileSelect(this)">
+
+                        <!-- Send Button -->
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ri-send-plane-fill"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Message Template -->
+<!-- In chat_modal.html, replace the existing message template with this: -->
+<template id="messageTemplate">
+    <div class="message mb-3">
+        <div class="d-flex gap-2">
+            <div class="message-avatar">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px;">
+                    <span class="initial"></span>
+                </div>
+            </div>
+            <div class="message-content flex-grow-1">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <strong class="sender-name"></strong>
+                    <small class="text-muted timestamp"></small>
+                </div>
+
+                <!-- Reply Reference -->
+                <div class="reply-to d-none bg-light p-2 rounded mb-2">
+                    <small class="text-muted">Replying to:</small>
+                    <p class="mb-0 reply-text"></p>
+                </div>
+
+                <div class="message-bubble p-2 rounded">
+                    <p class="message-text mb-1"></p>
+                </div>
+
+                <!-- Attachments -->
+                <div class="attachments d-flex flex-wrap gap-2 mt-1"></div>
+
+                <!-- Message Actions -->
+                <div class="message-actions mt-1">
+                    <button class="btn btn-sm btn-link p-0 reply-btn">
+                        <i class="fas fa-reply"></i> Reply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

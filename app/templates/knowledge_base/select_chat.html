@@ -1,0 +1,199 @@
+{% extends "partials/base.html" %}
+{% block title %}Select Agent for Chat{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .kb-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+        border: 1px solid var(--vz-border-color);
+        background: var(--vz-card-bg);
+    }
+    
+    .kb-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(var(--vz-primary-rgb), 0.1);
+    }
+    
+    .kb-card.selected {
+        border-color: var(--vz-primary);
+        background-color: rgba(var(--vz-primary-rgb), 0.05);
+    }
+    
+    .kb-description {
+        max-height: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+
+    .chat-selection-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .ai-icon {
+        font-size: 3rem;
+        color: var(--vz-primary);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .kb-meta-info {
+        font-size: 0.875rem;
+        color: var(--vz-text-muted);
+    }
+
+    .kb-status-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">AI Chat Assistant</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Agent</a></li>
+                                <li class="breadcrumb-item active">AI Chat</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="chat-selection-header">
+                        <div class="ai-icon">
+                            <i class="ri-robot-line"></i>
+                        </div>
+                        <h2 class="mb-2">Select Your AI Agent</h2>
+                        <p class="text-muted">Choose an agent to start your AI-powered conversation</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            {% if knowledge_bases %}
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                                {% for kb in knowledge_bases %}
+                                <div class="col">
+                                    <div class="card kb-card h-100 position-relative" onclick="selectKnowledgeBase({{ kb.id }})">
+                                        <span class="kb-status-badge">
+                                            {% if kb.activeYN %}
+                                            <span class="badge rounded-pill bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge rounded-pill bg-danger">Inactive</span>
+                                            {% endif %}
+                                        </span>
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="flex-shrink-0">
+                                                    <div class="avatar-sm">
+                                                        <span class="avatar-title rounded bg-primary">
+                                                            {% if 'employee' in kb.name.lower() %}
+                                                                <i class="ri-team-line fs-4"></i>
+                                                            {% elif 'project' in kb.name.lower() %}
+                                                                <i class="ri-project-line fs-4"></i>
+                                                            {% elif 'customer' in kb.name.lower() %}
+                                                                <i class="ri-user-voice-line fs-4"></i>
+                                                            {% elif 'sales' in kb.name.lower() %}
+                                                                <i class="ri-line-chart-line fs-4"></i>
+                                                            {% elif 'product' in kb.name.lower() %}
+                                                                <i class="ri-store-2-line fs-4"></i>
+                                                            {% elif 'finance' in kb.name.lower() %}
+                                                                <i class="ri-money-dollar-circle-line fs-4"></i>
+                                                            {% else %}
+                                                                <i class="ri-database-2-line fs-4"></i>
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <h5 class="card-title mb-0">{{ kb.name }}</h5>
+                                                </div>
+                                            </div>
+                                            
+                                            <p class="card-text kb-description">{{ kb.kb_description or 'No description available' }}</p>
+                                            
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-dashed">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <div class="avatar-xs">
+                                                        <div class="avatar-title bg-light text-primary rounded-circle">
+                                                            {{ kb.creator.username[:1].upper() }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 ms-2">
+                                                    <small class="text-muted">
+                                                        Created by {{ kb.creator.username }}
+                                                        <br>
+                                                        {{ kb.created_at.strftime('%Y-%m-%d') }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="empty-state">
+                                <div class="avatar-lg mx-auto mb-4">
+                                    <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-1">
+                                        <i class="ri-inbox-line"></i>
+                                    </div>
+                                </div>
+                                <h5 class="mb-2">No Agents Available</h5>
+                                <p class="text-muted">Please contact your administrator for access to agents.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "partials/footer.html" %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    function selectKnowledgeBase(kbId) {
+        // Remove selected class from all cards
+        document.querySelectorAll('.kb-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked card
+        event.currentTarget.classList.add('selected');
+        
+        // Redirect to chat page
+        window.location.href = `/knowledge_base/kb-chat/${kbId}`;
+    }
+</script>
+{% endblock extra_js %} 

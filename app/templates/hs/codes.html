@@ -1,0 +1,724 @@
+{% extends "partials/base.html" %}
+
+{% block title %}HS Code{% endblock title %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div
+                        class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">HS Codes</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item active">HS Codes</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            <!-- Codes Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="search-box">
+                                <input type="text" id="codesSearchInput" class="form-control"
+                                    placeholder="Search codes..." style="width: 250px; display: inline-block;">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                            <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHSCodeModal"
+                                onclick="openAddModal()">+ Add HS Code</a>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Issue Body</th>
+                                        <th style="width: 150px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for code in codes %}
+                                    <tr>
+                                        <td>{{ code.code }}</td>
+                                        <td>{{ code.description }}</td>
+                                        <td>{{ code.category.name if code.category else '' }}</td>
+                                        <td>
+                                            {% set issue_bodies = [] %}
+                                            {% for doc in code.documents_dict %}
+                                            {% if doc.issuing_body and doc.issuing_body.name not in issue_bodies %}
+                                            {% set _ = issue_bodies.append(doc.issuing_body.name) %}
+                                            {% endif %}
+                                            {% endfor %}
+                                            {{ issue_bodies | join(', ') }}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-info" data-bs-toggle="modal"
+                                                data-bs-target="#addHSCodeModal" data-id="{{ code.id }}"
+                                                data-code="{{ code.code }}" data-description="{{ code.description }}"
+                                                data-category="{{ code.category_id }}"
+                                                data-documents='{{ code.documents_dict | tojson | safe }}'
+                                                onclick="openViewModal(this)"><i class="ri-eye-line"></i></a>
+                                            <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#addHSCodeModal" data-id="{{ code.id }}"
+                                                data-code="{{ code.code }}" data-description="{{ code.description }}"
+                                                data-category="{{ code.category_id }}"
+                                                data-documents='{{ code.documents_dict | tojson | safe }}'
+                                                onclick="openEditModal(this)"><i class="ri-pencil-line"></i></a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-code-btn"
+                                                data-id="{{ code.id }}" data-code="{{ code.code }}"><i
+                                                    class="ri-delete-bin-line"></i></button>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No codes found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit HS Code Modal -->
+<div class="modal fade" id="addHSCodeModal" tabindex="-1" aria-labelledby="addHSCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <form id="hsCodeForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addHSCodeModalLabel">Add HS Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" id="hsCodeTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="details-tab" data-bs-toggle="tab"
+                                data-bs-target="#details" type="button" role="tab">Details</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents"
+                                type="button" role="tab">Documents</button>
+                        </li>
+                    </ul>
+                    <!-- Tab panes -->
+                    <div class="tab-content mt-3">
+                        <!-- Details Tab -->
+                        <div class="tab-pane fade show active" id="details" role="tabpanel">
+                            <div class="mb-3">
+                                <label>HS Code</label>
+                                <input type="text" name="code" id="hsCode" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label>Description</label>
+                                <input type="text" name="description" id="hsDescription" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label>Category</label>
+                                <select name="category_id" id="hsCategory" class="form-control" required
+                                    style="width: 100%;">
+                                    <option value="">Select Category</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Documents Tab -->
+                        <div class="tab-pane fade" id="documents" role="tabpanel">
+                            <div id="document-form-container">
+                                <input type="hidden" name="document_id" id="documentId">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Issuing Body</label>
+                                            <select id="issuingBody" class="form-control" name="issuing_body"
+                                                style="width: 100%;">
+                                                <option value="">Select</option>
+                                                {% for body in issue_bodies %}
+                                                <option value="{{ body.id }}">{{ body.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Document Category</label>
+                                            <select id="documentCategory" class="form-control" name="document_category"
+                                                style="width: 100%;">
+                                                <option value="">Select</option>
+                                                {% for doc_cat in document_categories %}
+                                                <option value="{{ doc_cat.id }}">{{ doc_cat.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                      
+                                <div class="mb-3">
+                                    <label class="form-label">Is Mandatory</label>
+                                    <select id="isMandatory" name="is_mandatory" class="form-control">
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="sampleDocInputContainer">
+                                    <label class="form-label">Sample Document</label>
+                                    <input type="file" id="sampleDoc" name="sample_doc" class="form-control">
+                                </div>
+                                <button type="button" class="btn btn-secondary mb-3" id="addIssueBodyBtn">Add Document</button>
+                            </div>
+                            <!-- Table to display added Documents -->
+                            <div id="documentsTableContainer">
+                                <table class="table table-bordered" id="documentsTable" style="display:none;">
+                                    <thead>
+                                        <tr>
+                                            <th>Issuing Body</th>
+                                            <th>Document Category</th>
+                                            <th>Is Mandatory</th>
+                                            <th>Sample Document</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <div id="noDocumentsMsg" class="text-muted" style="display:none;">No documents added.</div>
+                            </div>
+                            <input type="hidden" name="documents_json" id="documentsJson">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- jQuery FIRST -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    let editingCodeId = null;
+    let documents = [];
+
+    function handleIssuingBodyChange() {
+        // Remove any existing event listeners first
+        $('#issuingBody').off('change.customHandler');
+        
+        // Use jQuery event handler for Select2 compatibility
+        $('#issuingBody').on('change.customHandler', function() {
+            const issuingBodyId = this.value;
+            const documentCategorySelect = $('#documentCategory');
+            
+            // Clear document category options
+            documentCategorySelect.empty().append('<option value="">Loading...</option>');
+            
+            if (issuingBodyId) {
+                // Fetch document categories for the selected issuing body
+                fetch(`/hs/api/document-categories/${issuingBodyId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        documentCategorySelect.empty().append('<option value="">Select Document Category</option>');
+                        if (data.success && data.categories) {
+                            data.categories.forEach(category => {
+                                documentCategorySelect.append(new Option(category.name, category.id));
+                            });
+                        }
+                        // Trigger Select2 to update
+                        documentCategorySelect.trigger('change');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching document categories:', error);
+                        documentCategorySelect.empty().append('<option value="">Error loading categories</option>');
+                    });
+            } else {
+                documentCategorySelect.empty().append('<option value="">Select Issuing Body First</option>');
+            }
+        });
+    }
+
+
+    function openAddModal() {
+        editingCodeId = null;
+        document.getElementById('addHSCodeModalLabel').textContent = 'Add HS Code';
+        document.getElementById('submitBtn').textContent = 'Save';
+        document.getElementById('submitBtn').style.display = 'block';
+        document.getElementById('hsCode').value = '';
+        document.getElementById('hsCode').readOnly = false;
+        document.getElementById('hsDescription').value = '';
+        document.getElementById('hsDescription').readOnly = false;
+        document.getElementById('hsCategory').value = '';
+        document.getElementById('hsCategory').disabled = false;
+        resetDocumentForm();
+        documents = [];
+        updateDocumentsTable();
+        setDocumentFormState(false);
+        document.getElementById('isMandatory').disabled = false;
+        document.getElementById('sampleDocInputContainer').style.display = 'block';
+    }
+
+
+    function openEditModal(button) {
+        editingCodeId = button.getAttribute('data-id');
+        document.getElementById('addHSCodeModalLabel').textContent = 'Edit HS Code';
+        document.getElementById('submitBtn').textContent = 'Update';
+        document.getElementById('submitBtn').style.display = 'block';
+        document.getElementById('hsCode').value = button.getAttribute('data-code');
+        document.getElementById('hsCode').readOnly = false;
+        document.getElementById('hsDescription').value = button.getAttribute('data-description');
+        document.getElementById('hsDescription').readOnly = false;
+        document.getElementById('hsCategory').value = button.getAttribute('data-category') || '';
+        document.getElementById('hsCategory').disabled = false;
+        resetDocumentForm();
+        setDocumentFormState(false);
+        
+        // Populate Documents with updated structure (no description field)
+        let docs = [];
+        try {
+            docs = JSON.parse(button.getAttribute('data-documents'));
+        } catch (e) { }
+        
+        documents = Array.isArray(docs) ? docs.map(doc => ({
+            documentId: doc.id,
+            issuingBodyId: doc.issuing_body_id || (doc.issuing_body && doc.issuing_body.id) || '',
+            issuingBodyName: (doc.issuing_body && doc.issuing_body.name) || '',
+            documentCategoryId: doc.document_category_id || '',
+            documentCategoryName: (doc.document_category && doc.document_category.name) || '',
+            isMandatory: doc.is_mandatory ? 'Yes' : 'No',
+            attachments: (doc.attachments || []).map(att => ({
+                attachment_id: att.id,
+                file_name: att.file_name,
+                file_url: att.file_url || ''
+            }))
+        })) : [];
+        updateDocumentsTable();
+        document.getElementById('isMandatory').disabled = false;
+        document.getElementById('sampleDocInputContainer').style.display = 'block';
+    }
+
+
+    function openViewModal(button) {
+        editingCodeId = null;
+        document.getElementById('addHSCodeModalLabel').textContent = 'View HS Code';
+        document.getElementById('submitBtn').style.display = 'none';
+        document.getElementById('hsCode').value = button.getAttribute('data-code');
+        document.getElementById('hsCode').readOnly = true;
+        document.getElementById('hsDescription').value = button.getAttribute('data-description');
+        document.getElementById('hsDescription').readOnly = true;
+        document.getElementById('hsCategory').value = button.getAttribute('data-category') || '';
+        document.getElementById('hsCategory').disabled = true;
+        resetDocumentForm();
+        setDocumentFormState(true);
+        
+        // Populate Documents with updated structure (no description field)
+        let docs = [];
+        try {
+            docs = JSON.parse(button.getAttribute('data-documents'));
+        } catch (e) { }
+        
+        documents = Array.isArray(docs) ? docs.map(doc => ({
+            documentId: doc.id,
+            issuingBodyId: doc.issuing_body_id || (doc.issuing_body && doc.issuing_body.id) || '',
+            issuingBodyName: (doc.issuing_body && doc.issuing_body.name) || '',
+            documentCategoryId: doc.document_category_id || '',
+            documentCategoryName: (doc.document_category && doc.document_category.name) || '',
+            isMandatory: doc.is_mandatory ? 'Yes' : 'No',
+            attachments: (doc.attachments || []).map(att => ({
+                attachment_id: att.id,
+                file_name: att.file_name,
+                file_url: att.file_url || ''
+            }))
+        })) : [];
+        updateDocumentsTable();
+        document.getElementById('isMandatory').disabled = true;
+        document.getElementById('sampleDocInputContainer').style.display = 'none';
+    }
+
+
+    function resetDocumentForm() {
+        document.getElementById('documentId').value = '';
+    
+    // Reset Select2 dropdowns properly
+        $('#issuingBody').val('').trigger('change');
+        $('#documentCategory').empty().append('<option value="">Select Issuing Body First</option>').trigger('change');
+        
+        document.getElementById('isMandatory').value = 'Yes';
+        document.getElementById('sampleDoc').value = '';
+    }
+
+
+    function setDocumentFormState(isViewMode) {
+        document.getElementById('document-form-container').style.display = isViewMode ? 'none' : 'block';
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        handleIssuingBodyChange();
+
+        // Modal clear on hide
+
+        const modal = document.getElementById('addHSCodeModal');
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function () {
+                editingCodeId = null;
+                documents = [];
+                updateDocumentsTable();
+                resetDocumentForm();
+            });
+        }
+        
+        // Form submit
+        const form = document.getElementById('hsCodeForm');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                formData.set('documents_json', JSON.stringify(documents));
+                const url = editingCodeId ? `/hs/code/${editingCodeId}/edit` : "{{ url_for('hs.new_code') }}";
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: editingCodeId ? 'Updated!' : 'Created!',
+                                text: data.message || (editingCodeId ? 'HS Code updated successfully!' : 'HS Code created successfully!'),
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'Error saving HS Code.'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Something went wrong!'
+                        });
+                    });
+            });
+        }
+        
+        // Delete code
+        document.querySelectorAll('.delete-code-btn').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var id = this.getAttribute('data-id');
+                var code = this.getAttribute('data-code');
+                Swal.fire({
+                    title: `Delete HS Code "${code}"?`,
+                    text: 'This action cannot be undone!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/hs/code/${id}/delete`, { method: 'POST' })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Deleted!',
+                                        text: data.message || 'HS Code deleted successfully!',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(() => location.reload());
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: data.message || 'Error deleting.'
+                                    });
+                                }
+                            });
+                    }
+                });
+            });
+        });
+        
+        // Search
+        document.getElementById("codesSearchInput").addEventListener("keyup", filterCodes);
+    });
+
+
+    function filterCodes() {
+        var input = document.getElementById("codesSearchInput");
+        var filter = input.value.toLowerCase();
+        var table = document.querySelector(".table.table-bordered.table-hover");
+        var trs = table.querySelectorAll("tbody tr");
+        trs.forEach(function (row) {
+            var code = row.children[0]?.textContent.toLowerCase() || "";
+            var desc = row.children[1]?.textContent.toLowerCase() || "";
+            var cat = row.children[2]?.textContent.toLowerCase() || "";
+            if (code.includes(filter) || desc.includes(filter) || cat.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+
+    function updateDocumentsTable() {
+        const table = document.getElementById('documentsTable');
+        const tbody = table.querySelector('tbody');
+        const msg = document.getElementById('noDocumentsMsg');
+        const isViewMode = document.getElementById('submitBtn').style.display === 'none';
+
+        tbody.innerHTML = '';
+        if (documents.length === 0) {
+            table.style.display = 'none';
+            msg.style.display = 'block';
+        } else {
+            table.style.display = '';
+            msg.style.display = 'none';
+            documents.forEach((doc, idx) => {
+                const removeButtonHtml = isViewMode ? '' : `<button type="button" class="btn btn-danger btn-sm" onclick="removeDocument(${idx})">Remove</button>`;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${doc.issuingBodyName}</td>
+                    <td>${doc.documentCategoryName}</td>
+                    <td>${doc.isMandatory}</td>
+                    <td>${doc.attachments && doc.attachments.length ? doc.attachments.map(att => att.file_name).join(', ') : ''}</td>
+                    <td>
+                        ${doc.attachments && doc.attachments.length ? doc.attachments.map(att => `<a href="/hs/attachment/${att.attachment_id || att.id}/view" target="_blank" class="btn btn-info btn-sm me-1">View</a>`).join('') : ''}
+                        ${removeButtonHtml}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        document.getElementById('documentsJson').value = JSON.stringify(documents);
+    }
+
+
+    function removeDocument(idx) {
+        const docToRemove = documents[idx];
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This will permanently delete the document from the database! This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (docToRemove.documentId) {
+                    // It exists in the DB, call the delete route
+                    fetch(`/hs/document/${docToRemove.documentId}/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                documents.splice(idx, 1);
+                                updateDocumentsTable();
+                                Swal.fire('Deleted!', 'The document has been deleted.', 'success');
+                            } else {
+                                Swal.fire('Error!', data.message || 'Could not delete the document.', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            Swal.fire('Error!', 'An unexpected error occurred.', 'error');
+                        });
+                } else {
+                    // It only exists in the UI, just remove it from the array
+                    documents.splice(idx, 1);
+                    updateDocumentsTable();
+                    Swal.fire('Removed!', 'The new document has been removed from the list.', 'success');
+                }
+            }
+        });
+    }
+
+    document.getElementById('addIssueBodyBtn').addEventListener('click', function () {
+        const issuingBodySelect = document.getElementById('issuingBody');
+        const documentCategorySelect = document.getElementById('documentCategory');
+        const issuingBodyId = issuingBodySelect.value;
+        const issuingBodyName = issuingBodySelect.options[issuingBodySelect.selectedIndex].text;
+        const documentCategoryId = documentCategorySelect.value;
+        const documentCategoryName = documentCategorySelect.options[documentCategorySelect.selectedIndex].text;
+        const isMandatory = document.getElementById('isMandatory').value;
+        const sampleDocInput = document.getElementById('sampleDoc');
+
+        if (!issuingBodyId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Issuing Body',
+                text: 'Please select an Issuing Body before adding.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        if (!documentCategoryId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Document Category',
+                text: 'Please select a Document Category before adding.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // If a file is selected, upload it first
+        if (sampleDocInput.files.length > 0) {
+            const file = sampleDocInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show SweetAlert progress
+            Swal.fire({
+                title: 'Uploading...',
+                html: 'Please wait while your file is being uploaded.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch('/hs/upload-attachment', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    Swal.close();
+                    if (data.success) {
+                        const newAttachment = {
+                            attachment_id: data.attachment.id,
+                            file_name: data.attachment.file_name,
+                            file_url: data.attachment.file_url
+                        };
+
+                        // Add new document with attachment (no description field)
+                        documents.push({
+                            issuingBodyId,
+                            issuingBodyName,
+                            documentCategoryId,
+                            documentCategoryName,
+                            isMandatory,
+                            attachments: [newAttachment]
+                        });
+
+                        updateDocumentsTable();
+                        resetDocumentFormFields();
+                    } else {
+                        Swal.fire('Error', 'File upload failed', 'error');
+                    }
+                })
+                .catch(() => {
+                    Swal.close();
+                    Swal.fire('Error', 'File upload failed', 'error');
+                });
+        } else {
+            // No file, just add the document (no description field)
+            documents.push({
+                issuingBodyId,
+                issuingBodyName,
+                documentCategoryId,
+                documentCategoryName,
+                isMandatory,
+                attachments: []
+            });
+            updateDocumentsTable();
+            resetDocumentFormFields();
+        }
+    });
+
+
+    function resetDocumentFormFields() {
+        // Reset Select2 dropdowns properly
+        $('#issuingBody').val('').trigger('change');
+        $('#documentCategory').empty().append('<option value="">Select Issuing Body First</option>').trigger('change');
+        
+        document.getElementById('isMandatory').value = 'Yes';
+        document.getElementById('sampleDoc').value = '';
+    }
+
+
+    $('#addHSCodeModal').on('shown.bs.modal', function () {
+        // Initialize Select2 first
+        $('#hsCategory').select2({
+            dropdownParent: $('#addHSCodeModal'),
+            width: '100%',
+            placeholder: 'Select Category',
+            allowClear: true,
+            minimumResultsForSearch: 0
+        });
+        
+        $('#issuingBody').select2({
+            dropdownParent: $('#addHSCodeModal'),
+            width: '100%',
+            placeholder: 'Select Issuing Body',
+            allowClear: true,
+            minimumResultsForSearch: 0
+        });
+        
+        $('#documentCategory').select2({
+            dropdownParent: $('#addHSCodeModal'),
+            width: '100%',
+            placeholder: 'Select Document Category',
+            allowClear: true,
+            minimumResultsForSearch: 0
+        });
+        
+        // Then set up the change handler AFTER Select2 initialization
+        setTimeout(() => {
+            handleIssuingBodyChange();
+        }, 100);
+    });
+
+</script>
+
+{% include 'chat/chat_modal.html' %}
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+{% endblock %}

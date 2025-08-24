@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h3 class="text-center">{{ title }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="form-container">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.permission_name.label(class="form-label") }}
+                            {{ form.permission_name(class="form-control") }}
+                            {% if form.permission_name.errors %}
+                            {% for error in form.permission_name.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.permission_code.label(class="form-label") }}
+                            {{ form.permission_code(class="form-control") }}
+                            {% if form.permission_code.errors %}
+                            {% for error in form.permission_code.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                            {% for error in form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.module.label(class="form-label") }}
+                            {{ form.module(class="form-control") }}
+                            {% if form.module.errors %}
+                            {% for error in form.module.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            {{ form.is_active.label(class="form-check-label") }}
+                        </div>
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('admin.permissions') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

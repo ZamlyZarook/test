@@ -1,0 +1,67 @@
+<!-- Create this as templates/errors/expired_coupon.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expired E-Coupon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .expired-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 64px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .coupon-code {
+            font-size: 18px;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .expired-date {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="expired-container">
+        <div class="icon">⚠️</div>
+        <h1>Coupon Expired</h1>
+        <p>This e-coupon is no longer valid.</p>
+        
+        <div class="coupon-code">
+            {{ ecoupon.coupon_code }}
+        </div>
+        
+        <div class="expired-date">
+            Expired on: {{ ecoupon.validity_date.strftime('%d %b, %Y') }}
+        </div>
+        
+        <p>Please contact customer support if you believe this is an error.</p>
+    </div>
+</body>
+</html>

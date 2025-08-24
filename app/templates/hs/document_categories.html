@@ -1,0 +1,279 @@
+{% extends "partials/base.html" %}
+
+{% block title %}HS Document Categories{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div
+                        class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">HS Document Categories</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item active">HS Document Categories</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="search-box">
+                                    <input type="text" id="documentCategorySearchInput" class="form-control"
+                                        placeholder="Search document categories..." style="width: 250px; display: inline-block;">
+                                    <i class="ri-search-line search-icon"></i>
+                                </div>
+                            </div>
+                            <a href="#" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addDocumentCategoryModal">+ Add Document Category</a>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Issuing Body</th>  <!-- Add this column -->        
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th style="width: 150px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc_cat in document_categories %}
+                                    <tr>
+                                        <td>{{ doc_cat.issuing_body.name if doc_cat.issuing_body else '' }}</td>  <!-- Add this column -->        
+                                        <td>{{ doc_cat.name }}</td>
+                                        <td>{{ doc_cat.description }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#addDocumentCategoryModal" data-id="{{ doc_cat.id }}"
+                                                data-name="{{ doc_cat.name }}" data-description="{{ doc_cat.description }}"
+                                                data-issuing-body-id="{{ doc_cat.issuing_body_id }}"
+                                                data-action="{{ url_for('hs.edit_document_category', id=doc_cat.id) }}">
+                                                <i class="ri-pencil-line"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-document-category-btn"
+                                                data-id="{{ doc_cat.id }}" data-name="{{ doc_cat.name }}">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No document categories found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Document Category Modal -->
+<div class="modal fade" id="addDocumentCategoryModal" tabindex="-1" aria-labelledby="addDocumentCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="documentCategoryForm" method="post" action="{{ url_for('hs.new_document_category') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDocumentCategoryModalLabel">Add HS Document Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add this section in the modal body, before the name field -->
+                    <div class="mb-3">
+                        <label>Issuing Body</label>
+                        <select name="issuing_body_id" id="documentCategoryIssuingBody" class="form-control" required>
+                            <option value="">Select Issuing Body</option>
+                            {% for body in issue_bodies %}
+                            <option value="{{ body.id }}">{{ body.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" id="documentCategoryName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <input type="text" name="description" id="documentCategoryDescription" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" id="documentCategorySubmitBtn" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addDocumentCategoryModal = document.getElementById('addDocumentCategoryModal');
+        const documentCategoryForm = document.getElementById('documentCategoryForm');
+        const modalTitle = document.getElementById('addDocumentCategoryModalLabel');
+        const submitBtn = document.getElementById('documentCategorySubmitBtn');
+
+        addDocumentCategoryModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+
+            // Reset form for 'add' mode, or prepopulate for 'edit'
+            if (id) { // Edit mode
+                const name = button.getAttribute('data-name');
+                const description = button.getAttribute('data-description');
+                const issuingBodyId = button.getAttribute('data-issuing-body-id');
+                const action = button.getAttribute('data-action');
+
+                modalTitle.textContent = 'Edit HS Document Category';
+                submitBtn.textContent = 'Update';
+                documentCategoryForm.action = action;
+                document.getElementById('documentCategoryName').value = name;
+                document.getElementById('documentCategoryDescription').value = description;
+                document.getElementById('documentCategoryIssuingBody').value = issuingBodyId;
+            } else { // Add mode
+                modalTitle.textContent = 'Add HS Document Category';
+                submitBtn.textContent = 'Save';
+                documentCategoryForm.action = "{{ url_for('hs.new_document_category') }}";
+                documentCategoryForm.reset();
+            }
+        });
+
+        // Handle Add/Edit form submission with Fetch
+        documentCategoryForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(documentCategoryForm);
+            const url = documentCategoryForm.action;
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'Something went wrong.', 'error');
+                });
+        });
+
+        // Handle Delete with Fetch and SweetAlert
+        document.querySelectorAll('.delete-document-category-btn').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const documentCategoryId = this.getAttribute('data-id');
+                const documentCategoryName = this.getAttribute('data-name');
+                const url = "{{ url_for('hs.delete_document_category', id=0) }}".replace('0', documentCategoryId);
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: `Do you want to delete the document category "${documentCategoryName}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Deleted!', data.message, 'success').then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire('Error!', data.message, 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire('Error!', 'Something went wrong.', 'error');
+                            });
+                    }
+                });
+            });
+        });
+    });
+
+    function filterDocumentCategories() {
+        var input = document.getElementById("documentCategorySearchInput");
+        var filter = input.value.toLowerCase();
+        var table = document.querySelector(".table.table-bordered.table-hover");
+        var trs = table.querySelectorAll("tbody tr");
+
+        trs.forEach(function (row) {
+            // Search in issuing body, name and description columns
+            var issuingBody = row.children[0]?.textContent.toLowerCase() || "";
+            var name = row.children[1]?.textContent.toLowerCase() || "";
+            var desc = row.children[2]?.textContent.toLowerCase() || "";
+            if (issuingBody.includes(filter) || name.includes(filter) || desc.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // Optional: filter as you type
+    document.getElementById("documentCategorySearchInput").addEventListener("keyup", filterDocumentCategories);    
+
+</script>
+
+{% include 'chat/chat_modal.html' %}
+
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+
+{% endblock %}

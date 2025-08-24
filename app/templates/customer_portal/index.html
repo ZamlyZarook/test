@@ -1,0 +1,3283 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Dashboard{% endblock title %}
+
+
+{% block extra_css %}
+<!-- Include FullCalendar CSS -->
+<link href="{{url_for('static' ,filename='libs/fullcalendar/main.min.css')}}" rel="stylesheet" type="text/css" />
+<style>
+    /* Customer ETA Calendar styling */
+    .customer-eta-calendar {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .customer-calendar-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .customer-calendar-card .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+    
+    #customer-eta-calendar {
+        flex: 1;
+        min-height: 400px;
+    }
+    
+    /* Style for ETA events in customer view */
+    .customer-eta-event {
+        font-weight: 500;
+        padding: 3px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.85rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* Override FullCalendar event styles for customer calendar */
+    .customer-eta-calendar .fc-event {
+        border: none !important;
+        background-color: transparent !important;
+    }
+    
+    .customer-eta-calendar .fc-event-main {
+        background-color: transparent !important;
+    }
+    
+    /* Loading indicator for customer calendar */
+    .customer-calendar-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+    }
+    
+    /* Customer calendar list view time styling */
+    .customer-eta-calendar .fc-list-event-time {
+        color: #000000 !important;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 991.98px) {
+        #customer-eta-calendar {
+            min-height: 300px;
+        }
+    }
+
+    .modal-open {
+        overflow: hidden !important;
+    }
+
+    .modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 1040 !important;
+    }
+
+    .customer-shipment-modal .modal-dialog {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+    }
+
+    /* Connected Companies Widget Styling */
+    .company-item {
+        transition: background-color 0.2s ease;
+        border-radius: 6px;
+        padding: 8px;
+    }
+    
+    .company-item:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .company-status-badge {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+    }
+    /* Add this CSS to your index.html in the extra_css block */
+
+/* Dashboard Card Hover Effects */
+.card-hover {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-animate {
+    transition: all 0.3s ease;
+}
+
+/* Remove text decoration from card links */
+a.text-decoration-none {
+    text-decoration: none !important;
+}
+
+a.text-decoration-none:hover {
+    text-decoration: none !important;
+}
+
+/* Ensure card text colors remain consistent */
+a.text-decoration-none .card {
+    color: inherit;
+}
+
+a.text-decoration-none .card h5 {
+    color: #6c757d !important;
+}
+
+a.text-decoration-none .card h2 {
+    color: #212529 !important;
+}
+
+/* Card active state */
+.card-hover:active {
+    transform: translateY(-2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-hover:hover {
+        transform: none;
+    }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Dashboard</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Home</a></li>
+                                <li class="breadcrumb-item active">Dashboard</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <!-- Updated Statistics Cards Section for index.html -->
+            <!-- Replace the existing Statistics Cards section with this -->
+
+            <div class="row">
+                <!-- All Shipments Card -->
+                <div class="col-xl-2 col-lg-2 col-md-2">
+                    <a href="{{ url_for('customer_portal.sea_import') }}" class="text-decoration-none">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-primary text-primary rounded-circle fs-3">
+                                            <i class="ri-archive-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">All Shipments</h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold">
+                                            <span class="counter-value" data-target="{{ statistics.total_shipments }}">{{ statistics.total_shipments }}</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Open Shipments Card (NEW) -->
+                <div class="col-xl-3 col-lg-3 col-md-3">
+                    <a href="{{ url_for('customer_portal.sea_import', status='open') }}" class="text-decoration-none">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-primary text-primary rounded-circle fs-3">
+                                            <i class="ri-folder-open-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">Not Assigned to CHA </h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold">
+                                            <span class="counter-value" data-target="{{ statistics.open_shipments }}">{{ statistics.open_shipments }}</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- New Shipments Card -->
+                <div class="col-xl-3 col-lg-3 col-md-3">
+                    <a href="{{ url_for('customer_portal.sea_import', status='new') }}" class="text-decoration-none">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-warning text-warning rounded-circle fs-3">
+                                            <i class="ri-inbox-archive-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">Assigned to CHA</h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold">
+                                            <span class="counter-value" data-target="{{ statistics.new_shipments }}">{{ statistics.new_shipments }}</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Ongoing Shipments Card -->
+                <div class="col-xl-2 col-lg-2 col-md-2">
+                    <a href="{{ url_for('customer_portal.sea_import', status='ongoing') }}" class="text-decoration-none">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-info text-info rounded-circle fs-3">
+                                            <i class="ri-ship-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">Assigned & Ongoing</h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold">
+                                            <span class="counter-value" data-target="{{ statistics.ongoing_shipments }}">{{ statistics.ongoing_shipments }}</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Completed Shipments Card -->
+                <div class="col-xl-2 col-lg-2 col-md-2">
+                    <a href="{{ url_for('customer_portal.sea_import', status='completed') }}" class="text-decoration-none">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-success text-success rounded-circle fs-3">
+                                            <i class="ri-checkbox-circle-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">Completed</h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold">
+                                            <span class="counter-value" data-target="{{ statistics.completed_shipments }}">{{ statistics.completed_shipments }}</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <!-- Task Completion Chart -->
+                <div class="col-xl-4">
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Shipments</h4>
+                            <!-- <div>
+                                <select class="form-select form-select-sm" id="timeFilter">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div> -->
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="p-3">
+                                <canvas id="taskCompletionChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages Widget (Customer Only) -->
+                    {% if current_user.role == "customer" %}
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-chat-3-line text-muted me-1 align-bottom"></i> Messages
+                            </h4>
+                        </div>
+                        <div class="card-body pt-0">
+                            <!-- Tabs -->
+                            <ul class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#recent" role="tab">
+                                        Recent Chats
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#pending" role="tab">
+                                        Pending Reply
+                                        {% if statistics.pending_replies %}
+                                        <span class="badge bg-danger-subtle text-danger">{{ statistics.pending_replies|length }}</span>
+                                        {% endif %}
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="recent" role="tabpanel">
+                                    <div class="chat-message-list">
+                                        {% for chat in statistics.recent_chats %}
+                                        <a href="{{ url_for('customer_portal.sea_import') }}" class="text-reset">
+                                            <div class="d-flex align-items-start border-bottom py-3">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar-xs rounded-circle bg-light">
+                                                        <span class="avatar-title bg-soft-primary text-primary rounded-circle">
+                                                            <i class="ri-chat-3-line"></i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <p class="text-truncate mb-1">{{ chat.message }}</p>
+                                                    <p class="text-muted fs-12 mb-0">{{ chat.timestamp.strftime('%d %b, %H:%M') }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="pending" role="tabpanel">
+                                    <div class="chat-message-list">
+                                        {% for chat in statistics.pending_replies %}
+                                        <a href="{{ url_for('customer_portal.sea_import') }}" class="text-reset">
+                                            <div class="d-flex align-items-start border-bottom py-3">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar-xs rounded-circle bg-light">
+                                                        <span class="avatar-title bg-soft-danger text-danger rounded-circle">
+                                                            <i class="ri-chat-3-line"></i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <p class="text-truncate mb-1">{{ chat.message }}</p>
+                                                    <p class="text-muted fs-12 mb-0">{{ chat.timestamp.strftime('%d %b, %H:%M') }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Connected Companies Widget (Clearing Agent & Clearing Company Only) -->
+                    {% if current_user.role in ["clearing_agent", "clearing_company"] %}
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-building-line text-muted me-1 align-bottom"></i> Connected Companies
+                            </h4>
+                            <div class="flex-shrink-0">
+                                <span class="badge bg-primary-subtle text-primary">{{ statistics.connected_companies|length }}</span>
+                            </div>
+                        </div>
+                        <div class="card-body pt-0">
+                            <div class="connected-companies-list">
+                                {% if statistics.connected_companies %}
+                                    {% for company in statistics.connected_companies %}
+                                    <div class="company-item border-bottom py-3">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-shrink-0 me-3">
+                                                <div class="avatar-xs rounded-circle bg-light">
+                                                    <span class="avatar-title bg-soft-success text-success rounded-circle">
+                                                        <i class="ri-building-2-line"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="text-truncate mb-1">{{ company.company_name }}</h6>
+                                                <p class="text-muted fs-12 mb-1">{{ company.company_email or 'No email' }}</p>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge company-status-badge bg-success-subtle text-success">
+                                                        {{ company.connection_status }}
+                                                    </span>
+                                                    <small class="text-muted">{{ company.last_interaction }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <div class="avatar-md mx-auto mb-3">
+                                            <span class="avatar-title bg-soft-primary text-primary rounded-circle">
+                                                <i class="ri-building-line fs-24"></i>
+                                            </span>
+                                        </div>
+                                        <h5 class="text-muted">No Connected Companies</h5>
+                                        <p class="text-muted mb-0">You haven't been assigned to any companies yet.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <!-- Calendar -->
+                <div class="col-xl-8">
+                    <div class="customer-eta-calendar">
+                        <div class="card customer-calendar-card shadow-sm">
+                            <div class="card-header py-2">
+                                <div class="d-flex align-items-center">
+                                    <h5 class="card-title mb-0 flex-grow-1">
+                                        <i class="ri-ship-line text-primary me-2"></i>Your Shipment ETAs
+                                    </h5>
+                                    <div class="flex-shrink-0">
+                                        <div class="d-flex gap-2">
+                                            <div class="btn-group">
+                                                <button class="btn btn-soft-primary btn-sm" id="customer-btn-month">Month</button>
+                                                <button class="btn btn-soft-secondary btn-sm" id="customer-btn-list">List</button>
+                                            </div>
+                                            <button class="btn btn-soft-info btn-sm" id="customer-btn-refresh">
+                                                <i class="ri-refresh-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body position-relative">
+                                <!-- Loading indicator -->
+                                <div class="customer-calendar-loading d-none" id="customer-calendar-loader">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <!-- Calendar container -->
+                                <div id="customer-eta-calendar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                                    <!-- Document Expiry Widget (Customer Only) -->
+                {% if current_user.role == "customer" %}
+                    <div class="card card-hover shadow-sm">
+                        <div class="card-header border-0 align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-alert-line text-warning me-1 align-bottom"></i> Document Expiry Alert
+                            </h4>
+                            <div class="flex-shrink-0">
+                                <select class="form-select form-select-sm" id="expiryDaysFilter" style="width: auto;">
+                                    <option value="15">15 Days</option>
+                                    <option value="30" selected>30 Days</option>
+                                    <option value="45">45 Days</option>
+                                    <option value="60">60 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body pt-0">
+                            <div id="documentExpiryContainer">
+                                <!-- Initial summary from server -->
+                                {% if statistics.expiring_documents_summary %}
+                                    <div class="alert alert-warning">
+                                        <i class="ri-alert-line me-2"></i>
+                                        <strong>{{ statistics.expiring_documents_summary|length }} document type(s)</strong> expiring within 30 days
+                                    </div>
+                                    {% for doc in statistics.expiring_documents_summary %}
+                                    <div class="border-bottom py-2">
+                                        <h6 class="mb-1">{{ doc.display_name }}</h6>
+                                        <p class="text-muted fs-12 mb-0">
+                                            {{ doc.count }} document(s) - 
+                                            {% if doc.days_until_expiry <= 0 %}
+                                                <span class="text-danger">Expired</span>
+                                            {% elif doc.days_until_expiry <= 7 %}
+                                                <span class="text-danger">{{ doc.days_until_expiry }} days left</span>
+                                            {% else %}
+                                                <span class="text-warning">{{ doc.days_until_expiry }} days left</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    {% endfor %}
+                                    <div class="text-center mt-3">
+                                        <button class="btn btn-primary btn-sm" onclick="openDocumentExpiryModal()">
+                                            <i class="ri-refresh-line me-1"></i>Manage Document Expiry
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-3">
+                                        <div class="avatar-md mx-auto mb-3">
+                                            <span class="avatar-title bg-soft-success text-success rounded-circle">
+                                                <i class="ri-checkbox-circle-line fs-24"></i>
+                                            </span>
+                                        </div>
+                                        <h6 class="text-muted">All Documents Valid</h6>
+                                        <p class="text-muted mb-0 fs-12">No documents expiring within 30 days</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                </div>
+
+                <!-- Add this after the existing widgets, before the closing </div> of the row mt-4 -->
+
+                <!-- Demurrage Risk Monitor Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5 class="mb-3">
+                            <i class="ri-alert-line text-warning me-2"></i>AI Powered - Demurrage Risk Monitor
+                        </h5>
+                    </div>
+                </div>
+
+                <!-- Updated Statistics Cards Section with AI Branding -->
+                <div class="row">
+                    <!-- AI Projected Demurrage Card -->
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-danger text-danger rounded-circle fs-3">
+                                            <i class="ri-robot-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">
+                                            Projected Demurrage
+                                        </h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold" id="totalProjectedDemurrage">
+                                            <span class="counter-value">Loading...</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipments at Demurrage Card -->
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-danger text-danger rounded-circle fs-3">
+                                            <i class="ri-alarm-warning-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">
+                                            Shipments at Demurrage
+                                        </h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold" id="atRiskShipmentsCount">
+                                            <span class="counter-value">Loading...</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Average Cost Per Container -->
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-info text-info rounded-circle fs-3">
+                                            <i class="ri-cpu-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">
+                                            Avg Cost Per Container
+                                        </h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold" id="avgCostPerContainer">
+                                            <span class="counter-value">Loading...</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipments in Free Period -->
+                    <div class="col-xl-3 col-lg-3 col-md-6">
+                        <div class="card card-animate card-hover shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 avatar-sm rounded-circle bg-light p-2 me-3">
+                                        <span class="avatar-title bg-soft-warning text-warning rounded-circle fs-3">
+                                            <i class="ri-time-line"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h5 class="text-muted text-uppercase fs-13 mb-1">
+                                            Shipments in Free Period
+                                        </h5>
+                                        <h2 class="mb-0 ff-secondary fw-semibold" id="criticalActionsCount">
+                                            <span class="counter-value">Loading...</span>
+                                        </h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Updated At-Risk Shipments Table -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card card-hover shadow-sm">
+                            <div class="card-header border-0 align-items-center d-flex">
+                                <h4 class="card-title mb-0 flex-grow-1">
+                                    <i class="ri-robot-line text-primary me-2"></i>
+                                    <i class="ri-sparkling-line text-warning me-1"></i>AI Risk Assessment - Shipment Monitor
+                                </h4>
+                                <div class="flex-shrink-0">
+                                    <select class="form-select form-select-sm" id="riskLevelFilter" style="width: auto;">
+                                        <option value="all">All Risk Levels</option>
+                                        <option value="high">High Risk (In Demurrage)</option>
+                                        <option value="low">Low Risk (Free Period)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body pt-2">
+                                <!-- Risk Level Legend -->
+                                <div class="mb-3 p-3 bg-light rounded">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-danger text-white me-2">High Risk</span>
+                                                <small class="text-muted">Shipments currently in demurrage period</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-warning text-dark me-2">Low Risk</span>
+                                                <small class="text-muted">Shipments in free period</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="atRiskShipmentsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Job Number</th>
+                                                <th>BL Number</th>
+                                                <th>Container Details</th>
+                                                <th>ETA Date</th>
+                                                <th>Demurrage From</th>
+                                                <th>Status</th>
+                                                <th>Risk Level</th>
+                                                <th>AI Projected Cost</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="atRiskShipmentsTableBody">
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2 mb-0">Loading AI risk assessment...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Updated Critical Timeline with Interactive Graphs -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card card-hover shadow-sm">
+                            <div class="card-header border-0 align-items-center d-flex">
+                                <h4 class="card-title mb-0 flex-grow-1">
+                                    <i class="ri-cpu-line text-primary me-2"></i>
+                                    <i class="ri-sparkling-line text-warning me-1"></i>AI Projected Demurrage Timeline
+                                </h4>
+                                <div class="flex-shrink-0">
+                                    <button class="btn btn-soft-primary btn-sm" id="refreshTimelineBtn">
+                                        <i class="ri-refresh-line me-1"></i>Refresh AI Analysis
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body pt-2">
+                                <!-- Timeline Legend -->
+                                <div class="mb-4 p-3 bg-light rounded">
+                                    <h6 class="mb-2">Timeline Legend:</h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 20px; height: 4px; background-color: #28a745;" class="me-2"></div>
+                                                <small>Free Period</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 20px; height: 4px; background-color: #ffc107;" class="me-2"></div>
+                                                <small>Tier 1 Demurrage</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 20px; height: 4px; background-color: #fd7e14;" class="me-2"></div>
+                                                <small>Tier 2 Demurrage</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 20px; height: 4px; background-color: #dc3545;" class="me-2"></div>
+                                                <small>Higher Tiers</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="ri-information-line me-1"></i>
+                                        Hover over timeline segments to see accumulated costs at each point
+                                    </small>
+                                </div>
+                                
+                                <div id="criticalTimelineContainer">
+                                    <!-- Timeline containers will be populated here -->
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 mb-0">Loading AI timeline analysis...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Updated Shipment Details Modal for Demurrage -->
+                <div class="modal fade" id="demurrageShipmentModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="ri-robot-line text-primary me-2"></i>
+                                    <i class="ri-sparkling-line text-warning me-1"></i>AI Demurrage Analysis
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="demurrageShipmentDetails">
+                                    <!-- Details will be populated here -->
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <!-- Removed Contact CHA button as requested -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Customer Shipment Details Modal -->
+            <div class="modal fade" id="customer-shipment-modal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0">
+                        <div class="modal-header p-3 bg-primary-subtle">
+                            <h5 class="modal-title">Your Shipment Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-profile-line text-primary fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">Job No</h5>
+                                            <p class="text-muted mb-0" id="customer-import-id"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-calendar-event-line text-success fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">ETA</h5>
+                                            <p class="text-muted mb-0" id="customer-eta-date"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-file-list-3-line text-warning fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">BL Number</h5>
+                                            <p class="text-muted mb-0" id="customer-bl-no"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-ship-line text-info fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">Vessel</h5>
+                                            <p class="text-muted mb-0" id="customer-vessel-name"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-map-pin-line text-danger fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">Port of Loading</h5>
+                                            <p class="text-muted mb-0" id="customer-port-loading"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-map-pin-5-line text-primary fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">Port of Discharge</h5>
+                                            <p class="text-muted mb-0" id="customer-port-discharge"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="ri-file-text-line text-info fs-24"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">Cargo Description</h5>
+                                            <p class="text-muted mb-0" id="customer-cargo-description"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 text-end">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Expiry Management Modal -->
+            <div class="modal fade" id="documentExpiryModal" tabindex="-1" aria-labelledby="documentExpiryModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="documentExpiryModalLabel">
+                                <i class="ri-alert-line text-warning me-2"></i>Document Expiry Management
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Filter Controls -->
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">Days Until Expiry</label>
+                                    <select class="form-select" id="modalExpiryDaysFilter">
+                                        <option value="15">15 Days</option>
+                                        <option value="30" selected>30 Days</option>
+                                        <option value="45">45 Days</option>
+                                        <option value="60">60 Days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button class="btn btn-primary" onclick="loadExpiringDocuments()">
+                                        <i class="ri-refresh-line me-1"></i>Refresh
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Loading Indicator -->
+                            <div id="expiryLoadingIndicator" class="text-center py-4 d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading expiring documents...</p>
+                            </div>
+
+                            <!-- Documents List -->
+                            <div id="expiringDocumentsList">
+                                <!-- Content will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Update Document Modal -->
+            <div class="modal fade" id="bulkUpdateDocumentModal" tabindex="-1" aria-labelledby="bulkUpdateDocumentModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="bulkUpdateDocumentModalLabel">
+                                <i class="ri-upload-line text-primary me-2"></i>Bulk Update Documents
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="bulkUpdateForm" enctype="multipart/form-data">
+                                <input type="hidden" id="bulkIssuingBodyId" name="issuing_body_id">
+                                <input type="hidden" id="bulkDocumentCategoryId" name="document_category_id">
+                                
+                                <div class="alert alert-info">
+                                    <i class="ri-information-line me-2"></i>
+                                    <strong>Document Type:</strong> <span id="bulkDocumentTypeName"></span><br>
+                                    <strong>Materials Affected:</strong> <span id="bulkMaterialCount"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Upload New Document <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" name="file" id="bulkUpdateFile" required>
+                                    <small class="text-muted">This will replace all documents of this type for all your materials</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">New Expiry Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="expiry_date" id="bulkUpdateExpiryDate" 
+                                        min="" required>
+                                    <small class="text-danger">Expiry date is mandatory and must be in the future</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Comment</label>
+                                    <textarea class="form-control" name="comment" id="bulkUpdateComment" rows="3"
+                                            placeholder="Optional comment about this update"></textarea>
+                                </div>
+
+                                <!-- Affected Documents Preview -->
+                                <div class="mb-3">
+                                    <h6>Documents that will be updated:</h6>
+                                    <div id="affectedDocumentsList" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="submitBulkUpdate()">
+                                <i class="ri-upload-line me-1"></i>Update All Documents
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+
+<!-- Chat Modal -->
+{% include 'chat/chat_modal.html' %}
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{url_for('static' ,filename='libs/fullcalendar/main.min.js')}}"></script>
+<!-- In the head section, ensure you have Remix Icons -->
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Task Completion Chart - Now Dynamic
+    const ctx = document.getElementById('taskCompletionChart').getContext('2d');
+    const shipmentTypes = {{ statistics.shipment_types| tojson | safe }};
+
+    console.log('Dynamic shipment types data:', shipmentTypes);
+
+    // Filter out base types with 0 shipments for better visualization
+    const filteredTypes = {};
+    const filteredLabels = [];
+    const filteredValues = [];
+    
+    for (const [baseCode, count] of Object.entries(shipmentTypes)) {
+        if (count > 0) {
+            filteredTypes[baseCode] = count;
+            filteredLabels.push(formatBaseCodeLabel(baseCode));
+            filteredValues.push(count);
+        }
+    }
+
+    console.log('Filtered labels:', filteredLabels);
+    console.log('Filtered values:', filteredValues);
+
+    // Dynamic color generation based on number of base types
+    const dynamicColors = generateColors(filteredLabels.length);
+
+    // Only create chart if we have data
+    if (filteredLabels.length > 0 && filteredValues.length > 0) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: filteredLabels,
+                datasets: [{
+                    data: filteredValues,
+                    backgroundColor: dynamicColors,
+                    borderWidth: 0,
+                    borderRadius: 4,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: 20
+                },
+                cutout: '70%'
+            }
+        });
+        console.log('Chart created successfully');
+    } else {
+        console.log('No data to display in chart');
+        // Show a message when there's no data
+        const chartContainer = ctx.canvas.parentElement;
+        chartContainer.innerHTML = `
+            <div class="text-center py-5">
+                <div class="avatar-md mx-auto mb-3">
+                    <span class="avatar-title bg-soft-info text-info rounded-circle">
+                        <i class="ri-pie-chart-line fs-24"></i>
+                    </span>
+                </div>
+                <h6 class="text-muted">No Shipment Data</h6>
+                <p class="text-muted mb-0 fs-12">No shipments found to display in chart</p>
+            </div>
+        `;
+    }
+
+    // Function to format base code labels for better display
+    function formatBaseCodeLabel(baseCode) {
+        // Convert base codes like "AIR_IMPORT" to "Air Import"
+        return baseCode
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    }
+
+    // Function to generate dynamic colors based on count
+    function generateColors(count) {
+        const baseColors = [
+            '#FF6384',  // Red/Pink
+            '#36A2EB',  // Blue
+            '#4BC0C0',  // Teal
+            '#FFCE56',  // Yellow
+            '#9966FF',  // Purple
+            '#FF9F40',  // Orange
+            '#FF6384',  // Red (different shade)
+            '#C9CBCF',  // Gray
+            '#4BC0C0',  // Teal (different shade)
+            '#FF9F40'   // Orange (different shade)
+        ];
+
+        // If we have more types than base colors, generate additional colors
+        if (count <= baseColors.length) {
+            return baseColors.slice(0, count);
+        }
+
+        // Generate additional colors using HSL
+        const colors = [...baseColors];
+        for (let i = baseColors.length; i < count; i++) {
+            const hue = (i * 137.508) % 360; // Golden angle approximation
+            colors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+
+        return colors.slice(0, count);
+    }
+
+    // Optional: Add click handler for chart segments (only if chart exists)
+    if (filteredLabels.length > 0) {
+        ctx.canvas.addEventListener('click', function(event) {
+            const chart = Chart.getChart(ctx);
+            if (chart) {
+                const points = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                
+                if (points.length) {
+                    const firstPoint = points[0];
+                    const label = chart.data.labels[firstPoint.index];
+                    const value = chart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+                    
+                    console.log(`Clicked on ${label}: ${value} shipments`);
+                    // You can add navigation logic here if needed
+                    // For example: window.location.href = `/shipments?type=${originalBaseCode}`;
+                }
+            }
+        });
+    }
+
+    // Time filter change handler (if you have this functionality)
+    const timeFilter = document.getElementById('timeFilter');
+    if (timeFilter) {
+        timeFilter.addEventListener('change', function (e) {
+            console.log('Time filter changed to:', e.target.value);
+            // You can implement the time filter logic here if needed
+            // This might involve making an AJAX call to get filtered data
+        });
+    }
+});
+
+// Function to open chat modal
+function openChatModal(moduleName, entryId, docSerial) {
+    // Set the chat modal title
+    document.getElementById('chatModalLabel').textContent = `Chat - Document #${docSerial}`;
+
+    // Initialize chat
+    initializeChat(moduleName, entryId);
+
+    // Show the modal
+    const chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+    chatModal.show();
+}
+</script>
+
+<!-- Helper Functions (Global Scope) -->
+<script>
+    // Global helper function to format date and time
+    function formatDateTime(date) {
+        if (!date) return 'N/A';
+        
+        var options = { 
+            weekday: 'long',
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        
+        return new Date(date).toLocaleDateString('en-US', options);
+    }
+
+    // Global function to show customer shipment details (FIXED VERSION)
+    function showCustomerShipmentDetails(event) {
+        if (!event || !event.extendedProps || !event.extendedProps.isEta) {
+            return;
+        }
+        
+        // Populate modal with shipment details
+        document.getElementById('customer-import-id').textContent = event.extendedProps.import_id || 'N/A';
+        document.getElementById('customer-eta-date').textContent = formatDateTime(event.start);
+        document.getElementById('customer-bl-no').textContent = event.extendedProps.bl_no || 'N/A';
+        document.getElementById('customer-vessel-name').textContent = event.extendedProps.vessel || 'N/A';
+        document.getElementById('customer-port-loading').textContent = event.extendedProps.port_of_loading || 'N/A';
+        document.getElementById('customer-port-discharge').textContent = event.extendedProps.port_of_discharge || 'N/A';
+        document.getElementById('customer-cargo-description').textContent = event.extendedProps.cargo_description || 'N/A';
+        
+        // Show the modal
+        var customerShipmentModal = new bootstrap.Modal(document.getElementById('customer-shipment-modal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
+        customerShipmentModal.show();
+    }
+
+    function getCustomerShipmentColorClass(shipment) {
+        // Use the same color logic as the main calendar
+        var colors = ['primary', 'success', 'warning', 'danger', 'info'];
+        return colors[shipment.id % colors.length];
+    }
+
+    // Transform customer API data to calendar events
+    function transformCustomerETADataToEvents(data) {
+        return data.map(function(shipment) {
+            // Add color logic similar to the main calendar
+            var colorClass = getCustomerShipmentColorClass(shipment);
+            
+            return {
+                id: shipment.id,
+                title: shipment.import_id || 'Shipment #' + shipment.id,
+                start: shipment.eta,
+                extendedProps: {
+                    isEta: true,
+                    import_id: shipment.import_id,
+                    bl_no: shipment.bl_no,
+                    vessel: shipment.vessel,
+                    voyage: shipment.voyage,
+                    port_of_loading: shipment.port_of_loading,
+                    port_of_discharge: shipment.port_of_discharge,
+                    cargo_description: shipment.cargo_description,
+                    remarks: shipment.remarks,
+                    colorClass: colorClass  // Add color class
+                },
+                className: 'bg-' + colorClass + '-subtle',
+                display: 'block'
+            };
+        });
+    }
+</script>
+
+<!-- Calendar -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Customer ETA Calendar initialization started");
+        
+        // Show loading indicator
+        const customerCalendarLoader = document.getElementById('customer-calendar-loader');
+        let customerCalendar;
+        
+        try {
+            // Initialize customer calendar
+            var customerCalendarEl = document.getElementById('customer-eta-calendar');
+            
+            if (!customerCalendarEl) {
+                console.error("Error: Customer calendar element not found!");
+                return;
+            }
+            
+            // Check if FullCalendar is loaded
+            if (typeof FullCalendar === 'undefined') {
+                console.error("Error: FullCalendar library not loaded!");
+                return;
+            }
+            
+            // Create customer calendar
+            customerCalendar = new FullCalendar.Calendar(customerCalendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: false // Hide default view buttons, we have custom ones
+                },
+                height: 'auto',
+                contentHeight: 'auto',
+                aspectRatio: 1.5,
+                selectable: false,
+                dayMaxEvents: true,
+                events: [],
+                eventClick: function(info) {
+                    console.log("Event clicked:", info.event);
+                    showCustomerShipmentDetails(info.event);
+                },
+                eventContent: function(arg) {
+                    var eventHtml = '';
+                    if (arg.event.extendedProps && arg.event.extendedProps.isEta) {
+                        eventHtml = `
+                            <div class="customer-eta-event bg-${arg.event.extendedProps.colorClass}-subtle text-${arg.event.extendedProps.colorClass}">
+                                <i class="ri-ship-line me-1"></i> ${arg.event.title}
+                            </div>
+                        `;
+                        return { html: eventHtml };
+                    }
+                    return;
+                },
+
+                views: {
+                    dayGridMonth: {
+                        titleFormat: { year: 'numeric', month: 'long' },
+                        dayHeaderFormat: { weekday: 'short' }
+                    },
+                    listMonth: {
+                        listDayFormat: { weekday: 'long', day: 'numeric', month: 'long' },
+                        listDaySideFormat: { year: 'numeric' }
+                    }
+                },
+                datesSet: function(dateInfo) {
+                    // Update active button based on current view
+                    const monthBtn = document.getElementById('customer-btn-month');
+                    const listBtn = document.getElementById('customer-btn-list');
+                    
+                    if (monthBtn && listBtn) {
+                        if (dateInfo.view.type === 'dayGridMonth') {
+                            monthBtn.classList.remove('btn-soft-secondary');
+                            monthBtn.classList.add('btn-soft-primary');
+                            listBtn.classList.remove('btn-soft-primary');
+                            listBtn.classList.add('btn-soft-secondary');
+                        } else {
+                            listBtn.classList.remove('btn-soft-secondary');
+                            listBtn.classList.add('btn-soft-primary');
+                            monthBtn.classList.remove('btn-soft-primary');
+                            monthBtn.classList.add('btn-soft-secondary');
+                        }
+                    }
+                }
+            });
+            
+            // Render the calendar
+            customerCalendar.render();
+            console.log("Customer calendar rendering complete");
+            
+            // Handle view buttons
+            const monthBtn = document.getElementById('customer-btn-month');
+            const listBtn = document.getElementById('customer-btn-list');
+            const refreshBtn = document.getElementById('customer-btn-refresh');
+            
+            if (monthBtn) {
+                monthBtn.addEventListener('click', function() {
+                    customerCalendar.changeView('dayGridMonth');
+                });
+            }
+            
+            if (listBtn) {
+                listBtn.addEventListener('click', function() {
+                    customerCalendar.changeView('listMonth');
+                });
+            }
+            
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    fetchCustomerETAData(customerCalendar);
+                });
+            }
+            
+            // Fetch customer ETA data
+            fetchCustomerETAData(customerCalendar);
+            
+        } catch (error) {
+            console.error("Error initializing customer calendar:", error.message);
+            if (customerCalendarLoader) customerCalendarLoader.classList.add('d-none');
+        }
+        
+        // Function to fetch customer ETA data
+        function fetchCustomerETAData(calendar) {
+            if (customerCalendarLoader) customerCalendarLoader.classList.remove('d-none');
+            
+            // Make AJAX request to get customer ETA data
+            fetch('/customer_portal/api/customer/shipments/eta')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received ETA data:", data);
+                    // Transform the API data into FullCalendar event format
+                    var events = transformCustomerETADataToEvents(data);
+                    
+                    // Remove all existing events
+                    if (calendar) {
+                        calendar.getEvents().forEach(function(event) {
+                            event.remove();
+                        });
+                        
+                        // Add new events
+                        events.forEach(function(event) {
+                            calendar.addEvent(event);
+                        });
+                    }
+                    
+                    console.log("Customer calendar updated with ETA data");
+                })
+                .catch(error => {
+                    console.error('Error fetching customer ETA data:', error);
+                })
+                .finally(() => {
+                    if (customerCalendarLoader) customerCalendarLoader.classList.add('d-none');
+                });
+        }
+    });
+</script>
+
+
+<!-- Expiry -->
+ <script>
+    /**
+ * Document Expiry Management JavaScript
+ * Complete implementation for managing document expiry alerts and bulk updates
+ */
+
+// Global variables
+let currentExpiringDocuments = [];
+
+// Initialize document expiry functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDocumentExpiry();
+});
+
+// Main initialization function
+function initializeDocumentExpiry() {
+    console.log('Initializing Document Expiry Management...');
+
+    // Handle expiry days filter change in dashboard widget
+    const expiryDaysFilter = document.getElementById('expiryDaysFilter');
+    if (expiryDaysFilter) {
+        expiryDaysFilter.addEventListener('change', function() {
+            updateDashboardExpiryWidget(this.value);
+        });
+    }
+
+    // Handle modal expiry days filter change
+    const modalExpiryDaysFilter = document.getElementById('modalExpiryDaysFilter');
+    if (modalExpiryDaysFilter) {
+        modalExpiryDaysFilter.addEventListener('change', function() {
+            loadExpiringDocuments();
+        });
+    }
+
+    // Set minimum date for bulk update expiry date
+    const today = new Date().toISOString().split('T')[0];
+    const bulkUpdateExpiryDate = document.getElementById('bulkUpdateExpiryDate');
+    if (bulkUpdateExpiryDate) {
+        bulkUpdateExpiryDate.min = today;
+    }
+
+    // Initialize tooltips if Bootstrap is available
+    if (typeof bootstrap !== 'undefined') {
+        initializeTooltips();
+    }
+
+    console.log('Document Expiry Management initialized successfully');
+}
+
+// Initialize tooltips
+function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+// Open document expiry modal
+function openDocumentExpiryModal() {
+    console.log('Opening document expiry modal...');
+    const modal = new bootstrap.Modal(document.getElementById('documentExpiryModal'));
+    modal.show();
+    loadExpiringDocuments();
+}
+
+// Update dashboard widget with new days filter
+function updateDashboardExpiryWidget(days) {
+    console.log(`Updating dashboard widget for ${days} days...`);
+    const container = document.getElementById('documentExpiryContainer');
+    if (!container) {
+        console.error('Dashboard container not found');
+        return;
+    }
+
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0">Loading...</p>
+        </div>
+    `;
+
+    // Fetch updated data
+    fetch(`/customer_portal/api/expiring-documents?days=${days}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dashboard data received:', data);
+            if (data.success) {
+                displayDashboardExpiryWidget(data.data, days);
+            } else {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="ri-error-warning-line me-2"></i>Error: ${data.message || 'Unknown error'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="ri-error-warning-line me-2"></i>Failed to load expiring documents
+                </div>
+            `;
+        });
+}
+
+// Display dashboard expiry widget content
+function displayDashboardExpiryWidget(documents, days) {
+    console.log(`Displaying ${documents.length} document groups in dashboard widget`);
+    const container = document.getElementById('documentExpiryContainer');
+    if (!container) {
+        console.error('Dashboard container not found');
+        return;
+    }
+
+    if (documents.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-3">
+                <div class="avatar-md mx-auto mb-3">
+                    <span class="avatar-title bg-soft-success text-success rounded-circle">
+                        <i class="ri-checkbox-circle-line fs-24"></i>
+                    </span>
+                </div>
+                <h6 class="text-muted">All Documents Valid</h6>
+                <p class="text-muted mb-0 fs-12">No documents expiring within ${days} days</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="alert alert-warning">
+            <i class="ri-alert-line me-2"></i>
+            <strong>${documents.length} document type(s)</strong> expiring within ${days} days
+        </div>
+    `;
+
+    // Show top 5 most urgent documents
+    documents.slice(0, 5).forEach(doc => {
+        let statusClass = 'text-warning';
+        let statusText = `${doc.days_until_expiry} days left`;
+
+        if (doc.days_until_expiry <= 0) {
+            statusClass = 'text-danger';
+            statusText = 'Expired';
+        } else if (doc.days_until_expiry <= 7) {
+            statusClass = 'text-danger';
+        }
+
+        html += `
+            <div class="border-bottom py-2">
+                <h6 class="mb-1">${doc.display_name}</h6>
+                <p class="text-muted fs-12 mb-0">
+                    ${doc.material_count} material(s) - 
+                    <span class="${statusClass}">${statusText}</span>
+                </p>
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="text-center mt-3">
+            <button class="btn btn-primary btn-sm" onclick="openDocumentExpiryModal()">
+                <i class="ri-refresh-line me-1"></i>Manage Document Expiry
+            </button>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+// Load expiring documents for modal
+function loadExpiringDocuments() {
+    console.log('Loading expiring documents for modal...');
+    const daysFilter = document.getElementById('modalExpiryDaysFilter');
+    const days = daysFilter ? daysFilter.value : 30;
+    const loadingIndicator = document.getElementById('expiryLoadingIndicator');
+    const documentsList = document.getElementById('expiringDocumentsList');
+
+    if (!documentsList) {
+        console.error('Documents list container not found');
+        return;
+    }
+
+    // Show loading
+    if (loadingIndicator) {
+        loadingIndicator.classList.remove('d-none');
+    }
+    documentsList.innerHTML = '';
+
+    fetch(`/customer_portal/api/expiring-documents?days=${days}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Modal data received:', data);
+            if (data.success) {
+                currentExpiringDocuments = data.data;
+                displayExpiringDocuments(data.data);
+            } else {
+                documentsList.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="ri-error-warning-line me-2"></i>Error: ${data.message || 'Unknown error'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching modal data:', error);
+            documentsList.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="ri-error-warning-line me-2"></i>Failed to load expiring documents: ${error.message}
+                </div>
+            `;
+        })
+        .finally(() => {
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('d-none');
+            }
+        });
+}
+
+// Display expiring documents in modal
+function displayExpiringDocuments(documents) {
+    console.log(`Displaying ${documents.length} document groups in modal`);
+    const container = document.getElementById('expiringDocumentsList');
+    if (!container) {
+        console.error('Modal documents list container not found');
+        return;
+    }
+
+    if (documents.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <div class="avatar-lg mx-auto mb-4">
+                    <span class="avatar-title bg-soft-success text-success rounded-circle">
+                        <i class="ri-checkbox-circle-line fs-1"></i>
+                    </span>
+                </div>
+                <h5 class="text-muted">All Documents Valid</h5>
+                <p class="text-muted">No documents are expiring within the selected timeframe.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Document Type</th>
+                        <th>Materials Affected</th>
+                        <th>Days Until Expiry</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    documents.forEach(doc => {
+        let statusBadge = '';
+        let statusClass = '';
+
+        if (doc.status === 'expired') {
+            statusBadge = '<span class="badge bg-danger">Expired</span>';
+            statusClass = 'table-danger';
+        } else if (doc.status === 'expiring') {
+            statusBadge = '<span class="badge bg-danger">Critical</span>';
+            statusClass = 'table-warning';
+        } else {
+            statusBadge = '<span class="badge bg-warning">Warning</span>';
+        }
+
+        html += `
+            <tr class="${statusClass}">
+                <td>
+                    <div>
+                        <h6 class="mb-1">${doc.display_name}</h6>
+                        <small class="text-muted">
+                            <i class="ri-building-line me-1"></i>${doc.issuing_body_name}
+                        </small>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-primary-subtle text-primary">
+                        ${doc.material_count} material(s)
+                    </span>
+                </td>
+                <td>
+                    ${doc.days_until_expiry} days
+                </td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-info" onclick="viewDocumentDetails(${doc.issuing_body_id}, ${doc.document_category_id})" 
+                                data-bs-toggle="tooltip" title="View Details">
+                            <i class="ri-eye-line"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="openBulkUpdateModal(${doc.issuing_body_id}, ${doc.document_category_id}, '${escapeHtml(doc.display_name)}', ${doc.material_count})"
+                                data-bs-toggle="tooltip" title="Update All Documents">
+                            <i class="ri-upload-line"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Initialize tooltips for new elements
+    setTimeout(() => {
+        initializeTooltips();
+    }, 100);
+}
+
+// View document details
+function viewDocumentDetails(issuingBodyId, documentCategoryId) {
+    console.log(`Viewing details for issuing body ${issuingBodyId}, category ${documentCategoryId}`);
+    
+    fetch(`/customer_portal/api/document-expiry-details/${issuingBodyId}/${documentCategoryId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Document details received:', data);
+            if (data.success) {
+                showDocumentDetailsModal(data);
+            } else {
+                showAlert('Error loading document details: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching document details:', error);
+            showAlert('Failed to load document details: ' + error.message, 'error');
+        });
+}
+
+// Show document details modal
+function showDocumentDetailsModal(data) {
+    console.log('Showing document details modal');
+    
+    let html = `
+        <div class="modal fade" id="documentDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="ri-file-list-line me-2"></i>Document Details: ${escapeHtml(data.issuing_body_name)} > ${escapeHtml(data.document_category_name)}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="ri-information-line me-2"></i>
+                            <strong>Total Documents:</strong> ${data.total_documents}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>HS Code</th>
+                                        <th>File Name</th>
+                                        <th>Expiry Date</th>
+                                        <th>Days Left</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+    `;
+
+    data.documents.forEach(doc => {
+        let daysClass = 'text-success';
+        let daysText = doc.days_until_expiry !== null ? `${doc.days_until_expiry} days` : 'No expiry';
+        
+        if (doc.days_until_expiry !== null) {
+            if (doc.days_until_expiry <= 0) {
+                daysClass = 'text-danger';
+                daysText = 'Expired';
+            } else if (doc.days_until_expiry <= 7) {
+                daysClass = 'text-danger';
+            } else if (doc.days_until_expiry <= 30) {
+                daysClass = 'text-warning';
+            }
+        }
+
+        html += `
+            <tr>
+                <td>
+                    <div>
+                        <strong>${escapeHtml(doc.material_code)}</strong><br>
+                        <small class="text-muted">${escapeHtml(doc.material_name)}</small>
+                    </div>
+                </td>
+                <td>${escapeHtml(doc.hs_code)}</td>
+                <td>
+                    <span class="text-truncate d-inline-block" style="max-width: 150px;" 
+                          data-bs-toggle="tooltip" title="${escapeHtml(doc.file_name)}">
+                        ${escapeHtml(doc.file_name)}
+                    </span>
+                </td>
+                <td>${doc.expiry_date || 'N/A'}</td>
+                <td class="${daysClass}">
+                    ${daysText}
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('documentDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add new modal to body
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('documentDetailsModal'));
+    modal.show();
+
+    // Initialize tooltips for new modal
+    setTimeout(() => {
+        initializeTooltips();
+    }, 100);
+
+    // Remove modal from DOM when hidden
+    document.getElementById('documentDetailsModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// Open bulk update modal
+function openBulkUpdateModal(issuingBodyId, documentCategoryId, displayName, materialCount) {
+    console.log(`Opening bulk update modal for issuing body ${issuingBodyId}, category ${documentCategoryId}`);
+    
+    // Set form values
+    document.getElementById('bulkIssuingBodyId').value = issuingBodyId;
+    document.getElementById('bulkDocumentCategoryId').value = documentCategoryId;
+    document.getElementById('bulkDocumentTypeName').textContent = displayName;
+    document.getElementById('bulkMaterialCount').textContent = materialCount;
+
+    // Clear and reset form
+    const form = document.getElementById('bulkUpdateForm');
+    if (form) {
+        form.reset();
+        // Re-set hidden values after reset
+        document.getElementById('bulkIssuingBodyId').value = issuingBodyId;
+        document.getElementById('bulkDocumentCategoryId').value = documentCategoryId;
+    }
+
+    // Set minimum date for expiry
+    const today = new Date().toISOString().split('T')[0];
+    const expiryDateInput = document.getElementById('bulkUpdateExpiryDate');
+    if (expiryDateInput) {
+        expiryDateInput.min = today;
+    }
+
+    // Load affected documents
+    loadAffectedDocuments(issuingBodyId, documentCategoryId);
+
+    // Show modal
+    const modalElement = document.getElementById('bulkUpdateDocumentModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Bulk update modal element not found');
+    }
+}
+
+// Load affected documents for bulk update preview
+function loadAffectedDocuments(issuingBodyId, documentCategoryId) {
+    console.log('Loading affected documents for preview...');
+    const container = document.getElementById('affectedDocumentsList');
+    if (!container) {
+        console.error('Affected documents container not found');
+        return;
+    }
+
+    container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</div>';
+
+    fetch(`/customer_portal/api/document-expiry-details/${issuingBodyId}/${documentCategoryId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Affected documents data received:', data);
+            if (data.success) {
+                let html = '';
+                if (data.documents && data.documents.length > 0) {
+                    data.documents.forEach(doc => {
+                        html += `
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <div>
+                                    <strong>${escapeHtml(doc.material_code)}</strong> - ${escapeHtml(doc.file_name)}
+                                </div>
+                                <small class="text-muted">Expires: ${doc.expiry_date || 'N/A'}</small>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<p class="text-muted">No documents found.</p>';
+                }
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-danger">Error loading documents: ' + (data.message || 'Unknown error') + '</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading affected documents:', error);
+            container.innerHTML = '<p class="text-danger">Failed to load documents: ' + error.message + '</p>';
+        });
+}
+
+// Submit bulk update
+function submitBulkUpdate() {
+    console.log('Submitting bulk update...');
+    const form = document.getElementById('bulkUpdateForm');
+    if (!form) {
+        console.error('Bulk update form not found');
+        showAlert('Form not found', 'error');
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    // Validate form
+    const file = document.getElementById('bulkUpdateFile').files[0];
+    const expiryDate = document.getElementById('bulkUpdateExpiryDate').value;
+
+    if (!file) {
+        showAlert('Please select a file', 'warning');
+        return;
+    }
+
+    if (!expiryDate) {
+        showAlert('Please select an expiry date', 'warning');
+        return;
+    }
+
+    // Check if expiry date is in the future
+    const today = new Date().toISOString().split('T')[0];
+    if (expiryDate <= today) {
+        showAlert('Expiry date must be in the future', 'warning');
+        return;
+    }
+
+    // Show loading state
+    const submitBtn = document.querySelector('#bulkUpdateDocumentModal .btn-primary');
+    if (!submitBtn) {
+        console.error('Submit button not found');
+        return;
+    }
+
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+
+    // Submit form
+    fetch('/customer_portal/api/bulk-update-documents', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Bulk update response:', data);
+        if (data.success) {
+            showAlert(data.message, 'success');
+            
+            // Close modal
+            const modalElement = document.getElementById('bulkUpdateDocumentModal');
+            if (modalElement) {
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            
+            // Refresh expiring documents list
+            loadExpiringDocuments();
+            
+            // Update dashboard widget
+            const currentDaysFilter = document.getElementById('expiryDaysFilter');
+            const currentDays = currentDaysFilter ? currentDaysFilter.value : 30;
+            updateDashboardExpiryWidget(currentDays);
+            
+        } else {
+            showAlert(data.message || 'Error updating documents', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting bulk update:', error);
+        showAlert('Failed to update documents: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Restore button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (typeof text !== 'string') {
+        return text;
+    }
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Helper function to show alerts
+function showAlert(message, type = 'info') {
+    console.log(`Alert: ${type} - ${message}`);
+    
+    // Use SweetAlert if available, otherwise use browser alert
+    if (typeof Swal !== 'undefined') {
+        const iconMap = {
+            'success': 'success',
+            'error': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            icon: iconMap[type] || 'info',
+            title: message
+        });
+    } else {
+        // Fallback to browser alert
+        alert(message);
+    }
+}
+
+// Export functions for global access (if needed)
+window.DocumentExpiryManager = {
+    openDocumentExpiryModal,
+    updateDashboardExpiryWidget,
+    loadExpiringDocuments,
+    viewDocumentDetails,
+    openBulkUpdateModal,
+    submitBulkUpdate,
+    showAlert
+};
+
+console.log('Document Expiry Management script loaded successfully');
+ </script>
+ 
+ <style>
+    /* Document Expiry Widget Styling */
+.document-expiry-widget {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.expiry-status-critical {
+    border-left: 4px solid #dc3545;
+}
+
+.expiry-status-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.expiry-status-good {
+    border-left: 4px solid #198754;
+}
+
+/* Modal responsive design */
+@media (max-width: 768px) {
+    .modal-xl .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Bulk update form styling */
+#affectedDocumentsList {
+    background-color: #f8f9fa;
+}
+
+.form-select-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Status badges */
+.badge.bg-primary-subtle {
+    background-color: #cff4fc !important;
+    color: #055160 !important;
+}
+ </style>
+
+<!-- Demurrage -->
+<script>
+/**
+ * AI-Powered Demurrage Risk Monitor JavaScript
+ * Enhanced interactive demurrage projection dashboard functionality
+ */
+
+// Global variables for AI demurrage dashboard
+let aiDemurrageData = {
+    snapshots: {},
+    atRiskShipments: [],
+    timelineContainers: []
+};
+
+// Initialize AI demurrage dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAIDemurrageDashboard();
+});
+
+function initializeAIDemurrageDashboard() {
+    console.log('Initializing AI-Powered Demurrage Risk Monitor...');
+    
+    // Load initial data
+    loadAIDemurrageSnapshots();
+    loadAIRiskAssessmentShipments();
+    loadInteractiveTimelineGraph();
+    
+    // Set up event listeners
+    setupAIDemurrageEventListeners();
+    
+    // Auto-refresh every 5 minutes with AI badge update
+    setInterval(function() {
+        refreshAIDemurrageDashboard();
+    }, 5 * 60 * 1000);
+    
+    // Add AI sparkle animation to icons
+    addAISparkleEffects();
+}
+
+function setupAIDemurrageEventListeners() {
+    // Risk level filter
+    const riskLevelFilter = document.getElementById('riskLevelFilter');
+    if (riskLevelFilter) {
+        riskLevelFilter.addEventListener('change', function() {
+            filterRiskAssessmentShipments(this.value);
+        });
+    }
+    
+    // Refresh timeline button
+    const refreshTimelineBtn = document.getElementById('refreshTimelineBtn');
+    if (refreshTimelineBtn) {
+        refreshTimelineBtn.addEventListener('click', function() {
+            loadInteractiveTimelineGraph();
+        });
+    }
+}
+
+function addAISparkleEffects() {
+    // Add sparkle animation to AI icons
+    const sparkleIcons = document.querySelectorAll('.ri-sparkling-line');
+    sparkleIcons.forEach(icon => {
+        icon.classList.add('ai-spark');
+    });
+}
+
+// Load AI snapshot cards data
+function loadAIDemurrageSnapshots() {
+    console.log('Loading AI demurrage snapshots...');
+    
+    fetch('/customer_portal/api/demurrage-snapshots')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('AI demurrage snapshots received:', data);
+            if (data.success) {
+                aiDemurrageData.snapshots = data.data;
+                updateAISnapshotCards(data.data);
+            } else {
+                console.error('Error loading AI snapshots:', data.message);
+                showAISnapshotError();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching AI demurrage snapshots:', error);
+            showAISnapshotError();
+        });
+}
+
+function updateAISnapshotCards(snapshots) {
+    // AI Projected Demurrage
+    const totalElement = document.getElementById('totalProjectedDemurrage');
+    if (totalElement) {
+        totalElement.innerHTML = `<span class="counter-value">${snapshots.total_projected || '$0'}</span>`;
+        addLoadingShimmer(totalElement.parentElement.parentElement.parentElement);
+    }
+    
+    // Shipments at Demurrage (High Risk)
+    const atRiskElement = document.getElementById('atRiskShipmentsCount');
+    if (atRiskElement) {
+        atRiskElement.innerHTML = `<span class="counter-value">${snapshots.at_risk_count || 0}</span>`;
+        addLoadingShimmer(atRiskElement.parentElement.parentElement.parentElement);
+    }
+    
+    // AI Average Cost Per Container
+    const avgCostElement = document.getElementById('avgCostPerContainer');
+    if (avgCostElement) {
+        avgCostElement.innerHTML = `<span class="counter-value">${snapshots.avg_cost || '$0'}</span>`;
+        addLoadingShimmer(avgCostElement.parentElement.parentElement.parentElement);
+    }
+    
+    // Shipments in Free Period (Low Risk)
+    const criticalElement = document.getElementById('criticalActionsCount');
+    if (criticalElement) {
+        criticalElement.innerHTML = `<span class="counter-value">${snapshots.critical_actions || 0}</span>`;
+        addLoadingShimmer(criticalElement.parentElement.parentElement.parentElement);
+    }
+}
+
+function addLoadingShimmer(element) {
+    element.classList.add('ai-loading');
+    setTimeout(() => {
+        element.classList.remove('ai-loading');
+    }, 1500);
+}
+
+function showAISnapshotError() {
+    const elements = ['totalProjectedDemurrage', 'atRiskShipmentsCount', 'avgCostPerContainer', 'criticalActionsCount'];
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerHTML = `<span class="counter-value text-muted">AI Error</span>`;
+        }
+    });
+}
+
+// Load AI risk assessment shipments
+function loadAIRiskAssessmentShipments() {
+    console.log('Loading AI risk assessment shipments...');
+    
+    fetch('/customer_portal/api/at-risk-shipments')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('AI risk assessment shipments received:', data);
+            if (data.success) {
+                aiDemurrageData.atRiskShipments = data.data;
+                updateAIRiskAssessmentTable(data.data);
+            } else {
+                console.error('Error loading AI risk assessment:', data.message);
+                showAIRiskAssessmentError(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching AI risk assessment:', error);
+            showAIRiskAssessmentError(error.message);
+        });
+}
+
+function updateAIRiskAssessmentTable(shipments) {
+    const tableBody = document.getElementById('atRiskShipmentsTableBody');
+    if (!tableBody) return;
+    
+    if (shipments.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <div class="avatar-md mx-auto mb-3">
+                        <span class="avatar-title bg-soft-success text-success rounded-circle">
+                            <i class="ri-robot-line fs-24"></i>
+                        </span>
+                    </div>
+                    <h6 class="text-muted">AI Analysis Complete</h6>
+                    <p class="text-muted mb-0">No at-risk shipments detected by AI monitoring!</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    shipments.forEach(shipment => {
+        const riskBadgeClass = getAIRiskBadgeClass(shipment.risk_level, shipment.is_demurrage);
+        const statusClass = getAIStatusClass(shipment.is_demurrage);
+        
+        html += `
+            <tr>
+                <td>
+                    <span class="fw-bold text-primary">${escapeHtml(shipment.job_number || 'N/A')}</span>
+                </td>
+                <td>${escapeHtml(shipment.bl_number || 'N/A')}</td>
+                <td>
+                    <div>
+                        <span class="badge bg-info-subtle text-info">${escapeHtml(shipment.container_details || 'N/A')}</span>
+                        <br><small class="text-muted">${shipment.container_count || 0} container(s)</small>
+                    </div>
+                </td>
+                <td>${formatDate(shipment.eta_date)}</td>
+                <td>
+                    ${shipment.demurrage_from ? formatDate(shipment.demurrage_from) : 
+                      '<span class="text-muted">Not Set</span>'}
+                </td>
+                <td>
+                    <span class="status-text ${statusClass}">${shipment.days_status_text || 'N/A'}</span>
+                </td>    
+                <td>
+                    <div class="status-display">
+                        <span class="badge ${riskBadgeClass}">${shipment.risk_level || 'Unknown'} Risk</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="ri-robot-line text-primary me-1" title="AI Projected"></i>
+                        <span class="fw-bold">${shipment.projected_cost || 'N/A'}</span>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-soft-primary btn-action" 
+                            onclick="viewAIShipmentDetails(${shipment.shipment_id})"
+                            data-bs-toggle="tooltip" title="View AI Analysis">
+                        <i class="ri-eye-line"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = html;
+    
+    // Initialize tooltips
+    setTimeout(() => {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }, 100);
+}
+
+function showAIRiskAssessmentError(message) {
+    const tableBody = document.getElementById('atRiskShipmentsTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <div class="text-danger">
+                        <i class="ri-robot-line fs-24 mb-2"></i>
+                        <h6>AI Analysis Error</h6>
+                        <p class="mb-0">${escapeHtml(message)}</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Load interactive timeline graph
+function loadInteractiveTimelineGraph() {
+    console.log('Loading AI interactive timeline graph...');
+    
+    const container = document.getElementById('criticalTimelineContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 mb-0">AI analyzing timeline patterns...</p>
+            </div>
+        `;
+    }
+    
+    fetch('/customer_portal/api/critical-timeline-graph')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('AI timeline graph data received:', data);
+            if (data.success) {
+                aiDemurrageData.timelineContainers = data.data;
+                renderInteractiveTimelineGraph(data.data);
+            } else {
+                console.error('Error loading AI timeline:', data.message);
+                showTimelineError(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching AI timeline graph:', error);
+            showTimelineError(error.message);
+        });
+}
+
+function renderInteractiveTimelineGraph(containers) {
+    const container = document.getElementById('criticalTimelineContainer');
+    if (!container) return;
+    
+    if (containers.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="avatar-md mx-auto mb-3">
+                    <span class="avatar-title bg-soft-success text-success rounded-circle">
+                        <i class="ri-robot-line fs-24"></i>
+                    </span>
+                </div>
+                <h6 class="text-muted">AI Timeline Analysis Complete</h6>
+                <p class="text-muted mb-0">No containers currently in demurrage period</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    containers.forEach(containerData => {
+        html += createContainerTimelineCard(containerData);
+    });
+    
+    container.innerHTML = html;
+    
+    // Initialize interactive timelines
+    containers.forEach(containerData => {
+        initializeContainerTimeline(containerData);
+    });
+}
+
+function createContainerTimelineCard(containerData) {
+    return `
+        <div class="container-timeline-card" data-container-id="${containerData.container_id}">
+            <div class="timeline-header">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <h6 class="mb-1">
+                            <i class="ri-container-line text-primary me-1"></i>
+                            ${escapeHtml(containerData.container_number)}
+                        </h6>
+                        <small class="text-muted">${escapeHtml(containerData.size_type)}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block">Job: ${escapeHtml(containerData.job_number)}</small>
+                        <small class="text-muted">BL: ${escapeHtml(containerData.bl_number)}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted d-block">ETA: ${formatDate(containerData.eta_date)}</small>
+                        <small class="text-muted">Demurrage: ${formatDate(containerData.demurrage_from)}</small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <span class="projected-cost-badge">
+                            <i class="ri-robot-line me-1"></i>
+                            ${containerData.projected_cost_today}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-svg-container" id="timeline-${containerData.container_id}">
+                    <!-- SVG timeline will be rendered here -->
+                </div>
+                <div class="timeline-labels" id="labels-${containerData.container_id}">
+                    <!-- Date labels will be added here -->
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function initializeContainerTimeline(containerData) {
+    const timelineId = `timeline-${containerData.container_id}`;
+    const labelsId = `labels-${containerData.container_id}`;
+    const container = document.getElementById(timelineId);
+    const labelsContainer = document.getElementById(labelsId);
+    
+    if (!container || !containerData.timeline_segments || containerData.timeline_segments.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted py-3">No timeline data available</p>';
+        return;
+    }
+    
+    // Clear existing content
+    container.innerHTML = '';
+    labelsContainer.innerHTML = '';
+    
+    // Create SVG
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'timeline-svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '80');
+    
+    // Create tooltip div
+    const tooltip = document.createElement('div');
+    tooltip.className = 'timeline-tooltip';
+    container.appendChild(tooltip);
+    
+    // Calculate timeline dimensions
+    const containerWidth = container.offsetWidth || 800;
+    const timelineHeight = 20;
+    const timelineY = 10;
+    
+    // Calculate total timeline duration
+    const segments = containerData.timeline_segments;
+    const startDate = new Date(segments[0].start_date);
+    const endDate = new Date(segments[segments.length - 1].end_date || new Date());
+    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    
+    let currentX = 0;
+    const labels = [];
+    
+    // Render segments
+    segments.forEach((segment, index) => {
+        const segmentStart = new Date(segment.start_date);
+        const segmentEnd = new Date(segment.end_date || new Date());
+        const segmentDays = Math.ceil((segmentEnd - segmentStart) / (1000 * 60 * 60 * 24));
+        const segmentWidth = Math.max((segmentDays / totalDays) * containerWidth, 30); // Minimum width of 30px
+        
+        // Create segment rectangle
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', currentX);
+        rect.setAttribute('y', timelineY);
+        rect.setAttribute('width', segmentWidth);
+        rect.setAttribute('height', timelineHeight);
+        rect.setAttribute('fill', segment.color);
+        rect.setAttribute('class', 'timeline-segment');
+        rect.setAttribute('data-segment-index', index);
+        
+        // Add hover effects
+        rect.addEventListener('mouseenter', function(e) {
+            showTimelineTooltip(e, segment, tooltip);
+        });
+        
+        rect.addEventListener('mouseleave', function() {
+            hideTimelineTooltip(tooltip);
+        });
+        
+        rect.addEventListener('mousemove', function(e) {
+            updateTooltipPosition(e, tooltip);
+        });
+        
+        svg.appendChild(rect);
+        
+        // Add label for significant points
+        if (index === 0 || segment.type === 'demurrage_tier') {
+            labels.push({
+                x: currentX,
+                text: formatDate(segment.start_date),
+                type: segment.type
+            });
+        }
+        
+        currentX += segmentWidth;
+    });
+    
+    // Add final label
+    labels.push({
+        x: currentX,
+        text: 'Today',
+        type: 'today'
+    });
+    
+    container.appendChild(svg);
+    
+    // Render labels
+    labels.forEach(label => {
+        const labelDiv = document.createElement('div');
+        labelDiv.style.position = 'absolute';
+        labelDiv.style.left = `${(label.x / containerWidth) * 100}%`;
+        labelDiv.style.transform = 'translateX(-50%)';
+        labelDiv.textContent = label.text;
+        labelDiv.className = `timeline-label ${label.type}`;
+        labelsContainer.appendChild(labelDiv);
+    });
+    
+    // Make labels container relative
+    labelsContainer.style.position = 'relative';
+}
+
+function showTimelineTooltip(event, segment, tooltip) {
+    let tooltipContent = `
+        <div class="fw-bold">${segment.description || segment.type}</div>
+        <div>Duration: ${segment.days || 0} days</div>
+        <div>Cost: LKR ${segment.cost || 0}</div>
+    `;
+    
+    if (segment.rate_per_day) {
+        tooltipContent += `<div>Rate: $${segment.rate_per_day}/day</div>`;
+    }
+    
+    tooltip.innerHTML = tooltipContent;
+    tooltip.classList.add('show');
+    updateTooltipPosition(event, tooltip);
+}
+
+function hideTimelineTooltip(tooltip) {
+    tooltip.classList.remove('show');
+}
+
+function updateTooltipPosition(event, tooltip) {
+    const rect = event.target.closest('.timeline-svg-container').getBoundingClientRect();
+    tooltip.style.left = `${event.clientX - rect.left}px`;
+    tooltip.style.top = `${event.clientY - rect.top - 10}px`;
+}
+
+function showTimelineError(message) {
+    const container = document.getElementById('criticalTimelineContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-danger">
+                    <i class="ri-robot-line fs-24 mb-2"></i>
+                    <h6>AI Timeline Analysis Error</h6>
+                    <p class="mb-0">${escapeHtml(message)}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Filter risk assessment shipments by risk level
+function filterRiskAssessmentShipments(riskLevel) {
+    const tableBody = document.getElementById('atRiskShipmentsTableBody');
+    if (!tableBody) return;
+    
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        if (riskLevel === 'all') {
+            row.style.display = '';
+        } else {
+            const riskBadge = row.querySelector('.badge');
+            if (riskBadge && riskBadge.textContent.toLowerCase().includes(riskLevel)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+}
+
+// View AI shipment details
+function viewAIShipmentDetails(shipmentId) {
+    console.log('Viewing AI shipment details for:', shipmentId);
+    
+    fetch(`/customer_portal/api/shipment-demurrage-details/${shipmentId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('AI shipment details received:', data);
+            if (data.success) {
+                showAIShipmentDetailsModal(data.data);
+            } else {
+                showAlert('Error loading AI analysis: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching AI shipment details:', error);
+            showAlert('Failed to load AI analysis: ' + error.message, 'error');
+        });
+}
+
+function showAIShipmentDetailsModal(shipment) {
+    const detailsContainer = document.getElementById('demurrageShipmentDetails');
+    if (!detailsContainer) return;
+    
+    let html = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6><i class="ri-robot-line text-primary me-2"></i>Job Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Job Number:</strong></td><td>${escapeHtml(shipment.job_number || 'N/A')}</td></tr>
+                    <tr><td><strong>BL Number:</strong></td><td>${escapeHtml(shipment.bl_number || 'N/A')}</td></tr>
+                    <tr><td><strong>ETA Date:</strong></td><td>${formatDate(shipment.eta_date)}</td></tr>
+                    <tr><td><strong>Port of Discharge:</strong></td><td>${escapeHtml(shipment.port_of_discharge || 'N/A')}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="ri-container-line text-info me-2"></i>Container Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Container Count:</strong></td><td>${shipment.container_count || 0}</td></tr>
+                    <tr><td><strong>Container Types:</strong></td><td>${escapeHtml(shipment.container_details || 'N/A')}</td></tr>
+                    <tr><td><strong>Demurrage Status:</strong></td><td>${escapeHtml(shipment.demurrage_status || 'N/A')}</td></tr>
+                    <tr><td><strong>Demurrage From:</strong></td><td>${formatDate(shipment.demurrage_from)}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                <h6><i class="ri-cpu-line text-warning me-2"></i>AI Risk Assessment</h6>
+                <div class="alert alert-${getAIRiskAlertClass(shipment.risk_level)}">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="${getAIRiskIcon(shipment.risk_level)} fs-24"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <i class="ri-robot-line me-2"></i>AI Risk Level: ${shipment.risk_level || 'Unknown'}
+                            </h6>
+                            <p class="mb-0">${shipment.risk_explanation || 'No additional information available.'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+               <h6><i class="ri-money-dollar-circle-line text-success me-2"></i>AI Projected Costs</h6>
+               <div class="table-responsive">
+                   <table class="table table-bordered">
+                       <thead class="table-light">
+                           <tr>
+                               <th><i class="ri-robot-line me-1"></i>Container Type</th>
+                               <th>Container Count</th>
+                               <th>AI Projected Cost</th>
+                               <th>Currency</th>
+                           </tr>
+                       </thead>
+                       <tbody>
+   `;
+   
+   if (shipment.projected_costs && shipment.projected_costs.length > 0) {
+       shipment.projected_costs.forEach(cost => {
+           html += `
+               <tr>
+                   <td>${escapeHtml(cost.container_type || 'N/A')}</td>
+                   <td class="text-center">${cost.container_count || 0}</td>
+                   <td class="text-end fw-bold text-success">${cost.total_cost || '0.00'}</td>
+                   <td>${escapeHtml(cost.currency || 'USD')}</td>
+               </tr>
+           `;
+       });
+   } else {
+       html += `
+           <tr>
+               <td colspan="4" class="text-center text-muted">
+                   <i class="ri-robot-line me-2"></i>No AI cost projections available
+               </td>
+           </tr>
+       `;
+   }
+   
+   html += `
+                       </tbody>
+                   </table>
+               </div>
+           </div>
+       </div>
+   `;
+   
+   detailsContainer.innerHTML = html;
+   
+   // Show modal
+   const modal = new bootstrap.Modal(document.getElementById('demurrageShipmentModal'));
+   modal.show();
+}
+
+// Refresh entire AI demurrage dashboard
+function refreshAIDemurrageDashboard() {
+    console.log('Refreshing AI demurrage dashboard...');
+    loadAIDemurrageSnapshots();
+    loadAIRiskAssessmentShipments();
+    loadInteractiveTimelineGraph();
+}
+
+// Helper functions
+function getAIRiskBadgeClass(riskLevel, isDemurrage) {
+    if (isDemurrage || riskLevel?.toLowerCase() === 'high') {
+        return 'risk-badge-high';
+    } else {
+        return 'risk-badge-low';
+    }
+}
+
+function getAIStatusClass(isDemurrage) {
+    return isDemurrage ? 'status-high' : 'status-low';
+}
+
+function getAIRiskAlertClass(riskLevel) {
+    switch (riskLevel?.toLowerCase()) {
+        case 'high': return 'danger';
+        case 'medium': return 'warning';
+        case 'low': return 'success';
+        default: return 'info';
+    }
+}
+
+function getAIRiskIcon(riskLevel) {
+    switch (riskLevel?.toLowerCase()) {
+        case 'high': return 'ri-error-warning-line text-danger';
+        case 'medium': return 'ri-alert-line text-warning';
+        case 'low': return 'ri-information-line text-success';
+        default: return 'ri-robot-line text-info';
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (error) {
+        return 'Invalid Date';
+    }
+}
+
+function escapeHtml(text) {
+    if (typeof text !== 'string') {
+        return text;
+    }
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+function showAlert(message, type = 'info') {
+    console.log(`AI Alert: ${type} - ${message}`);
+    
+    // Use SweetAlert if available, otherwise use browser alert
+    if (typeof Swal !== 'undefined') {
+        const iconMap = {
+            'success': 'success',
+            'error': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            icon: iconMap[type] || 'info',
+            title: `AI: ${message}`,
+            background: type === 'error' ? '#f8d7da' : '#d1ecf1'
+        });
+    } else {
+        // Fallback to browser alert
+        alert(`AI Alert: ${message}`);
+    }
+}
+
+// Export functions for global access
+window.AIDemurrageRiskMonitor = {
+    refreshAIDemurrageDashboard,
+    viewAIShipmentDetails,
+    filterRiskAssessmentShipments,
+    loadInteractiveTimelineGraph
+};
+
+console.log('AI-Powered Demurrage Risk Monitor script loaded successfully');
+</script>
+
+<style>
+    /* Demurrage Risk Monitor Styles */
+.timeline-section {
+    border-left: 2px solid #e9ecef;
+    padding-left: 1rem;
+    margin-left: 1rem;
+}
+
+.timeline-item {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.timeline-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--bs-primary);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--bs-primary);
+}
+
+.vr {
+    width: 1px;
+    height: 2rem;
+}
+
+/* Risk level specific colors */
+.timeline-item.risk-high::before {
+    background-color: var(--bs-danger);
+    box-shadow: 0 0 0 2px var(--bs-danger);
+}
+
+.timeline-item.risk-medium::before {
+    background-color: var(--bs-warning);
+    box-shadow: 0 0 0 2px var(--bs-warning);
+}
+
+.timeline-item.risk-low::before {
+    background-color: var(--bs-success);
+    box-shadow: 0 0 0 2px var(--bs-success);
+}
+
+/* Progress bar enhancements */
+.progress {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive timeline */
+@media (max-width: 768px) {
+    .timeline-section {
+        border-left: none;
+        padding-left: 0;
+        margin-left: 0;
+    }
+    
+    .timeline-item::before {
+        display: none;
+    }
+    
+    .vr {
+        display: none;
+    }
+}
+</style>
+<style>
+    <style>
+    /* Existing styles... */
+
+    /* AI Branding Enhancements */
+    .ai-branded .card-title {
+        background: linear-gradient(45deg, #007bff, #6f42c1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .ai-spark {
+        animation: sparkle 2s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+        0%, 100% { opacity: 0.7; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* Interactive Timeline Styles */
+    .timeline-container {
+        margin-bottom: 2rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .timeline-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 12px 16px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .timeline-content {
+        padding: 16px;
+    }
+
+    .timeline-svg-container {
+        position: relative;
+        margin: 16px 0;
+        min-height: 60px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .timeline-svg {
+        width: 100%;
+        height: 60px;
+        display: block;
+    }
+
+    .timeline-segment {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .timeline-segment:hover {
+        opacity: 0.8;
+        stroke: #000;
+        stroke-width: 2;
+    }
+
+    .timeline-tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        max-width: 250px;
+    }
+
+    .timeline-tooltip.show {
+        opacity: 1;
+    }
+
+    .timeline-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 11px;
+        color: #6c757d;
+    }
+
+    .projected-cost-badge {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    /* Container Card Styles */
+    .container-timeline-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .container-timeline-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Risk Badge Enhancements */
+    .risk-badge-high {
+        background: linear-gradient(45deg, #dc3545, #c82333) !important;
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        animation: pulse-danger 2s infinite;
+    }
+
+    .risk-badge-low {
+        background: linear-gradient(45deg, #ffc107, #e0a800) !important;
+        color: #212529 !important;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    @keyframes pulse-danger {
+        0% { box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3); }
+        50% { box-shadow: 0 4px 16px rgba(220, 53, 69, 0.6); }
+        100% { box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3); }
+    }
+
+    /* Status Display Enhancements */
+    .status-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .status-text {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .status-high {
+        color: #dc3545;
+    }
+
+    .status-low {
+        color: #ffc107;
+    }
+
+    /* Loading States */
+    .ai-loading {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ai-loading::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    /* Responsive Timeline */
+    @media (max-width: 768px) {
+        .timeline-svg-container {
+            min-height: 60px;
+        }
+        
+        .timeline-svg {
+            height: 60px;
+        }
+        
+        .timeline-labels {
+            font-size: 10px;
+        }
+        
+        .container-timeline-card .row > div {
+            margin-bottom: 8px;
+        }
+    }
+
+    /* Enhanced Table Styles */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    /* Action Button Enhancements */
+    .btn-action {
+        transition: all 0.3s ease;
+        border-radius: 6px;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+</style>
+</style>
+{% endblock %}

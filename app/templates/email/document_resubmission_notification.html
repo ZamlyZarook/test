@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Resubmitted</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #fff3cd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid #ffeaa7;
+        }
+        .header h2 {
+            margin: 0;
+            color: #856404;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            margin: 10px 0;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 140px;
+        }
+        .info-value {
+            color: #007bff;
+            font-weight: 500;
+            text-align: right;
+            flex: 1;
+        }
+        .document-section {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .note-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #6c757d;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .note-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .note-text {
+            color: #6c757d;
+            font-style: italic;
+            line-height: 1.5;
+        }
+        .action-section {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #e7f3ff;
+            border-radius: 5px;
+        }
+        .priority-notice {
+            background-color: #fdf2e9;
+            padding: 15px;
+            border: 1px solid #f4a261;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .priority-notice h4 {
+            color: #d63031;
+            margin: 0 0 10px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .highlight {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="emoji">📝</span>
+        <h2>Document Resubmitted</h2>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{ recipient_name }},</p>
+        
+        <p>A document has been resubmitted for review. Please find the details below:</p>
+        
+        <div class="info-section">
+            <h3>Shipment Information</h3>
+            <div class="info-row">
+                <span class="info-label">Entry ID:</span>
+                <span class="info-value">{{ entry_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Document Serial:</span>
+                <span class="info-value">{{ docserial }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Customer:</span>
+                <span class="info-value">{{ customer_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Resubmission Date:</span>
+                <span class="info-value">{{ resubmission_date }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Document Expiry:</span>
+                <span class="info-value">{{ expiry_date }}</span>
+            </div>
+        </div>
+        
+        <div class="document-section">
+            <h3>Resubmitted Document</h3>
+            <p><strong>Document Type:</strong> {{ document_name }}</p>
+            <p><strong>File Name:</strong> {{ filename }}</p>
+            <p><strong>Status:</strong> <span class="status-badge">Pending Review</span></p>
+        </div>
+        
+        {% if has_note %}
+        <div class="note-section">
+            <div class="note-title">Customer Note:</div>
+            <div class="note-text">{{ note }}</div>
+        </div>
+        {% endif %}
+        
+        {% if is_company %}
+        <div class="priority-notice">
+            <h4>⏰ Action Required</h4>
+            <p>This document requires your immediate attention for review and approval. The customer has addressed previous concerns and resubmitted the document.</p>
+        </div>
+        
+        <div class="action-section">
+            <h3>Next Steps</h3>
+            <p>Please log in to your account to:</p>
+            <ul style="text-align: left; display: inline-block;">
+                <li>Review the resubmitted document</li>
+                <li>Check if previous issues have been addressed</li>
+                <li>Accept or reject the document with appropriate comments</li>
+                <li>Notify the customer of your decision promptly</li>
+            </ul>
+        </div>
+        {% else %}
+        <div class="action-section">
+            <h3>Document Under Review</h3>
+            <p>The customer has resubmitted their document addressing previous concerns. Please review and take appropriate action.</p>
+        </div>
+        {% endif %}
+        
+        <p>{% if is_company %}Timely review of resubmitted documents helps maintain good customer relationships and keeps shipment processing on track.{% else %}Please prioritize the review of this resubmitted document to avoid any delays in processing.{% endif %}</p>
+        
+        <p>If you have any questions or need additional information, please contact the customer or support team.</p>
+        
+        <p>Best regards,<br>
+        {% if is_company %}
+        Document Management System
+        {% else %}
+        {{ company_name }}
+        {% endif %}
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {{ current_year }} Navitrax. All rights reserved.</p>
+        <p>This is an automated notification regarding document resubmission.</p>
+        <p><strong>Please log in to your account to review and process this document.</strong></p>
+    </div>
+</body>
+</html>

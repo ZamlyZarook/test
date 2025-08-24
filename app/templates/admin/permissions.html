@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">Permissions</h3>
+                        <a href="{{ url_for('admin.add_permission') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Permission
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="permissionsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Permission Name</th>
+                                    <th>Permission Code</th>
+                                    <th>Description</th>
+                                    <th>Module</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for permission in permissions %}
+                                <tr>
+                                    <td>{{ permission.permission_name }}</td>
+                                    <td>{{ permission.permission_code }}</td>
+                                    <td>{{ permission.description }}</td>
+                                    <td>{{ permission.module.module_name }}</td>
+                                    <td>
+                                        {% if permission.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('admin.edit_permission', permission_id=permission.id) }}"
+                                                class="btn btn-sm btn-info" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger" title="Delete"
+                                                onclick="confirmDelete('{{ url_for('admin.delete_permission', permission_id=permission.id) }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this permission? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="deleteButton" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#permissionsTable').DataTable({
+            "order": [[0, "asc"]], // Sort by permission name by default
+            "pageLength": 25,
+            "language": {
+                "search": "Search permissions:",
+                "lengthMenu": "Show _MENU_ permissions per page",
+                "zeroRecords": "No permissions found",
+                "info": "Showing _START_ to _END_ of _TOTAL_ permissions",
+                "infoEmpty": "Showing 0 to 0 of 0 permissions",
+                "infoFiltered": "(filtered from _MAX_ total permissions)"
+            }
+        });
+    });
+
+    function confirmDelete(url) {
+        $('#deleteButton').attr('href', url);
+        $('#deleteModal').modal('show');
+    }
+</script>
+{% endblock %}

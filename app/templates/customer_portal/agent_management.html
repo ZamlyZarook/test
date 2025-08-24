@@ -1,0 +1,494 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Agent Management{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Agent Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Customer Portal</a></li>
+                                <li class="breadcrumb-item active">Agent Management</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Filters Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Filters</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="GET" class="row g-3" id="filterForm">
+                                <div class="col-md-2">
+                                    <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                    <select class="form-select" id="entriesPerPage" name="per_page" onchange="updateEntriesPerPage(this.value)">
+                                        <option value="5" {% if request.args.get('per_page')=='5' %}selected{% endif %}>5</option>
+                                        <option value="10" {% if request.args.get('per_page')=='10' or not request.args.get('per_page') %}selected{% endif %}>10</option>
+                                        <option value="25" {% if request.args.get('per_page')=='25' %}selected{% endif %}>25</option>
+                                        <option value="50" {% if request.args.get('per_page')=='50' %}selected{% endif %}>50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="searchInput" class="form-label">Search Agents</label>
+                                    <input type="text" class="form-control" id="searchInput" name="search"
+                                        value="{{ request.args.get('search', '') }}" placeholder="Search by name, email, or username...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-filter-3-line me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Agent Management Tabs Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Agent Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Agent Status Filter Tabs -->
+                            <ul class="nav nav-tabs mb-3" id="agentTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available-agents" type="button" role="tab">
+                                        Available Agents <span class="badge bg-primary" id="availableCount">{{ available_agents.total }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="assigned-tab" data-bs-toggle="tab" data-bs-target="#assigned-agents" type="button" role="tab">
+                                        Assigned Agents <span class="badge bg-success" id="assignedCount">{{ assigned_agents.total }}</span>
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content" id="agentTabContent">
+                                <!-- Available Agents Tab -->
+                                <div class="tab-pane fade show active" id="available-agents" role="tabpanel">
+                                    <div class="table-responsive">
+                                        {% if available_agents.items %}
+                                        <table class="table table-nowrap align-middle table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Username</th>
+                                                    <th>Email</th>
+                                                    <th>Contact</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for agent in available_agents.items %}
+                                                <tr id="available-agent-{{ agent.id }}">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm me-2">
+                                                                <span class="avatar-title bg-soft-primary text-primary rounded-circle">
+                                                                    {{ (agent.name or agent.username)[:2].upper() }}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">{{ agent.name or agent.username }}</h6>
+                                                                <small class="text-muted">Clearing Agent</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{ agent.username }}</td>
+                                                    <td>{{ agent.email }}</td>
+                                                    <td>{{ agent.contact_number or '-' }}</td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-success btn-sm" onclick="assignAgent({{ agent.id }}, '{{ agent.name or agent.username }}')">
+                                                            <i class="ri-link me-1"></i> Connect
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Pagination for Available Agents -->
+                                        <div class="d-flex justify-content-between align-items-center mt-4">
+                                            <div>
+                                                Showing {{ available_agents.items|length }} of {{ available_agents.total }} available agents
+                                            </div>
+                                            <nav aria-label="Available agents pagination">
+                                                <ul class="pagination mb-0">
+                                                    {% if available_agents.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.agent_management', 
+                                                            page=available_agents.prev_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Previous</a>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% for page_num in available_agents.iter_pages() %}
+                                                    {% if page_num %}
+                                                    <li class="page-item {% if page_num == available_agents.page %}active{% endif %}">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.agent_management', 
+                                                            page=page_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                                    </li>
+                                                    {% else %}
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                    {% endif %}
+                                                    {% endfor %}
+
+                                                    {% if available_agents.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.agent_management', 
+                                                            page=available_agents.next_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Next</a>
+                                                    </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center p-4">
+                                            <i class="ri-user-search-line display-4 text-muted"></i>
+                                            <p class="mt-3">No available agents found.</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Assigned Agents Tab -->
+                                <div class="tab-pane fade" id="assigned-agents" role="tabpanel">
+                                    <div class="table-responsive">
+                                        {% if assigned_agents.items %}
+                                        <table class="table table-nowrap align-middle table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Username</th>
+                                                    <th>Email</th>
+                                                    <th>Contact</th>
+                                                    <th>Assignment Date</th>
+                                                    <th>Assigned By</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user, assignment in assigned_agents.items %}
+                                                <tr id="assigned-agent-{{ user.id }}">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm me-2">
+                                                                <span class="avatar-title bg-soft-success text-success rounded-circle">
+                                                                    {{ (user.name or user.username)[:2].upper() }}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">{{ user.name or user.username }}</h6>
+                                                                <small class="text-muted">Clearing Agent</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{ user.username }}</td>
+                                                    <td>{{ user.email }}</td>
+                                                    <td>{{ user.contact_number or '-' }}</td>
+                                                    <td>
+                                                        <span class="badge badge-soft-info">
+                                                            {{ assignment.assignment_date.strftime('%Y-%m-%d') if assignment.assignment_date else 'Unknown' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ assignment.assigned_by.name if assignment.assigned_by else 'Unknown' }}</td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-danger btn-sm" onclick="unassignAgent({{ user.id }}, '{{ user.name or user.username }}')">
+                                                            <i class="ri-unlink me-1"></i> Disconnect
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Pagination for Assigned Agents -->
+                                        <div class="d-flex justify-content-between align-items-center mt-4">
+                                            <div>
+                                                Showing {{ assigned_agents.items|length }} of {{ assigned_agents.total }} assigned agents
+                                            </div>
+                                            <nav aria-label="Assigned agents pagination">
+                                                <ul class="pagination mb-0">
+                                                    {% if assigned_agents.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.agent_management', 
+                                                            page=assigned_agents.prev_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Previous</a>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% for page_num in assigned_agents.iter_pages() %}
+                                                    {% if page_num %}
+                                                    <li class="page-item {% if page_num == assigned_agents.page %}active{% endif %}">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.agent_management', 
+                                                            page=page_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                                    </li>
+                                                    {% else %}
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                    {% endif %}
+                                                    {% endfor %}
+
+                                                    {% if assigned_agents.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.agent_management', 
+                                                            page=assigned_agents.next_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Next</a>
+                                                    </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center p-4">
+                                            <i class="ri-user-unfollow-line display-4 text-muted"></i>
+                                            <p class="mt-3">No agents assigned yet. Connect some agents from the available list.</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle search form with debounce
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterAgents();
+                }, 800);
+            });
+        }
+
+        // Entries per page auto-apply
+        const entriesPerPageSelect = document.getElementById('entriesPerPage');
+        if (entriesPerPageSelect) {
+            entriesPerPageSelect.addEventListener('change', function() {
+                updateEntriesPerPage(this.value);
+            });
+        }
+    });
+
+    // Function to update entries per page
+    function updateEntriesPerPage(value) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('per_page', value);
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to filter agents
+    function filterAgents() {
+        const currentUrl = new URL(window.location.href);
+        const searchValue = document.getElementById('searchInput').value.trim();
+        
+        if (searchValue) {
+            currentUrl.searchParams.set('search', searchValue);
+        } else {
+            currentUrl.searchParams.delete('search');
+        }
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to assign an agent
+    function assignAgent(agentId, agentName) {
+        Swal.fire({
+            title: 'Confirm Assignment',
+            text: `Are you sure you want to connect "${agentName}" to your company?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Connect',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Connecting Agent...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Make the assignment request
+                fetch("{{ url_for('customer_portal.assign_agent') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({
+                        agent_id: agentId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Reload the page to update the lists
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to assign agent'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while assigning the agent'
+                    });
+                });
+            }
+        });
+    }
+
+    // Function to unassign an agent
+    function unassignAgent(agentId, agentName) {
+        Swal.fire({
+            title: 'Confirm Disconnection',
+            text: `Are you sure you want to disconnect "${agentName}" from your company?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Disconnect',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Disconnecting Agent...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Make the unassignment request
+                fetch("{{ url_for('customer_portal.unassign_agent') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({
+                        agent_id: agentId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Reload the page to update the lists
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to unassign agent'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while disconnecting the agent'
+                    });
+                });
+            }
+        });
+    }
+
+    // Auto-hide flash messages
+    setTimeout(function() {
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            flashMessage.remove();
+        }
+    }, 5000);
+</script>
+
+{% endblock extra_js %}

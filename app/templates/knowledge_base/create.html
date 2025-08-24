@@ -1,0 +1,1005 @@
+{% extends "partials/base.html" %}
+{% block title %}Create Knowledge Base{% endblock title %}
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- In the extra_css block -->
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/monokai.min.css">
+<!-- Additional styling for the editor -->
+<style>
+    .field-row {
+        border: 1px solid #e9e9ef;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+    .table-card {
+        margin-bottom: 20px;
+    }
+    /* Modified to show by default and hide conditionally with JS */
+    .fk-options {
+        display: block;
+    }
+    /* Add this class to dynamically hide FK options when not checked */
+    .fk-hidden {
+        display: none;
+    }  
+    .editor-container {
+        margin-bottom: 15px;
+    }
+.CodeMirror-themed .cm-header {
+    color: #ff8c00;
+}
+.CodeMirror-themed .cm-link {
+    color: #1e88e5;
+}
+.CodeMirror-themed .cm-string {
+    color: #43a047;
+}
+.CodeMirror-cursor {
+    border-left: 1px solid #000;
+}
+.cm-s-monokai .cm-keyword {color: #f92672;}
+.cm-s-monokai .cm-string {color: #a6e22e;}
+.cm-s-monokai .cm-comment {color: #75715e;}
+.cm-s-monokai .cm-atom {color: #ae81ff;}
+
+#knowledge-base-description-value {
+    height: 1000px; /* Already set appropriately */
+}
+
+/* Add this new rule to control table description height */
+.table-description-value, 
+.table-description-editor .CodeMirror {
+    height: 100px !important; /* Reduced height for table descriptions */
+}
+
+</style>
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Create Knowledge Base</h4>
+
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('knowledge_base.list_categories') }}">Knowledge Base</a></li>
+                                    <li class="breadcrumb-item"><a href="{{ url_for('knowledge_base.view_category', category_id=category.id) }}">{{ category.category }}</a></li>
+                                    <li class="breadcrumb-item active">Create</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end page title -->
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Knowledge Base Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="knowledge-base-form">
+                                    <input type="hidden" id="category-id" value="{{ category.id }}">
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="connection" class="form-label">Data Source Connection</label>
+                                            <select class="form-select select2" id="connection" required>
+                                                <option value="">Select Connection</option>
+                                                {% for connection in current_user.available_connections %}
+                                                <option value="{{ connection.id }}">{{ connection.connection_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="database" class="form-label">Database</label>
+                                            <select class="form-select select2" id="database" required disabled>
+                                                <option value="">Select Database</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Status</label>
+                                            <div class="form-check form-switch form-switch-sm">
+                                                <input type="checkbox" class="form-check-input" id="activeStatus" checked>
+                                                <label class="form-check-label" for="activeStatus">Active</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="kb-name" class="form-label">Knowledge Base Name</label>
+                                            <input type="text" class="form-control" id="kb-name" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="kb-description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="kb-description" rows="3"></textarea>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Table</h5>
+                                <button type="button" class="btn btn-soft-primary btn-sm" id="add-table-btn">
+                                    <i class="ri-add-line align-middle me-1"></i> Add Table
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="tables-container">
+                                    <!-- Table cards will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add this after the first card and before the table card -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Knowledge Base Description</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="editor-container">
+                                    <div id="knowledge-base-description-editor"></div>
+                                    <input type="hidden" id="knowledge-base-description-value" style="height: 400px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3 mb-5">
+                    <div class="col-12 text-md-end">
+                        <a href="{{ url_for('knowledge_base.view_category', category_id=category.id) }}" class="btn btn-light me-2">Cancel</a>
+                        <button type="button" class="btn btn-success" id="save-kb-btn">
+                            <i class="ri-save-line align-middle me-1"></i> Save Knowledge Base
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- container-fluid -->
+        </div>
+        <!-- End Page-content -->
+
+        <!-- Table Template -->
+<template id="table-template">
+    <div class="card table-card" data-table-id="${tableId}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center col-md-6">
+                <h5 class="card-title mb-0 me-2">Table:</h5>
+                <select class="form-select table-select ms-2" required>
+                    <option value="">Select Table</option>
+                </select>
+            </div>                    
+            <div>
+                <div class="form-check form-check-inline me-2">
+                    <input class="form-check-input add-all-fields" type="checkbox" id="addAllFields-${tableId}">
+                    <label class="form-check-label" for="addAllFields-${tableId}">Add All Fields</label>
+                </div>
+                <button type="button" class="btn btn-soft-success btn-sm add-field-btn">
+                    <i class="ri-add-line align-middle"></i> Add Field
+                </button>
+                <button type="button" class="btn btn-soft-danger btn-sm remove-table-btn">
+                    <i class="ri-delete-bin-line align-middle"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Add table description field -->
+            <div class="mb-3">
+                <label class="form-label">Table Description</label>
+                <div class="editor-container">
+                    <div class="table-description-editor"></div>
+                    <input type="hidden" class="table-description-value">
+                </div>
+            </div>
+            <div class="fields-container">
+                <!-- Fields will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+</template>
+
+        <!-- Field Template -->
+        <template id="field-template">
+            <div class="field-row d-flex align-items-center mb-3" data-field-id="${fieldId}">
+                <!-- Field Selector -->
+                <div class="me-2" style="width: 15%;">
+                    <select class="form-select form-select-sm field-select" required>
+                        <option value="">Select Field</option>
+                    </select>
+                </div>
+                
+                <!-- Description -->
+                <div class="me-2" style="width: 25%;">
+                    <input type="text" class="form-control form-control-sm field-description" placeholder="Field description">
+                </div>
+                
+                <!-- Unique Flag -->
+                <div class="me-2 d-flex align-items-center" style="width: 12%;">
+                    <span class="me-1 small">Unique</span>
+                    <div class="form-check form-switch form-switch-sm">
+                        <input class="form-check-input is-unique" type="checkbox">
+                    </div>
+                </div>
+                
+                <!-- Foreign Key Flag -->
+                <div class="me-2 d-flex align-items-center" style="width: 12%;">
+                    <span class="me-1 small">Foreign Key</span>
+                    <div class="form-check form-switch form-switch-sm">
+                        <input class="form-check-input is-foreign-key" type="checkbox">
+                    </div>
+                </div>
+                
+                <!-- Ref Table -->
+                <div class="me-2 fk-options" style="width: 15%;">
+                    <select class="form-select form-select-sm ref-table-select">
+                        <option value="">Ref Table</option>
+                    </select>
+                </div>
+                
+                <!-- Ref Field -->
+                <div class="me-2 fk-options" style="width: 15%;">
+                    <select class="form-select form-select-sm ref-field-select" disabled>
+                        <option value="">Ref Field</option>
+                    </select>
+                </div>
+                
+                <!-- Actions -->
+                <div style="width: 5%;">
+                    <button type="button" class="btn btn-sm btn-danger remove-field-btn">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+        
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- jQuery first -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- AG Grid -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/dist/ag-grid-community.min.js"></script>
+<!-- Sweet Alerts js -->
+<script src="{{ url_for('static', filename='libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<!-- In the extra_js block, after jQuery -->
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/matchbrackets.min.js"></script>
+<script>
+$(document).ready(function() {
+    let tableCounter = 0;
+    let fieldCounter = 0;
+    let tableData = {};
+    let currentConnection = null;
+    let currentDatabase = null;
+    let availableTables = [];
+    
+    // Initialize Select2
+    $('.select2').select2();
+
+    
+    
+    // Fetch connections based on user role
+    fetchUserConnections();
+    const kbDescriptionEditor = CodeMirror(document.getElementById('knowledge-base-description-editor'), {
+    mode: 'markdown',
+    theme: 'monokai',
+    lineNumbers: true,
+    lineWrapping: true,
+    matchBrackets: true,
+    indentUnit: 4,
+    tabSize: 4,
+    extraKeys: {
+        "Tab": function(cm) {
+            cm.replaceSelection("    ", "end");
+        }
+    }
+});
+    
+    // Handle connection change
+    $('#connection').change(function() {
+        console.log('Connection changed:', $(this).val());
+        const connectionId = $(this).val();
+        if (connectionId) {
+            currentConnection = connectionId;
+            // Enable database select
+            $('#database').prop('disabled', false);
+            
+            // Fetch databases for this connection
+            fetchDatabasesForConnection(connectionId);
+        } else {
+            resetForm('connection');
+        }
+    });
+    
+    // Handle database change
+    $('#database').change(function() {
+        const databaseId = $(this).val();
+        if (databaseId) {
+            currentDatabase = databaseId;
+            // Fetch tables for this database
+            fetchTablesForDatabase(currentConnection, databaseId);
+        } else {
+            resetForm('database');
+        }
+    });
+    
+    // Add table button
+    $('#add-table-btn').click(function() {
+        const databaseId = $('#database').val();
+        if (!databaseId) {
+            showToast('warning', 'Please select a database first');
+            return;
+        }
+        
+        addTable();
+    });
+    
+    // Save knowledge base
+    $('#save-kb-btn').click(function() {
+    if (!validateForm()) {
+        return;
+    }
+    
+    const formData = {
+        category_id: $('#category-id').val(),
+        connection_id: $('#connection').val(),
+        database_id: $('#database').val(),
+        active: $('#activeStatus').is(':checked'),
+        description: kbDescriptionEditor.getValue(),
+        tables: []
+    };
+    
+    // Gather table data
+    $('.table-card').each(function() {
+        const tableId = $(this).data('table-id');
+        const tableName = $(this).find('.table-select').val();
+        
+        // Get the description from the CodeMirror editor instance
+        const editor = $(this).data('editor');
+        const tableDescription = editor ? editor.getValue() : '';
+        
+        const tableData = {
+            table_name: tableName,
+            description: tableDescription,
+            fields: []
+        };
+            
+            // Gather fields for this table
+            $(this).find('.field-row').each(function() {
+                const fieldName = $(this).find('.field-select').val();
+                const fieldDesc = $(this).find('.field-description').val();
+                const isUnique = $(this).find('.is-unique').is(':checked');
+                const isForeignKey = $(this).find('.is-foreign-key').is(':checked');
+                
+                const fieldData = {
+                    source_field: fieldName,
+                    description: fieldDesc,
+                    is_unique: isUnique,
+                    is_foreign_key: isForeignKey
+                };
+                
+                if (isForeignKey) {
+                    fieldData.referenced_table = $(this).find('.ref-table-select').val();
+                    fieldData.referenced_field = $(this).find('.ref-field-select').val();
+                }
+                
+                tableData.fields.push(fieldData);
+            });
+            
+            formData.tables.push(tableData);
+        });
+        
+        // Add name and description to formData
+        formData.name = $('#kb-name').val();
+        formData.kb_description = $('#kb-description').val();
+        
+        // Submit form data
+        saveKnowledgeBase(formData);
+    });
+    
+    // Dynamic event handlers
+    
+    // Add field button
+    $(document).on('click', '.add-field-btn', function() {
+        const tableCard = $(this).closest('.table-card');
+        const tableId = tableCard.data('table-id');
+        const tableName = tableCard.find('.table-select').val();
+        
+        if (!tableName) {
+            showToast('warning', 'Please select a table first');
+            return;
+        }
+        
+        addField(tableId);
+    });
+    
+    // Remove table button
+    $(document).on('click', '.remove-table-btn', function() {
+        $(this).closest('.table-card').remove();
+    });
+    
+    // Remove field button
+    $(document).on('click', '.remove-field-btn', function() {
+        $(this).closest('.field-row').remove();
+    });
+    
+    
+    // Table select change
+$(document).on('change', '.table-select', function() {
+    const tableCard = $(this).closest('.table-card');
+    const tableId = tableCard.data('table-id');
+    const tableName = $(this).val();
+    
+    // Clear existing fields when table changes
+    tableCard.find('.fields-container').empty();
+    
+    // Uncheck the "Add All Fields" checkbox
+    tableCard.find('.add-all-fields').prop('checked', false);
+    
+    if (tableName) {
+        // Fetch fields for this table
+        fetchFieldsForTable(tableId, tableName);
+    }
+});
+    
+    // Foreign key checkbox change
+    $(document).on('change', '.is-foreign-key', function() {
+    const fkOptions = $(this).closest('.field-row').find('.fk-options');
+    if ($(this).is(':checked')) {
+        fkOptions.removeClass('fk-hidden');
+        
+        // Populate the referenced table dropdown with all available tables
+        const refTableSelect = fkOptions.find('.ref-table-select');
+        refTableSelect.empty().append('<option value="">Select Table</option>');
+        
+        // Add all available tables from the database, not just mapped tables
+        availableTables.forEach(function(table) {
+            refTableSelect.append(`<option value="${table}">${table}</option>`);
+        });
+    } else {
+        fkOptions.addClass('fk-hidden');
+    }
+});
+    
+    // Referenced table select change
+    $(document).on('change', '.ref-table-select', function() {
+    const fieldRow = $(this).closest('.field-row');
+    const refTableName = $(this).val();
+    const refFieldSelect = fieldRow.find('.ref-field-select');
+    
+    refFieldSelect.empty().append('<option value="">Select Field</option>');
+    
+    if (refTableName) {
+        // Fetch fields for the referenced table directly from the API
+        const connectionId = $('#connection').val();
+        const databaseId = $('#database').val();
+        
+        showLoading();
+        
+        fetch(`/knowledge_base/api/columns?connection_id=${connectionId}&database_id=${databaseId}&table=${refTableName}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                // Populate the referenced field dropdown with fields from the referenced table
+                data.columns.forEach(function(column) {
+                    // Handle different possible column data structures
+                    const columnName = typeof column === 'string' ? column : 
+                                      column.name ? column.name : 
+                                      column.column_name ? column.column_name : 
+                                      'Unknown';
+                    
+                    refFieldSelect.append(`<option value="${columnName}">${columnName}</option>`);
+                });
+                refFieldSelect.prop('disabled', false);
+            } else {
+                showToast('error', data.message || 'Failed to load fields');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching fields: ' + error.message);
+            console.error('Error fetching fields:', error);
+        });
+    } else {
+        refFieldSelect.prop('disabled', true);
+    }
+});
+    
+    // API functions
+    
+    function fetchUserConnections() {
+        showLoading();
+        
+        fetch('/knowledge_base/api/connections', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                // Populate connection select with available connections
+                const connectionSelect = $('#connection');
+                connectionSelect.empty().append('<option value="">Select Connection</option>');
+                
+                data.connections.forEach(function(connection) {
+                    connectionSelect.append(`<option value="${connection.id}">${connection.name}</option>`);
+                });
+                
+                // Refresh Select2
+                connectionSelect.trigger('change.select2');
+            } else {
+                showToast('error', data.message || 'Failed to load connections');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching connections: ' + error.message);
+            console.error('Error fetching connections:', error);
+        });
+    }
+    
+    function fetchDatabasesForConnection(connectionId) {
+        showLoading();
+        
+        fetch(`/knowledge_base/api/databases?connection_id=${connectionId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                const databaseSelect = $('#database');
+                databaseSelect.empty().append('<option value="">Select Database</option>');
+                
+                data.databases.forEach(function(db) {
+                    databaseSelect.append(`<option value="${db.id}">${db.name}</option>`);
+                });
+                
+                // Enable the select
+                databaseSelect.prop('disabled', false);
+                
+                // Refresh Select2
+                databaseSelect.trigger('change.select2');
+            } else {
+                showToast('error', data.message || 'Failed to load databases');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching databases: ' + error.message);
+            console.error('Error fetching databases:', error);
+        });
+    }
+    
+    function fetchTablesForDatabase(connectionId, databaseId) {
+        // Clear existing tables when database changes
+        $('#tables-container').empty();
+        tableData = {};
+        
+        showLoading();
+        
+        fetch(`/knowledge_base/api/tables?connection_id=${connectionId}&database_id=${databaseId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                availableTables = data.tables;
+                // Enable the add table button
+                $('#add-table-btn').prop('disabled', false);
+            } else {
+                showToast('error', data.message || 'Failed to load tables');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching tables: ' + error.message);
+            console.error('Error fetching tables:', error);
+        });
+    }
+    
+    function fetchFieldsForTable(tableId, tableName) {
+        const databaseId = $('#database').val();
+        const connectionId = $('#connection').val();
+        
+        showLoading();
+        
+        fetch(`/knowledge_base/api/columns?connection_id=${connectionId}&database_id=${databaseId}&table=${tableName}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                // Store fields for this table
+                tableData[tableId] = {
+                    name: tableName,
+                    fields: data.columns // Using the API response directly
+                };
+                
+                // Add fields for this table
+                const fieldsContainer = $(`[data-table-id="${tableId}"]`).find('.fields-container');
+                fieldsContainer.empty();
+                
+                // Add at least one field by default
+                addField(tableId);
+            } else {
+                showToast('error', data.message || 'Failed to load fields');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error fetching fields: ' + error.message);
+            console.error('Error fetching fields:', error);
+        });
+    }
+    
+    function saveKnowledgeBase(formData) {
+        showLoading();
+        
+        fetch('/knowledge_base/knowledge-base', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.status === 'success') {
+                showToast('success', 'Knowledge base created successfully');
+                // Redirect to the newly created knowledge base
+                window.location.href = `/knowledge_base/knowledge-base/${data.kb_id}`;
+            } else {
+                showToast('error', data.message || 'Failed to create knowledge base');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('error', 'Error creating knowledge base: ' + error.message);
+            console.error('Error creating knowledge base:', error);
+        });
+    }
+    
+    // Add All Fields checkbox change
+$(document).on('change', '.add-all-fields', function() {
+    if ($(this).is(':checked')) {
+        const tableCard = $(this).closest('.table-card');
+        const tableId = tableCard.data('table-id');
+        const tableName = tableCard.find('.table-select').val();
+        
+        if (!tableName) {
+            showToast('warning', 'Please select a table first');
+            $(this).prop('checked', false);
+            return;
+        }
+        
+        // Clear existing fields
+        tableCard.find('.fields-container').empty();
+        
+        // Add all fields from the selected table
+        if (tableData[tableId] && tableData[tableId].fields) {
+            tableData[tableId].fields.forEach(function(field) {
+                // Handle different possible API responses
+                const fieldName = field.name || field.column_name || field;
+                if (fieldName && typeof fieldName === 'string') {
+                    const fieldId = addField(tableId);
+                    const fieldRow = $(`[data-field-id="${fieldId}"]`);
+                    
+                    // Select the field in the dropdown
+                    fieldRow.find('.field-select').val(fieldName);
+                }
+            });
+        }
+    }
+});
+    // Helper functions
+    function initializeCodeEditor(tableElement) {
+    const editorContainer = tableElement.find('.table-description-editor')[0];
+    const hiddenInput = tableElement.find('.table-description-value');
+    
+    // Create the CodeMirror editor with proper configuration
+    const editor = CodeMirror(editorContainer, {
+        mode: 'markdown',
+        theme: 'monokai',
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        indentUnit: 4,
+        tabSize: 4,
+        extraKeys: {
+            "Tab": function(cm) {
+                cm.replaceSelection("    ", "end");
+            }
+        }
+    });
+    
+    
+    // Ensure proper styling
+    editor.refresh();
+    
+    // Store editor instance in data attribute for later access
+    tableElement.data('editor', editor);
+    
+    // Update hidden input when editor content changes
+    editor.on('change', function() {
+        hiddenInput.val(editor.getValue());
+    });
+    
+    return editor;
+}
+
+kbDescriptionEditor.on('change', function() {
+    $('#knowledge-base-description-value').val(kbDescriptionEditor.getValue());
+});
+    
+function addTable() {
+    tableCounter++;
+    const tableId = 'table-' + tableCounter;
+    
+    // Get table template
+    const templateHtml = $('#table-template').html()
+        .replace(/\${tableId}/g, tableId);
+    
+    const tableElement = $(templateHtml);
+    
+    // Populate table select with available tables
+    const tableSelect = tableElement.find('.table-select');
+    availableTables.forEach(function(table) {
+        tableSelect.append(`<option value="${table}">${table}</option>`);
+    });
+    
+    // Initialize Select2 for this table select
+    tableSelect.select2({
+        dropdownParent: tableElement
+    });
+    
+    $('#tables-container').append(tableElement);
+    
+    // Initialize CodeMirror editor for this table
+    // Wait a brief moment for the DOM to settle
+    setTimeout(function() {
+        initializeCodeEditor(tableElement);
+    }, 50);
+    
+    return tableId;
+}
+
+    
+    function addField(tableId) {
+    fieldCounter++;
+    const fieldId = 'field-' + fieldCounter;
+    
+    // Get field template
+    const templateHtml = $('#field-template').html()
+        .replace(/\${fieldId}/g, fieldId);
+    
+    const fieldElement = $(templateHtml);
+    
+    // Add this line to initially hide FK options for new fields
+    fieldElement.find('.fk-options').addClass('fk-hidden');
+    
+    // Populate field select with fields from the selected table
+    const tableCard = $(`[data-table-id="${tableId}"]`);
+    const tableName = tableCard.find('.table-select').val();
+    
+    if (tableName && tableData[tableId] && tableData[tableId].fields) {
+        const fieldSelect = fieldElement.find('.field-select');
+        tableData[tableId].fields.forEach(function(field) {
+            // Make sure we're using the correct property name from the API response
+            const fieldName = field.name || field.column_name || field; // Handle different possible API responses
+            
+            if (fieldName && typeof fieldName === 'string') {
+                fieldSelect.append(`<option value="${fieldName}">${fieldName}</option>`);
+            }
+        });
+    }
+    
+    tableCard.find('.fields-container').append(fieldElement);
+    return fieldId;
+}
+    function resetForm(level) {
+        if (level === 'connection') {
+            // Reset database select
+            $('#database').prop('disabled', true).empty().append('<option value="">Select Database</option>');
+            // Clear all tables
+            $('#tables-container').empty();
+            tableData = {};
+            currentConnection = null;
+            currentDatabase = null;
+            availableTables = [];
+        } else if (level === 'database') {
+            // Clear all tables
+            $('#tables-container').empty();
+            tableData = {};
+            currentDatabase = null;
+            availableTables = [];
+        } else if (level === 'table') {
+            // Do nothing, just keep the tables container ready for new tables
+        }
+    }
+    
+    function validateForm() {
+        if (!$('#kb-name').val().trim()) {
+            showToast('warning', 'Knowledge Base Name is required');
+            return false;
+        }
+        // Check basic form values
+        if (!$('#connection').val()) {
+            showToast('error', 'Please select a connection');
+            return false;
+        }
+        
+        if (!$('#database').val()) {
+            showToast('error', 'Please select a database');
+            return false;
+        }
+        
+        // Check if at least one table is added
+        if ($('.table-card').length === 0) {
+            showToast('error', 'Please add at least one table');
+            return false;
+        }
+        
+        // Check each table
+        let valid = true;
+        $('.table-card').each(function() {
+            const tableSelect = $(this).find('.table-select');
+            if (!tableSelect.val()) {
+                showToast('error', 'Please select a table for all table mappings');
+                valid = false;
+                return false; // break
+            }
+            
+            // Check if table has at least one field
+            if ($(this).find('.field-row').length === 0) {
+                showToast('error', `Please add at least one field to table "${tableSelect.val()}"`);
+                valid = false;
+                return false; // break
+            }
+            
+            // Check each field
+            $(this).find('.field-row').each(function() {
+                if (!$(this).find('.field-select').val()) {
+                    showToast('error', `Please select all fields in table "${tableSelect.val()}"`);
+                    valid = false;
+                    return false; // break
+                }
+                
+                // Check foreign key references if enabled
+                if ($(this).find('.is-foreign-key').is(':checked')) {
+                    if (!$(this).find('.ref-table-select').val()) {
+                        showToast('error', 'Please select referenced table for all foreign keys');
+                        valid = false;
+                        return false; // break
+                    }
+                    
+                    if (!$(this).find('.ref-field-select').val()) {
+                        showToast('error', 'Please select referenced field for all foreign keys');
+                        valid = false;
+                        return false; // break
+                    }
+                }
+            });
+            
+            if (!valid) {
+                return false; // break
+            }
+        });
+        
+        return valid;
+    }
+    
+    function showLoading() {
+        // Add loading indicator to the page
+        if ($('#loading-indicator').length === 0) {
+            $('body').append('<div id="loading-indicator" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-white bg-opacity-75" style="z-index: 9999;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+        }
+    }
+    
+    function hideLoading() {
+        // Remove loading indicator
+        $('#loading-indicator').remove();
+    }
+    
+    function showToast(type, message) {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: type === 'success' ? "#0ab39c" : 
+                            type === 'warning' ? "#f7b84b" : "#f06548"
+        }).showToast();
+    }
+});
+</script>
+{% endblock extra_js %}

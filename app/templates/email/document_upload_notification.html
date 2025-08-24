@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Upload Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+        }
+        .info-box {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+        .document-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .document-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .document-item:last-child {
+            border-bottom: none;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .highlight {
+            color: #007bff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📄 New Documents Uploaded</h2>
+    </div>
+    
+    <div class="content">
+        {% if is_company %}
+        <p>Dear {{ recipient_name }},</p>
+        {% else %}
+        <p>Dear {{ recipient_name }},</p>
+        {% endif %}
+        
+        <p>New documents have been uploaded to the system. Please find the details below:</p>
+        
+        <div class="info-box">
+            <h3>Shipment Information</h3>
+            <p><strong>Entry ID:</strong> {{ entry_id }}</p>
+            <p><strong>Document Serial:</strong> <span class="highlight">{{ docserial }}</span></p>
+            <p><strong>Customer:</strong> {{ customer_name }}</p>
+            <p><strong>Upload Date:</strong> {{ upload_date }}</p>
+            <p><strong>Number of Documents:</strong> <span class="highlight">{{ document_count }}</span></p>
+        </div>
+        
+        <div class="document-list">
+            <h3>Uploaded Documents</h3>
+            {% for file in uploaded_files %}
+            <div class="document-item">
+                <strong>{{ file.description }}</strong><br>
+                <small>File: {{ file.filename }}</small>
+                {% if file.multiple_allowed %}
+                <small style="color: #28a745;"> • Multiple files allowed</small>
+                {% else %}
+                <small style="color: #ffc107;"> • Single file only</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <p>Please review these documents at your earliest convenience and take any necessary actions.</p>
+                
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {{ current_year }} Navitrax. All rights reserved.</p>
+        <p>This is an automated notification. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

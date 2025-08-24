@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Clearing Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- SEA Import -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-ship"></i> SEA Import
+                                    </h5>
+                                    <p class="card-text">Manage SEA Import clearance operations</p>
+                                    <a href="{{ url_for('clearing.sea_import') }}" class="btn btn-primary">View SEA
+                                        Import</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEA Export -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-ship"></i> SEA Export
+                                    </h5>
+                                    <p class="card-text">Manage SEA Export clearance operations</p>
+                                    <a href="{{ url_for('clearing.sea_export') }}" class="btn btn-primary">View SEA
+                                        Export</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AIR Import -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-plane-arrival"></i> AIR Import
+                                    </h5>
+                                    <p class="card-text">Manage AIR Import clearance operations</p>
+                                    <a href="{{ url_for('clearing.air_import') }}" class="btn btn-primary">View AIR
+                                        Import</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AIR Export -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-plane-departure"></i> AIR Export
+                                    </h5>
+                                    <p class="card-text">Manage AIR Export clearance operations</p>
+                                    <a href="{{ url_for('clearing.air_export') }}" class="btn btn-primary">View AIR
+                                        Export</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transhipment -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-exchange-alt"></i> TRAN-Shipment
+                                    </h5>
+                                    <p class="card-text">Manage transhipment operations</p>
+                                    <a href="{{ url_for('clearing.transhipment') }}" class="btn btn-primary">View
+                                        Transhipment</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

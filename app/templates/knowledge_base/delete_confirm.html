@@ -1,0 +1,31 @@
+{% extends "partials/base.html" %}
+{% block title %}Confirm Delete Knowledge Base{% endblock title %}
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-6 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Confirm Delete</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-danger">
+                                <p>Are you sure you want to delete this knowledge base?</p>
+                                <p><strong>Warning:</strong> This action cannot be undone and will delete all related table maps and fields.</p>
+                            </div>
+                            <form method="POST">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('knowledge_base.view_category', category_id=category_id) }}" class="btn btn-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-danger">Delete Knowledge Base</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

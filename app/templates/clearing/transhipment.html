@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">TRAN-Shipment</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Transhipment
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Job No</th>
+                                    <th>BL/AWB No</th>
+                                    <th>Customer</th>
+                                    <th>Origin</th>
+                                    <th>Destination</th>
+                                    <th>Transit Port</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="text-center">No records found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

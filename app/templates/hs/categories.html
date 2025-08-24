@@ -1,0 +1,262 @@
+{% extends "partials/base.html" %}
+
+{% block title %}HS Codes{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div
+                        class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">HS Categories</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item active">HS Categories</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="search-box">
+                                    <input type="text" id="categorySearchInput" class="form-control"
+                                        placeholder="Search categories..." style="width: 250px; display: inline-block;">
+                                    <i class="ri-search-line search-icon"></i>
+                                </div>
+                            </div>
+                            <a href="#" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addCategoryModal">+ Add Category</a>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th style="width: 150px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cat in categories %}
+                                    <tr>
+                                        <td>{{ cat.name }}</td>
+                                        <td>{{ cat.description }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#addCategoryModal" data-id="{{ cat.id }}"
+                                                data-name="{{ cat.name }}" data-description="{{ cat.description }}"
+                                                data-action="{{ url_for('hs.edit_category', id=cat.id) }}">
+                                                <i class="ri-pencil-line"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-category-btn"
+                                                data-id="{{ cat.id }}" data-name="{{ cat.name }}">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No categories found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="categoryForm" method="post" action="{{ url_for('hs.new_category') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">Add HS Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" id="categoryName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <input type="text" name="description" id="categoryDescription" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" id="categorySubmitBtn" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addCategoryModal = document.getElementById('addCategoryModal');
+        const categoryForm = document.getElementById('categoryForm');
+        const modalTitle = document.getElementById('addCategoryModalLabel');
+        const submitBtn = document.getElementById('categorySubmitBtn');
+
+        addCategoryModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+
+            // Reset form for 'add' mode, or prepopulate for 'edit'
+            if (id) { // Edit mode
+                const name = button.getAttribute('data-name');
+                const description = button.getAttribute('data-description');
+                const action = button.getAttribute('data-action');
+
+                modalTitle.textContent = 'Edit HS Category';
+                submitBtn.textContent = 'Update';
+                categoryForm.action = action;
+                document.getElementById('categoryName').value = name;
+                document.getElementById('categoryDescription').value = description;
+            } else { // Add mode
+                modalTitle.textContent = 'Add HS Category';
+                submitBtn.textContent = 'Save';
+                categoryForm.action = "{{ url_for('hs.new_category') }}";
+                categoryForm.reset();
+            }
+        });
+
+        // Handle Add/Edit form submission with Fetch
+        categoryForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(categoryForm);
+            const url = categoryForm.action;
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'Something went wrong.', 'error');
+                });
+        });
+
+        // Handle Delete with Fetch and SweetAlert
+        document.querySelectorAll('.delete-category-btn').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const categoryId = this.getAttribute('data-id');
+                const categoryName = this.getAttribute('data-name');
+                const url = "{{ url_for('hs.delete_category', id=0) }}".replace('0', categoryId);
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: `Do you want to delete the category "${categoryName}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Deleted!', data.message, 'success').then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire('Error!', data.message, 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire('Error!', 'Something went wrong.', 'error');
+                            });
+                    }
+                });
+            });
+        });
+    });
+
+    function filterCategories() {
+        var input = document.getElementById("categorySearchInput");
+        var filter = input.value.toLowerCase();
+        var table = document.querySelector(".table.table-bordered.table-hover");
+        var trs = table.querySelectorAll("tbody tr");
+
+        trs.forEach(function (row) {
+            // Only search in name and description columns
+            var name = row.children[0]?.textContent.toLowerCase() || "";
+            var desc = row.children[1]?.textContent.toLowerCase() || "";
+            if (name.includes(filter) || desc.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // Optional: filter as you type
+    document.getElementById("categorySearchInput").addEventListener("keyup", filterCategories);
+</script>
+
+{% include 'chat/chat_modal.html' %}
+
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+
+{% endblock %}

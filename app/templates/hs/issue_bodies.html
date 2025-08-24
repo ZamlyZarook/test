@@ -1,0 +1,273 @@
+{% extends "partials/base.html" %}
+
+{% block title %}HS Code Issue Bodies{% endblock title %}
+{% block content %}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div
+                        class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">HS Code Issue Bodies</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item active">HS Code Issue Bodies</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="search-box">
+                                    <input type="text" id="issueBodySearchInput" class="form-control"
+                                        placeholder="Search issue bodies..."
+                                        style="width: 250px; display: inline-block;">
+                                    <i class="ri-search-line search-icon"></i>
+                                </div>
+                            </div>
+                            <a href="#" class="btn btn-primary mb-2" data-bs-toggle="modal"
+                                data-bs-target="#addIssueBodyModal">Add Issue Body</a>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Address</th>
+                                        <th>Contact No</th>
+                                        <th>Email</th>
+                                        <th>Website</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for body in issue_bodies %}
+                                    <tr>
+                                        <td>{{ body.name }}</td>
+                                        <td>{{ body.address }}</td>
+                                        <td>{{ body.contact_number }}</td>
+                                        <td>{{ body.email }}</td>
+                                        <td>{{ body.website }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#addIssueBodyModal" data-id="{{ body.id }}"
+                                                data-name="{{ body.name }}" data-address="{{ body.address }}"
+                                                data-contact_number="{{ body.contact_number }}"
+                                                data-email="{{ body.email }}" data-website="{{ body.website }}"
+                                                data-action="{{ url_for('hs.edit_issue_body', id=body.id) }}">
+                                                <i class="ri-pencil-line"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-btn"
+                                                data-id="{{ body.id }}" data-name="{{ body.name }}">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Issue Body Modal -->
+<div class="modal fade" id="addIssueBodyModal" tabindex="-1" aria-labelledby="addIssueBodyModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="issueBodyForm" method="post" action="{{ url_for('hs.new_issue_body') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addIssueBodyModalLabel">Add Issue Body</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" id="issueBodyName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Address</label>
+                        <input type="text" name="address" id="issueBodyAddress" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Contact Number</label>
+                        <input type="text" name="contact_number" id="issueBodyContact" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" name="email" id="issueBodyEmail" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Website</label>
+                        <input type="text" name="website" id="issueBodyWebsite" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" id="issueBodySubmitBtn" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addIssueBodyModal = document.getElementById('addIssueBodyModal');
+        const issueBodyForm = document.getElementById('issueBodyForm');
+        const modalTitle = document.getElementById('addIssueBodyModalLabel');
+        const submitBtn = document.getElementById('issueBodySubmitBtn');
+
+        addIssueBodyModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+
+            // Set form action and prepopulate for edit, or reset for add
+            if (id) { // Edit mode
+                modalTitle.textContent = 'Edit Issue Body';
+                submitBtn.textContent = 'Update';
+                issueBodyForm.action = button.getAttribute('data-action');
+                document.getElementById('issueBodyName').value = button.getAttribute('data-name');
+                document.getElementById('issueBodyAddress').value = button.getAttribute('data-address');
+                document.getElementById('issueBodyContact').value = button.getAttribute('data-contact_number');
+                document.getElementById('issueBodyEmail').value = button.getAttribute('data-email');
+                document.getElementById('issueBodyWebsite').value = button.getAttribute('data-website');
+            } else { // Add mode
+                modalTitle.textContent = 'Add Issue Body';
+                submitBtn.textContent = 'Save';
+                issueBodyForm.action = "{{ url_for('hs.new_issue_body') }}";
+                issueBodyForm.reset();
+            }
+        });
+
+        // Handle Add/Edit form submission with Fetch
+        issueBodyForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(issueBodyForm);
+            const url = issueBodyForm.action;
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', data.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error!', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'Something went wrong.', 'error');
+                });
+        });
+
+        // Handle Delete with Fetch and SweetAlert
+        document.querySelectorAll('.delete-btn').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                const url = "{{ url_for('hs.delete_issue_body', id=0) }}".replace('0', id);
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: `Do you want to delete "${name}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Deleted!', data.message, 'success').then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire('Error!', data.message, 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire('Error!', 'Something went wrong.', 'error');
+                            });
+                    }
+                });
+            });
+        });
+
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(function () {
+            var flashMessage = document.getElementById('flash-message');
+            if (flashMessage) {
+                flashMessage.style.display = 'none';
+            }
+        }, 5000);
+    });
+
+    function filterIssueBodies() {
+        var input = document.getElementById("issueBodySearchInput");
+        var filter = input.value.toLowerCase();
+        var table = document.querySelector(".table.table-bordered");
+        var trs = table.querySelectorAll("tbody tr");
+
+        trs.forEach(function (row) {
+            // Search in all columns except the last (actions)
+            let found = false;
+            for (let i = 0; i < row.children.length - 1; i++) {
+                if ((row.children[i]?.textContent.toLowerCase() || "").includes(filter)) {
+                    found = true;
+                    break;
+                }
+            }
+            row.style.display = found ? "" : "none";
+        });
+    }
+
+    // Optional: filter as you type
+    document.getElementById("issueBodySearchInput").addEventListener("keyup", filterIssueBodies);
+</script>
+
+{% include 'chat/chat_modal.html' %}
+
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+
+{% endblock %}

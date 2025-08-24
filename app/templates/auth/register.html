@@ -1,0 +1,344 @@
+{% extends "auth/base_account.html" %}
+
+{% block title %}Register{% endblock title %}
+
+{% block content %}
+<!-- Define global functions in the page head -->
+<script>
+    // These functions need to be in the global scope
+    function validateAndNext() {
+    // Get required fields
+    const userTypeRadios = document.querySelectorAll('input[name="user_type"]');
+    const userTypeContainer = document.querySelector('.user-type-container');
+    const companyName = document.getElementById('company_name');
+    const country = document.getElementById('country');
+    const contactNumber = document.getElementById('contact_number');
+    
+    // Reset validation state
+    userTypeRadios.forEach(radio => {
+        radio.classList.remove('is-invalid');
+    });
+    if (userTypeContainer) {
+        userTypeContainer.classList.remove('is-invalid');
+    }
+    companyName.classList.remove('is-invalid');
+    country.classList.remove('is-invalid');
+    contactNumber.classList.remove('is-invalid');
+    
+    let isValid = true;
+    
+    // Validate user type (radio buttons)
+    const userTypeSelected = document.querySelector('input[name="user_type"]:checked');
+    if (!userTypeSelected) {
+        // Add invalid class to all radio buttons and container
+        userTypeRadios.forEach(radio => {
+            radio.classList.add('is-invalid');
+        });
+        if (userTypeContainer) {
+            userTypeContainer.classList.add('is-invalid');
+        }
+        isValid = false;
+    }
+    
+    // Validate other required fields
+    if (!companyName.value.trim()) {
+        companyName.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    if (!country.value) {
+        country.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    if (!contactNumber.value.trim()) {
+        contactNumber.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // If form is valid, go to next tab
+    if (isValid) {
+        document.getElementById('account-tab').click();
+    } else {
+        // Optional: Show a general error message
+        console.log('Please fill in all required fields');
+    }
+}
+
+function goToPreviousTab() {
+    document.getElementById('company-tab').click();
+}
+
+</script>
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8 col-xl-6">
+        <div class="card mt-4">
+            <div class="card-body p-4">
+                <div class="text-center mt-2">
+                    <h5 class="text-primary">Create New Account</h5>
+                    <p class="text-muted">Sign up to get started</p>
+                </div>
+                <div class="p-2 mt-4">
+                    <form id="registrationForm" class="needs-validation" method="POST" action="" novalidate>
+                        <!-- CSRF protection -->
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+
+                        <!-- Tabs Navigation -->
+                        <ul class="nav nav-tabs mb-4" id="registerTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active" id="company-tab" data-bs-toggle="tab"
+                                    data-bs-target="#company" type="button" role="tab" aria-controls="company"
+                                    aria-selected="true">Company</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account"
+                                    type="button" role="tab" aria-controls="account" aria-selected="false">Account</a>
+                            </li>
+                        </ul>
+
+                        <!-- Tabs Content -->
+                        <div class="tab-content" id="registerTabsContent">
+                            <!-- Company Information Tab -->
+                            <div class="tab-pane fade show active" id="company" role="tabpanel" aria-labelledby="company-tab">
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Register As <span class="text-danger">*</span></label>
+                                    
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="user_type" id="user_type_cha" value="cha" required>
+                                        <label class="form-check-label" for="user_type_cha">Customs House Agent</label>
+                                    </div>
+
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="user_type" id="user_type_company" value="company" required>
+                                        <label class="form-check-label" for="user_type_company">Company</label>
+                                    </div>
+                                </div>
+
+
+                                <div class="mb-3">
+                                    <label for="company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Enter company name" required>
+                                    <div class="invalid-feedback">
+                                        Please enter company name
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter address"></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="country" name="country" required>
+                                        <option value="">Select country</option>
+                                        {% for country in countries %}
+                                        <option value="{{ country.countryID }}">{{ country.countryName }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a country
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="website" class="form-label">Website</label>
+                                    <input type="url" class="form-control" id="website" name="website" placeholder="Enter website">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="contact_number" class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="contact_number" name="contact_number" placeholder="Enter contact number" required>
+                                    <div class="invalid-feedback">
+                                        Please enter contact number
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="button" class="btn btn-primary" onclick="validateAndNext()">Next</button>
+                                </div>
+                            </div>
+
+                            <!-- Account Details Tab -->
+                            <div class="tab-pane fade" id="account" role="tabpanel" aria-labelledby="account-tab">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your full name" required>
+                                    <div class="invalid-feedback">
+                                        Please enter your full name
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="gender" name="gender" required>
+                                        <option value="">Select gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select gender
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="contact" class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="contact" name="contact" placeholder="Enter your contact number" required>
+                                    <div class="invalid-feedback">
+                                        Please enter your contact number
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="user_address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="user_address" name="user_address" rows="2" placeholder="Enter your address"></textarea>
+                                </div>
+                            
+                                
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
+                                    <div class="invalid-feedback">
+                                        Please enter username
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter email address" required>
+                                    <div class="invalid-feedback">
+                                        Please enter a valid email address
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
+                                    <div class="position-relative auth-pass-inputgroup">
+                                        <input type="password" class="form-control pe-5 password-input" id="password" name="password" placeholder="Enter password" required>
+                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"><i class="ri-eye-fill align-middle"></i></button>
+                                        <div class="invalid-feedback">
+                                            Please enter password
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="confirm_password">Confirm Password <span class="text-danger">*</span></label>
+                                    <div class="position-relative auth-pass-inputgroup">
+                                        <input type="password" class="form-control pe-5 password-input" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button"><i class="ri-eye-fill align-middle"></i></button>
+                                        <div class="invalid-feedback">
+                                            Please confirm your password
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="password-contain" class="p-3 bg-light mb-2 rounded d-none">
+                                    <h5 class="fs-13">Password must contain:</h5>
+                                    <p class="invalid fs-12 mb-2">Minimum <b>8 characters</b></p>
+                                    <p class="invalid fs-12 mb-2">At <b>lowercase</b> letter (a-z)</p>
+                                    <p class="invalid fs-12 mb-2">At least <b>uppercase</b> letter (A-Z)</p>
+                                    <p class="invalid fs-12 mb-0">A least <b>number</b> (0-9)</p>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <p class="mb-0 fs-12 text-muted fst-italic">By registering you agree to our <a href="#" class="text-primary text-decoration-underline fst-normal fw-medium">Terms of Use</a></p>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary" onclick="goToPreviousTab()">Previous</button>
+                                    <button type="submit" class="btn btn-success" id="registerButton">Register</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- end card body -->
+        </div>
+        <div class="mt-4 text-center">
+            <p class="mb-0">Already have an account? <a href="{{ url_for('auth.login') }}" class="fw-semibold text-primary text-decoration-underline">Log in</a></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add password matching validation
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    function validatePasswordMatch() {
+        if (confirmPassword.value !== password.value) {
+            confirmPassword.setCustomValidity("Passwords don't match");
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+    
+    if (password && confirmPassword) {
+        password.addEventListener('change', validatePasswordMatch);
+        confirmPassword.addEventListener('keyup', validatePasswordMatch);
+    }
+
+    const userTypeRadios = document.querySelectorAll('input[name="user_type"]');
+    const userTypeContainer = document.querySelector('.user-type-container');
+    
+    userTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Clear validation state when user selects an option
+            userTypeRadios.forEach(r => r.classList.remove('is-invalid'));
+            if (userTypeContainer) {
+                userTypeContainer.classList.remove('is-invalid');
+            }
+        });
+    });
+    
+    // Form validation
+    const form = document.getElementById('registrationForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Check which tab has invalid fields
+                const userType = document.getElementById('user_type');
+                const companyName = document.getElementById('company_name');
+                const country = document.getElementById('country');
+                const contactNumber = document.getElementById('contact_number');
+                
+                const companyInvalid = !userType.checkValidity() ||
+                                       !companyName.checkValidity() || 
+                                       !country.checkValidity() || 
+                                       !contactNumber.checkValidity();
+                
+                // Switch to the tab with invalid fields
+                if (companyInvalid) {
+                    document.getElementById('company-tab').click();
+                } else {
+                    document.getElementById('account-tab').click();
+                }
+            }
+            
+            form.classList.add('was-validated');
+        });
+    }
+});
+</script>
+{% endblock %}

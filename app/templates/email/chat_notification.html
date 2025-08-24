@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Chat Message</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+        }
+        .message-box {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-left: 4px solid #2196f3;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .info-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 120px;
+        }
+        .info-value {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .message-text {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .sender-info {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .cta-text {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .highlight {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .emoji {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="emoji">💬</span>
+        <h2>New Chat Message Received</h2>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{ recipient_name }},</p>
+        
+        <p>You have received a new message regarding your shipment. Please find the details below:</p>
+        
+        <div class="info-section">
+            <h3>Shipment Information</h3>
+            <div class="info-row">
+                <span class="info-label">Entry ID:</span>
+                <span class="info-value">{{ entry_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Document Serial:</span>
+                <span class="info-value">{{ docserial }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Customer:</span>
+                <span class="info-value">{{ customer_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Company:</span>
+                <span class="info-value">{{ company_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Message Date:</span>
+                <span class="info-value">{{ message_date }}</span>
+            </div>
+        </div>
+        
+        <div class="message-box">
+            <div class="sender-info">
+                <strong>Message from:</strong> {{ sender_name }}
+            </div>
+            <div class="message-text">{{ message_text }}</div>
+        </div>
+        
+        <div class="cta-section">
+            <p class="cta-text">
+                Please log in to your account to view the complete conversation and respond to this message.
+            </p>
+        </div>
+        
+        {% if is_customer %}
+        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        {% else %}
+        <p>Please respond to this message at your earliest convenience to maintain good customer communication.</p>
+        {% endif %}
+        
+        <p>Best regards,<br>
+        {% if is_customer %}
+        {{ company_name }}
+        {% else %}
+        Customer Communication System
+        {% endif %}
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {{ current_year }} Navitrax. All rights reserved.</p>
+        <p>This is an automated notification for chat messages. Please do not reply to this email directly.</p>
+        <p>To respond to this message, please log in to your account and use the chat system.</p>
+    </div>
+</body>
+</html>

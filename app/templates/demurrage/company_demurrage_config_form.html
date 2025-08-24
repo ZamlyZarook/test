@@ -1,0 +1,288 @@
+{% extends "partials/base.html" %}
+
+{% block title %}{% if config %}Edit{% else %}New{% endif %} Company Demurrage Configuration{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">{% if config %}Edit{% else %}New{% endif %} Company Demurrage Configuration</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('demurrage.company_demurrage_configs') }}">Demurrage Configurations</a></li>
+                                <li class="breadcrumb-item active">{% if config %}Edit{% else %}Add{% endif %} Configuration</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Configuration Form Card -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-{% if config %}edit-line{% else %}add-line{% endif %} me-1 align-bottom"></i>
+                                Demurrage Configuration Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" id="configForm">
+                                <!-- Basic Information -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-primary">
+                                                <h6 class="card-title mb-0">Basic Configuration</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="company_id" class="form-label">Company <span class="text-danger">*</span></label>
+                                                            <select class="form-select" id="company_id" name="company_id" required {% if current_user.is_super_admin != 1 %}disabled{% endif %}>
+                                                                <option value="">Select Company</option>
+                                                                {% for company in companies %}
+                                                                <option value="{{ company.id }}" 
+                                                                    {% if config and config.company_id == company.id %}selected{% endif %}
+                                                                    {% if not config and current_user.is_super_admin != 1 %}selected{% endif %}>
+                                                                    {{ company.company_name }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            {% if current_user.is_super_admin != 1 %}
+                                                            <input type="hidden" name="company_id" value="{{ companies[0].id }}">
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="country_id" class="form-label">Country <span class="text-danger">*</span></label>
+                                                            <select class="form-select" id="country_id" name="country_id" required>
+                                                                <option value="">Select Country</option>
+                                                                {% for country in countries %}
+                                                                <option value="{{ country.countryID }}" 
+                                                                    {% if config and config.country_id == country.countryID %}selected{% endif %}
+                                                                    {% if not config and country.countryName == 'Sri Lanka' %}selected{% endif %}>
+                                                                    {{ country.countryName }}
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="demurrage_days_threshold" class="form-label">Demurrage Days Threshold <span class="text-danger">*</span></label>
+                                                            <input type="number" class="form-control" id="demurrage_days_threshold" name="demurrage_days_threshold" required min="1" max="365"
+                                                                value="{% if config %}{{ config.demurrage_days_threshold }}{% endif %}"
+                                                                placeholder="Enter number of days">
+                                                            <div class="form-text">Number of days after ETA before demurrage charges apply</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Exclusion Rules -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-info">
+                                                <h6 class="card-title mb-0">Exclusion Rules</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input" type="checkbox" id="exclude_weekends" name="exclude_weekends" 
+                                                                    {% if not config or config.exclude_weekends %}checked{% endif %}>
+                                                                <label class="form-check-label" for="exclude_weekends">
+                                                                    Exclude Weekends
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-text">Exclude Saturdays and Sundays from demurrage calculation</div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input" type="checkbox" id="exclude_holidays" name="exclude_holidays" 
+                                                                    {% if not config or config.exclude_holidays %}checked{% endif %}>
+                                                                <label class="form-check-label" for="exclude_holidays">
+                                                                    Exclude Public Holidays
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-text">Exclude public holidays from demurrage calculation</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="alert alert-info">
+                                                    <i class="ri-information-line me-2"></i>
+                                                    <strong>Note:</strong> Weekend and holiday exclusions depend on the non-working days configured for the selected country. 
+                                                    Make sure to configure non-working days for accurate demurrage calculations.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Status (Only for edit) -->
+                                {% if config %}
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-secondary">
+                                                <h6 class="card-title mb-0">Status</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                                            {% if config.is_active %}checked{% endif %}>
+                                                        <label class="form-check-label" for="is_active">
+                                                            Active Configuration
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-text">Only active configurations will be used for demurrage calculations</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Configuration Summary -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-12">
+                                        <div class="card shadow-none border">
+                                            <div class="card-header bg-soft-success">
+                                                <h6 class="card-title mb-0">Configuration Summary</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="alert alert-light" id="configSummary">
+                                                    <i class="ri-settings-3-line me-2"></i>
+                                                    <span id="summaryText">Please fill in the form to see configuration summary</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('demurrage.company_demurrage_configs') }}" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i>
+                                        {% if config %}Update{% else %}Save{% endif %} Configuration
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages after 5 seconds
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            setTimeout(() => {
+                const closeBtn = flashMessage.querySelector('.btn-close');
+                if (closeBtn) closeBtn.click();
+            }, 5000);
+        }
+        
+        // Update summary on form changes
+        updateConfigSummary();
+        
+        // Add event listeners for form changes
+        document.getElementById('configForm').addEventListener('change', updateConfigSummary);
+        document.getElementById('demurrage_days_threshold').addEventListener('input', updateConfigSummary);
+    });
+
+    function updateConfigSummary() {
+        const companySelect = document.getElementById('company_id');
+        const countrySelect = document.getElementById('country_id');
+        const thresholdInput = document.getElementById('demurrage_days_threshold');
+        const excludeWeekends = document.getElementById('exclude_weekends');
+        const excludeHolidays = document.getElementById('exclude_holidays');
+        
+        const companyName = companySelect.options[companySelect.selectedIndex]?.text || 'Select Company';
+        const countryName = countrySelect.options[countrySelect.selectedIndex]?.text || 'Select Country';
+        const threshold = thresholdInput.value || '0';
+        
+        let exclusions = [];
+        if (excludeWeekends.checked) exclusions.push('weekends');
+        if (excludeHolidays.checked) exclusions.push('public holidays');
+        
+        const exclusionText = exclusions.length > 0 ? `, excluding ${exclusions.join(' and ')}` : ', including all days';
+        
+        const summaryText = `Demurrage charges will apply after <strong>${threshold} days</strong> from ETA for <strong>${companyName}</strong> in <strong>${countryName}</strong>${exclusionText}.`;
+        
+        document.getElementById('summaryText').innerHTML = summaryText;
+    }
+
+    // Form validation
+    document.getElementById('configForm').addEventListener('submit', function(e) {
+        const company = document.getElementById('company_id').value;
+        const country = document.getElementById('country_id').value;
+        const threshold = document.getElementById('demurrage_days_threshold').value;
+        
+        if (!company || !country || !threshold) {
+            e.preventDefault();
+            alert('Please fill in all required fields');
+            return false;
+        }
+        
+        const thresholdNum = parseInt(threshold);
+        if (thresholdNum <= 0 || thresholdNum > 365) {
+            e.preventDefault();
+            alert('Demurrage days threshold must be between 1 and 365 days');
+            return false;
+        }
+    });
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Successful</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid #b8daff;
+        }
+        .header h2 {
+            margin: 0;
+            color: #0c5460;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            margin: 10px 0;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 140px;
+        }
+        .info-value {
+            color: #007bff;
+            font-weight: 500;
+            text-align: right;
+            flex: 1;
+        }
+        .verification-section {
+            background-color: #fff3cd;
+            padding: 20px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .next-steps-section {
+            background-color: #e7f3ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+        .highlight {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .important-notice {
+            background-color: #d1ecf1;
+            padding: 15px;
+            border: 1px solid #b8daff;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .important-notice h4 {
+            color: #0c5460;
+            margin: 0 0 10px 0;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px 0;
+        }
+        .timeline-step {
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 12px;
+        }
+        .timeline-step.completed {
+            background-color: #28a745;
+        }
+        .timeline-step.pending {
+            background-color: #ffc107;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="emoji">📝</span>
+        <h2>Registration Successful!</h2>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{ customer_name }},</p>
+        
+        <p>Thank you for registering with Navitrax! We have successfully received your registration and your account has been created.</p>
+        
+        <div class="info-section">
+            <h3>Registration Information</h3>
+            <div class="info-row">
+                <span class="info-label">{{ 'Company Name' if account_type == 'company' else 'CHA Name' }}:</span>
+                <span class="info-value">{{ company_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Contact Person:</span>
+                <span class="info-value">{{ customer_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ email }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Username:</span>
+                <span class="info-value">{{ username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Account Type:</span>
+                <span class="info-value">{{ 'Company' if account_type == 'company' else 'Custom House Agent (CHA)' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Registration Date:</span>
+                <span class="info-value">{{ registration_date }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status:</span>
+                <span class="info-value"><span class="status-badge">Verification Pending</span></span>
+            </div>
+        </div>
+        
+        <div class="verification-section">
+            <h3>⏳ Account Verification in Progress</h3>
+            <p><strong>Your account is currently under review and verification.</strong> Our team is reviewing your registration details and documentation to ensure compliance with our security and operational standards.</p>
+        </div>
+        
+        <div class="next-steps-section">
+            <h3>What Happens Next?</h3>
+            <div class="timeline-item">
+                <div class="timeline-step completed">1</div>
+                <span>Registration completed successfully ✓</span>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-step pending">2</div>
+                <span>Account verification in progress...</span>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-step">3</div>
+                <span>Email notification upon approval</span>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-step">4</div>
+                <span>Account activation and login access</span>
+            </div>
+        </div>
+        
+        <div class="important-notice">
+            <h4>📧 Important</h4>
+            <p><strong>You will receive an email notification once your account has been verified and activated.</strong> This process typically takes 1-2 business days.</p>
+        </div>
+        
+        <p>During the verification process, our team may contact you if additional information or documentation is required. Please ensure that the email address provided is monitored regularly.</p>
+        
+        <p>Once your account is activated, you will be able to:</p>
+        <ul>
+            {% if account_type == 'company' %}
+            <li>Submit and track shipment documents</li>
+            <li>Monitor shipment status in real-time</li>
+            <li>Access comprehensive reporting tools</li>
+            <li>Communicate directly with our operations team</li>
+            {% else %}
+            <li>Access CHA-specific tools and features</li>
+            <li>Manage client clearance operations</li>
+            <li>Process customs documentation efficiently</li>
+            <li>Coordinate with customs authorities</li>
+            {% endif %}
+        </ul>
+        
+        <p>Thank you for choosing Navitrax. We appreciate your patience during the verification process and look forward to serving you.</p>
+        
+        <p>If you have any questions about your registration or the verification process, please feel free to contact our support team.</p>
+        
+        <p>Best regards,<br>
+        <strong>Navitrax Registration Team</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {{ current_year }} Navitrax. All rights reserved.</p>
+        <p>This is an automated confirmation of your account registration.</p>
+        <p><strong>Please do not reply to this email. For support, contact us through our official channels.</strong></p>
+    </div>
+</body>
+</html>

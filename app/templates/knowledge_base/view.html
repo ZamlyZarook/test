@@ -1,0 +1,193 @@
+{% extends "partials/base.html" %}
+{% block title %}Knowledge Base Details{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Knowledge Base Details</h4>
+
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="javascript: void(0);">Knowledge Base</a></li>
+                                    <li class="breadcrumb-item active">View Knowledge Base Category</li>
+                                    <li class="breadcrumb-item active">Knowledge Base Details</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                    <!-- Knowledge Base Header -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3>{{ kb.name }}</h3>
+                                <small class="text-muted">Source Table: {{ kb.source_table }}</small>
+                            </div>
+                            <div>
+                                <form action="{{ url_for('knowledge_base.toggle_knowledge_base_status', kb_id=kb.id) }}" method="post" class="d-inline">
+                                    {{ form.csrf_token }}
+                                    {{ form.kb_id }}
+                                    <button type="submit" class="btn {% if kb.activeYN %}btn-danger{% else %}btn-success{% endif %}">
+                                        {% if kb.activeYN %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                                <a href="#" class="btn btn-success"><i class="ri-pencil-line"></i></a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Company:</strong> {{ Company.query.get(kb.company_key).company_name }}</p>
+                                    <p><strong>Category:</strong> {{ kb.category_info.category }}</p>
+                                    <p><strong>Source Database:</strong> {{ kb.source_database.database_name }}</p>
+                                    <p><strong>Source Table:</strong> {{ kb.source_table }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Connection:</strong> {{ kb.source_connection.connection_name }}</p>
+                                    <p><strong>Created By:</strong> {{ kb.creator.username }}</p>
+                                    <p><strong>Status:</strong> {% if kb.activeYN %}Active{% else %}Inactive{% endif %}</p>
+                                </div>
+                            </div>
+                            {% if kb.kb_description %}
+                            <div class="mb-3">
+                                <h6 class="card-subtitle mb-2 text-muted">Knowledge Base Description</h6>
+                                <p>{{ kb.kb_description }}</p>
+                            </div>
+                            {% endif %}
+                            {% if kb.description %}
+                            <div class="mb-3">
+                                <h6 class="card-subtitle mb-2 text-muted">Technical Description</h6>
+                                <p>{{ kb.description }}</p>
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editTechnicalDescriptionModal">
+                                    <i class="ri-pencil-line"></i> Edit Technical Description
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                
+                    <!-- Tables Section -->
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>Tables</h3>
+                    </div>
+                    {% if tables %}
+                        {% for table in tables %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5>{{ table.table_name }} <small class="text-muted">(Order: {{ table.table_order }})</small></h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Add this block to display the table description -->
+        {% if table.description %}
+        <div class="mb-3">
+            <h6 class="card-subtitle mb-2 text-muted">Description</h6>
+            <p>{{ table.description }}</p>
+        </div>
+        {% endif %}
+        <!-- End of added block -->
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Field Name</th>
+                                            <th>Description</th>
+                                            <th>Properties</th>
+                                            <th>References</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for field in table.fields %}
+                                        <tr>
+                                            <td>{{ field.source_field_name }}</td>
+                                            <td>{{ field.field_description }}</td>
+                                            <td>
+                                                {% if field.is_unique %}<span class="badge bg-info">Unique</span>{% endif %}
+                                                {% if field.is_foreign_key %}<span class="badge bg-warning">Foreign Key</span>{% endif %}
+                                                {% if field.is_default_value %}<span class="badge bg-secondary">Default: {{ field.default_value }}</span>{% endif %}
+                                            </td>
+                                            <td>
+                                                {% if field.is_foreign_key and field.referenced_table %}
+                                                    {{ field.referenced_table.table_name }}.{{ field.referenced_field.source_field_name }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">No tables defined for this knowledge base.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+            </div>
+            <!-- container-fluid -->
+        </div>
+        <!-- End Page-content -->
+
+        <!-- Add this modal at the end of the content block, before the footer -->
+        <div class="modal fade" id="editTechnicalDescriptionModal" tabindex="-1" aria-labelledby="editTechnicalDescriptionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTechnicalDescriptionModalLabel">Edit Technical Description</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea id="technicalDescription" class="form-control" rows="10" style="font-family: monospace;">{{ kb.description }}</textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="updateTechnicalDescription()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add this script block at the end of the content block -->
+        <script>
+        function updateTechnicalDescription() {
+            const description = document.getElementById('technicalDescription').value;
+            
+            fetch(`/knowledge_base/knowledge-base/{{ kb.id }}/update-description`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: description
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Reload the page to show the updated description
+                    location.reload();
+                } else {
+                    alert('Error updating description: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating description');
+            });
+        }
+        </script>
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+{% endblock content %}

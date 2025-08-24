@@ -1,0 +1,187 @@
+{% extends "partials/base.html" %}
+{% block title %}Create Knowledge Base Category{% endblock title %}
+
+{% block head %}
+{{ super() }}
+<!-- Add CSRF token meta tag -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Create Knowledge Base Project Category</h4>
+
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="javascript: void(0);">Knowledge Base</a></li>
+                                    <li class="breadcrumb-item active"><a href="javascript: void(0);"></a>Knowledge Base Categories</li>
+                                    <li class="breadcrumb-item active">Create Knowledge Base Category</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Create Knowledge Base Project Category</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="categoryForm">
+                                        <div class="mb-3">
+                                            <label for="category" class="form-label">Project Category Name*</label>
+                                            <input type="text" class="form-control" id="category" name="category" required>
+                                            <div class="invalid-feedback">
+                                                Please provide a category name.
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="company" class="form-label">Company*</label>
+                                            <select class="form-control" id="company" name="company_id" required>
+                                                {% if companies %}
+                                                    {% for company in companies %}
+                                                        <option value="{{ company.id }}" 
+                                                            {% if company.id == current_user.company_id %}selected{% endif %}>
+                                                            {{ company.company_name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <option value="">No companies available</option>
+                                                {% endif %}
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Please select a company.
+                                            </div>
+                                            {% if not companies %}
+                                                <div class="text-danger mt-1">
+                                                    <small>No companies found. Please contact your administrator.</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="activeYN" name="active" checked>
+                                            <label class="form-check-label" for="activeYN">Active</label>
+                                        </div>
+                                        <div class="d-flex justify-content-end">
+                                            <a href="{{ url_for('knowledge_base.list_categories') }}" class="btn btn-light me-2">Cancel</a>
+                                            <button type="submit" class="btn btn-success">Create Project Category</button>
+                                        </div>                                        
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                <!-- Include JavaScript at the bottom -->
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+                <script>
+                    $(document).ready(function() {
+                        // Configure toastr notifications
+                        toastr.options = {
+                            "closeButton": true,
+                            "progressBar": true,
+                            "positionClass": "toast-top-right",
+                            "timeOut": "3000"
+                        };
+                        
+                        $('#categoryForm').on('submit', function(e) {
+                            e.preventDefault();
+                            
+                            // Basic form validation
+                            let isValid = true;
+                            if ($('#category').val().trim() === '') {
+                                $('#category').addClass('is-invalid');
+                                isValid = false;
+                            } else {
+                                $('#category').removeClass('is-invalid');
+                            }
+                            
+                            if ($('#company').val() === '' || $('#company').val() === null) {
+                                $('#company').addClass('is-invalid');
+                                isValid = false;
+                            } else {
+                                $('#company').removeClass('is-invalid');
+                            }
+                            
+                            if (!isValid) {
+                                return false;
+                            }
+                            
+                            // Get form data
+                            const data = {
+                                category: $('#category').val().trim(),
+                                description: $('#description').val().trim(),
+                                active: $('#activeYN').is(':checked'),
+                                company_id: $('#company').val() // Add company_id to the data
+                            };
+                            
+                            // Debug: Log the form data being sent
+                            console.log('Form data being sent:', data);
+                            console.log('Company dropdown value:', $('#company').val());
+                            console.log('Company dropdown selected text:', $('#company option:selected').text());
+                            
+                            // Get CSRF token
+                            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+                            
+                            // Show loading indicator
+                            const submitBtn = $(this).find('button[type="submit"]');
+                            const originalText = submitBtn.text();
+                            submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+                            submitBtn.prop('disabled', true);
+                            
+                            // Send AJAX request
+                            $.ajax({
+                                url: "{{ url_for('knowledge_base.save_category') }}",
+                                type: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify(data),
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                },
+                                success: function(response) {
+                                    if (response.status === 'success') {
+                                        toastr.success('Category created successfully!');
+                                        setTimeout(function() {
+                                            window.location.href = "/knowledge_base/knowledge-base/category/" + response.category_id;
+                                        }, 1000);
+                                    } else {
+                                        toastr.error('Error: ' + response.message);
+                                        submitBtn.html(originalText);
+                                        submitBtn.prop('disabled', false);
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    console.error('Error details:', xhr.responseText);
+                                    toastr.error('Error: ' + (xhr.responseJSON?.message || error || 'Unknown error occurred'));
+                                    submitBtn.html(originalText);
+                                    submitBtn.prop('disabled', false);
+                                }
+                            });
+                        });
+                    });
+                </script>
+                <!-- end page title -->
+
+            </div>
+            <!-- container-fluid -->
+        </div>
+        <!-- End Page-content -->
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+    </div>
+{% endblock content %}

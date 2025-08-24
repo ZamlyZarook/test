@@ -1,0 +1,333 @@
+{% extends "partials/base.html" %}
+{% block title %}Role Management{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+    <!-- Start right Content here -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- start page title -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                            <h4 class="mb-sm-0">Role Management</h4>
+                            <div class="page-title-right">
+                                <ol class="breadcrumb m-0">
+                                    <li class="breadcrumb-item"><a href="{{ url_for('admin_panel.manage_roles') }}">Super Admin</a></li>
+                                    <li class="breadcrumb-item active">Roles</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end page title -->
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex align-items-center">
+                                    <h5 class="card-title mb-0 flex-grow-1">Manage Roles</h5>
+                                    <div class="flex-shrink-0">
+                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                                            <i class="ri-add-line align-bottom me-1"></i> Add Role
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Role Name</th>
+                                            <th>Description</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for role in roles %}
+                                        <tr>
+                                            <td>{{ role.role_name }}</td>
+                                            <td>{{ role.description or 'N/A' }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-info me-2" onclick="editRole({{ role.id }})">
+                                                    <i class="ri-pencil-line"></i>
+                                                </button>
+                                                <!-- <button class="btn btn-sm btn-primary" onclick="manageMenus({{ role.id }})">
+                                                    <i class="ri-menu-line"></i>
+                                                </button> -->
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <script>document.write(new Date().getFullYear())</script> © Sona DBA.
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end d-none d-sm-block">
+                            Designed & Developed by Team Sona DBA
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Add Role Modal -->
+    <div class="modal fade" id="addRoleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoleForm">
+                        <div class="mb-3">
+                            <label class="form-label">Role Name</label>
+                            <input type="text" class="form-control" name="role_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRole()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRoleForm">
+                    <div class="mb-3">
+                        <label class="form-label">Role Name</label>
+                        <input type="text" class="form-control" name="role_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updateRole()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Manage Menus Modal -->
+    <div class="modal fade" id="manageMenusModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Role Menus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="menuTree"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveMenuPermissions()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+
+    <script>
+        let currentRoleId = null;
+        
+        function editRole(roleId) {
+            fetch(`/admin_panel/role/${roleId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('editRoleForm').elements['role_name'].value = data.role_name;
+                document.getElementById('editRoleForm').elements['description'].value = data.description || '';
+                currentRoleId = roleId;
+                new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while fetching role details');
+            });
+        }
+        
+        function updateRole() {
+            const form = document.getElementById('editRoleForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            fetch(`/admin_panel/role/${currentRoleId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if(data.message === 'Success') {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the role');
+            });
+        }
+        
+        function saveRole() {
+            const form = document.getElementById('addRoleForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            fetch('/admin_panel/role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if(data.message === 'Success') {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the role');
+            });
+        }
+        
+        function manageMenus(roleId) {
+            currentRoleId = roleId;
+            fetch(`/admin_panel/role/${roleId}/menus`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    const menuTree = document.getElementById('menuTree');
+                    menuTree.className = 'card card-body border shadow-none';
+                    menuTree.innerHTML = buildMenuTree(data);
+                    
+                    const checkboxes = document.querySelectorAll('.menu-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            const li = this.closest('li');
+                            const childCheckboxes = li.querySelectorAll('.menu-checkbox');
+                            childCheckboxes.forEach(child => {
+                                child.checked = this.checked;
+                            });
+                        });
+                    });
+                    
+                    new bootstrap.Modal(document.getElementById('manageMenusModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching menu permissions');
+                });
+        }
+        
+        function saveMenuPermissions() {
+            const checkboxes = document.querySelectorAll('.menu-checkbox:checked');
+            const menuIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            fetch(`/admin_panel/role/${currentRoleId}/menus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({menu_ids: menuIds})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if(data.message === 'Success') {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving menu permissions');
+            });
+        }
+        
+        function buildMenuTree(menus, level = 0) {
+            let html = '<ul class="list-unstyled">';
+            menus.forEach(menu => {
+                html += `
+                    <li class="nav-item mb-2">
+                        <div class="d-flex align-items-center ps-${level * 3} border-start border-secondary border-opacity-10 ${level > 0 ? 'ms-3' : ''}">
+                            <div class="form-check">
+                                <input class="form-check-input menu-checkbox" 
+                                    type="checkbox" 
+                                    value="${menu.id}" 
+                                    ${menu.has_access ? 'checked' : ''}>
+                                <label class="form-check-label d-flex align-items-center">
+                                    ${menu.icon ? `<i class="${menu.icon} me-2"></i>` : ''}
+                                    <span class="fs-14">${menu.name}</span>
+                                </label>
+                            </div>
+                        </div>
+                        ${menu.children.length > 0 ? buildMenuTree(menu.children, level + 1) : ''}
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            return html;
+        }
+    </script>
+{% endblock content %}

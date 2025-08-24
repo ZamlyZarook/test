@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h3 class="text-center">{{ title }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="form-container">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.role_name.label(class="form-label") }}
+                            {{ form.role_name(class="form-control") }}
+                            {% if form.role_name.errors %}
+                            {% for error in form.role_name.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.role_code.label(class="form-label") }}
+                            {{ form.role_code(class="form-control") }}
+                            {% if form.role_code.errors %}
+                            {% for error in form.role_code.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                            {% for error in form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.permissions.label(class="form-label") }}
+                            <div class="border p-3 rounded">
+                                {% for permission in form.permissions %}
+                                <div class="form-check">
+                                    {{ permission(class="form-check-input") }}
+                                    {{ permission.label(class="form-check-label") }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.permissions.errors %}
+                            {% for error in form.permissions.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            {{ form.is_active.label(class="form-check-label") }}
+                        </div>
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('admin.roles') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

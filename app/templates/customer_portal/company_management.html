@@ -1,0 +1,506 @@
+{% extends "partials/base.html" %}
+
+{% block title %}Clearing Company Management{% endblock title %}
+
+{% block content %}
+<!-- Start right Content here -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                        <h4 class="mb-sm-0">Custom House Agent Management</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Customer Portal</a></li>
+                                <li class="breadcrumb-item active">Custom House Agent Management</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" id="flash-message">
+                <i class="ri-check-double-line"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-12">
+                    <!-- Filters Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Filters</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="GET" class="row g-3" id="filterForm">
+                                <div class="col-md-2">
+                                    <label for="entriesPerPage" class="form-label">Show Entries</label>
+                                    <select class="form-select" id="entriesPerPage" name="per_page" onchange="updateEntriesPerPage(this.value)">
+                                        <option value="5" {% if request.args.get('per_page')=='5' %}selected{% endif %}>5</option>
+                                        <option value="10" {% if request.args.get('per_page')=='10' or not request.args.get('per_page') %}selected{% endif %}>10</option>
+                                        <option value="25" {% if request.args.get('per_page')=='25' %}selected{% endif %}>25</option>
+                                        <option value="50" {% if request.args.get('per_page')=='50' %}selected{% endif %}>50</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="searchInput" class="form-label">Search Custom House Agent</label>
+                                    <input type="text" class="form-control" id="searchInput" name="search"
+                                        value="{{ request.args.get('search', '') }}" placeholder="Search by name, email, or username...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="ri-filter-3-line me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Company Management Tabs Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Custom House Agent Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Company Status Filter Tabs -->
+                            <ul class="nav nav-tabs mb-3" id="companyTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available-companies" type="button" role="tab">
+                                        Available Agents <span class="badge bg-primary" id="availableCount">{{ available_companies.total }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="assigned-tab" data-bs-toggle="tab" data-bs-target="#assigned-companies" type="button" role="tab">
+                                        Connected Agents <span class="badge bg-success" id="assignedCount">{{ assigned_companies.total }}</span>
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content" id="companyTabContent">
+                                <!-- Available Companies Tab -->
+                                <div class="tab-pane fade show active" id="available-companies" role="tabpanel">
+                                    <div class="table-responsive">
+                                        {% if available_companies.items %}
+                                        <table class="table table-nowrap align-middle table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Custom House Agent</th>
+                                                    <th>Country</th>
+                                                    <th>Email</th>
+                                                    <th>Contact</th>
+                                                    <th>Address</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for company in available_companies.items %}
+                                                <tr id="available-company-{{ company.id }}">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm me-2">
+                                                                <span class="avatar-title bg-soft-primary text-primary rounded-circle">
+                                                                    {{ company.company_name[:2].upper() }}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">{{ company.company_name }}</h6>
+                                                                <small class="text-muted">Custom House Agent</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{ company.country_info.countryName }}</td>
+                                                    <td>{{ company.email }}</td>
+                                                    <td>{{ company.contact_num or '-' }}</td>
+                                                    <td>
+                                                        <span class="text-muted" title="{{ company.address or 'No address provided' }}">
+                                                            {{ (company.address[:30] + '...') if company.address and company.address|length > 30 else (company.address or '-') }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-success btn-sm" onclick="assignCompany({{ company.id }}, '{{ company.company_name }}')">
+                                                            <i class="ri-link me-1"></i> Connect
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Pagination for Available Companies -->
+                                        <div class="d-flex justify-content-between align-items-center mt-4">
+                                            <div>
+                                                Showing {{ available_companies.items|length }} of {{ available_companies.total }} available agents
+                                            </div>
+                                            <nav aria-label="Available companies pagination">
+                                                <ul class="pagination mb-0">
+                                                    {% if available_companies.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.company_management', 
+                                                            page=available_companies.prev_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Previous</a>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% for page_num in available_companies.iter_pages() %}
+                                                    {% if page_num %}
+                                                    <li class="page-item {% if page_num == available_companies.page %}active{% endif %}">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.company_management', 
+                                                            page=page_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                                    </li>
+                                                    {% else %}
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                    {% endif %}
+                                                    {% endfor %}
+
+                                                    {% if available_companies.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.company_management', 
+                                                            page=available_companies.next_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Next</a>
+                                                    </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center p-4">
+                                            <i class="ri-building-line display-4 text-muted"></i>
+                                            <p class="mt-3">No available shipping agents found.</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Assigned Companies Tab -->
+                                <div class="tab-pane fade" id="assigned-companies" role="tabpanel">
+                                    <div class="table-responsive">
+                                        {% if assigned_companies.items %}
+                                        <table class="table table-nowrap align-middle table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Custom House Agent</th>
+                                                    <th>Country</th>
+                                                    <th>Email</th>
+                                                    <th>Contact</th>
+                                                    <th>Address</th>
+                                                    <th>Assignment Date</th>
+                                                    <th>Assigned By</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user, assignment in assigned_companies.items %}
+                                                <tr id="assigned-company-{{ user.id }}">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-sm me-2">
+                                                                <span class="avatar-title bg-soft-success text-success rounded-circle">
+                                                                    {{ user.company_name [:2].upper() }}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">{{ user.company_name }}</h6>
+                                                                <small class="text-muted">Custom House Agent</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{ user.country }}</td>
+                                                    <td>{{ user.email }}</td>
+                                                    <td>{{ user.contact_num or '-' }}</td>
+                                                    <td>
+                                                        <span class="text-muted" title="{{ user.address or 'No address provided' }}">
+                                                            {{ (user.address[:30] + '...') if user.address and user.address|length > 30 else (user.address or '-') }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge badge-soft-info">
+                                                            {{ assignment.assignment_date.strftime('%Y-%m-%d') if assignment.assignment_date else 'Unknown' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ assignment.assigned_by.name if assignment.assigned_by else 'Unknown' }}</td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-danger btn-sm" onclick="unassignCompany({{ user.id }}, '{{ user.company_name }}')">
+                                                            <i class="ri-unlink me-1"></i> Disconnect
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Pagination for Assigned Companies -->
+                                        <div class="d-flex justify-content-between align-items-center mt-4">
+                                            <div>
+                                                Showing {{ assigned_companies.items|length }} of {{ assigned_companies.total }} connected agents
+                                            </div>
+                                            <nav aria-label="Assigned companies pagination">
+                                                <ul class="pagination mb-0">
+                                                    {% if assigned_companies.has_prev %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.company_management', 
+                                                            page=assigned_companies.prev_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Previous</a>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% for page_num in assigned_companies.iter_pages() %}
+                                                    {% if page_num %}
+                                                    <li class="page-item {% if page_num == assigned_companies.page %}active{% endif %}">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.company_management', 
+                                                            page=page_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                                    </li>
+                                                    {% else %}
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                    {% endif %}
+                                                    {% endfor %}
+
+                                                    {% if assigned_companies.has_next %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('customer_portal.company_management', 
+                                                            page=assigned_companies.next_num,
+                                                            per_page=request.args.get('per_page', 10),
+                                                            search=request.args.get('search', '')) }}">Next</a>
+                                                    </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center p-4">
+                                            <i class="ri-building-2-line display-4 text-muted"></i>
+                                            <p class="mt-3">No shipping agents connected yet. Connect some agents from the available list.</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    {% block footer %}
+    {% include "partials/footer.html" %}
+    {% endblock footer %}
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle search form with debounce
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterCompanies();
+                }, 800);
+            });
+        }
+
+        // Entries per page auto-apply
+        const entriesPerPageSelect = document.getElementById('entriesPerPage');
+        if (entriesPerPageSelect) {
+            entriesPerPageSelect.addEventListener('change', function() {
+                updateEntriesPerPage(this.value);
+            });
+        }
+    });
+
+    // Function to update entries per page
+    function updateEntriesPerPage(value) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to assign a clearing company
+    function assignCompany(companyId, companyName) {
+        Swal.fire({
+            title: 'Confirm Assignment',
+            text: `Are you sure you want to connect "${companyName}" to your company?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Connect',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Connecting Company...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Make the assignment request
+                fetch("{{ url_for('customer_portal.assign_company') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({
+                        company_id: companyId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Reload the page to update the lists
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to assign shipping agent'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while assigning the shipping agent'
+                    });
+                });
+            }
+        });
+    }
+
+    // Function to unassign a clearing company
+    function unassignCompany(companyId, companyName) {
+        Swal.fire({
+            title: 'Confirm Disconnection',
+            text: `Are you sure you want to disconnect "${companyName}" from your company?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Disconnect',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Disconnecting Company...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Make the unassignment request
+                fetch("{{ url_for('customer_portal.unassign_company') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({
+                        company_id: companyId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Reload the page to update the lists
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to unassign shipping agent'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while disconnecting the shipping agent'
+                    });
+                });
+            }
+        });
+    }
+
+    // Auto-hide flash messages
+    setTimeout(function() {
+        const flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            flashMessage.remove();
+        }
+    }, 5000);
+</script>
+
+{% endblock extra_js %}('per_page', value);
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    }
+
+    // Function to filter companies
+    function filterCompanies() {
+        const currentUrl = new URL(window.location.href);
+        const searchValue = document.getElementById('searchInput').value.trim();
+        
+        if (searchValue) {
+            currentUrl.searchParams.set('search', searchValue);
+        } else {
+            currentUrl.searchParams.delete('search');
+        }
+        currentUrl.searchParams.set

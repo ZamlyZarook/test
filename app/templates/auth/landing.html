@@ -1,0 +1,2325 @@
+<!doctype html>
+<html lang="en" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none" data-preloader="disable" data-theme="default" data-theme-colors="default">
+
+
+<!-- Mirrored from themesbrand.com/velzon/html/master/landing.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 12 Aug 2024 07:47:05 GMT -->
+<head>
+
+    <meta charset="utf-8" />
+    <title>Navitrax - AI Powered CHA Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
+    <meta content="Themesbrand" name="author" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="{{url_for('static',filename='images/favicon.ico')}}">
+
+    <!--Swiper slider css-->
+    <link href="{{ url_for('static', filename='libs/swiper/swiper-bundle.min.css') }}" rel="stylesheet" type="text/css" />
+
+    <!-- Layout config Js -->
+    <script src="{{ url_for('static', filename='js/layout.js') }}"></script>
+    <!-- Bootstrap Css -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
+    <!-- Icons Css -->
+    <link href="{{ url_for('static', filename='css/icons.min.css') }}" rel="stylesheet" type="text/css" />
+    <!-- App Css-->
+    <link href="{{ url_for('static', filename='css/app.min.css') }}" rel="stylesheet" type="text/css" />
+    <!-- custom Css-->
+    <link href="{{ url_for('static', filename='css/custom.min.css') }}" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#navbar-example">
+
+    <!-- Begin page -->
+    <div class="layout-wrapper landing">
+        <nav class="navbar navbar-expand-lg navbar-landing fixed-top" id="navbar">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="{{ url_for('static', filename='images/logo-white.png') }}" class="card-logo card-logo-dark" alt="logo dark" height="45">
+                    <img src="{{ url_for('static', filename='images/logo-white.png') }}" class="card-logo card-logo-light" alt="logo light" height="45">
+                </a>
+                <button class="navbar-toggler py-0 fs-20 text-body" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="mdi mdi-menu"></i>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mx-auto mt-2 mt-lg-0" id="navbar-example">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#hero">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#services">Services</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#features">Features</a>
+                        </li>
+                        <!-- <li class="nav-item">
+                            <a class="nav-link" href="#plans">Plans</a>
+                        </li> -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#reviews">Reviews</a>
+                        </li>
+                        <!-- <li class="nav-item">
+                            <a class="nav-link" href="#team">Team</a>
+                        </li> -->
+                        <!-- <li class="nav-item">
+                            <a class="nav-link" href="#contact">Contact</a>
+                        </li> -->
+                    </ul>
+
+                    <div class="">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-link fw-medium text-decoration-none text-body">Sign in</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Sign Up</a>
+                    </div>
+                </div>
+
+            </div>
+        </nav>
+        <!-- end navbar -->
+        <div class="vertical-overlay" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent.show"></div>
+
+        <!-- start hero section -->
+        <section class="section pb-0 hero-section" id="hero">
+            <div class="bg-overlay bg-overlay-pattern"></div>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-sm-10">
+                        <div class="text-center mt-lg-5 pt-5">
+                            <h1 class="display-6 fw-semibold mb-3 lh-base">Transforming Trade Operations with <span class="text-success">AI-Powered </span>Supply Chain & Shipping Desk / CHA operation</h1>
+                            <p class="lead text-muted lh-base">AI-driven, cloud-based Supply Chain, Shipping Desk / Custom house agent operation .Our solution is purpose-built to streamline import/export operations, enhance regulatory compliance, and provide intelligent automation through AI</p>
+
+                            <!-- <div class="d-flex gap-2 justify-content-center mt-4">
+                                <a href="auth-signup-basic.html" class="btn btn-primary">Get Started <i class="ri-arrow-right-line align-middle ms-1"></i></a>
+                                <a href="pages-pricing.html" class="btn btn-danger">View Plans <i class="ri-eye-line align-middle ms-1"></i></a>
+                            </div> -->
+                        </div>
+
+                        <div class="mt-4 mt-sm-5 pt-sm-5 mb-sm-n5 demo-carousel">
+                            <div class="demo-img-patten-top d-none d-sm-block">
+                                <img src="{{ url_for('static', filename='images/landing/img-pattern.png') }}" class="d-block img-fluid" alt="...">
+                            </div>
+                            <div class="demo-img-patten-bottom d-none d-sm-block">
+                                <img src="{{ url_for('static', filename='images/landing/img-pattern.png') }}" class="d-block img-fluid" alt="...">
+                            </div>
+                            <div class="carousel slide carousel-fade" data-bs-ride="carousel">
+                                <div class="carousel-inner shadow-lg p-2 bg-white rounded">
+                                    <div class="carousel-item active" data-bs-interval="4000">
+                                        <img src="{{ url_for('static', filename='images/demos/default.png') }}" class="d-block w-100" alt="...">
+                                    </div>
+                                  
+                                    <div class="carousel-item" data-bs-interval="4000">
+                                        <img src="{{ url_for('static', filename='images/demos/material.png') }}" class="d-block w-100" alt="...">
+                                    </div>
+                                    <div class="carousel-item" data-bs-interval="4000">
+                                        <img src="{{ url_for('static', filename='images/demos/minimal.png') }}" class="d-block w-100" alt="...">
+                                    </div>
+                                    <div class="carousel-item" data-bs-interval="4000">
+                                        <img src="{{ url_for('static', filename='images/demos/creative.png') }}" class="d-block w-100" alt="...">
+                                    </div>
+                                   
+                                    <div class="carousel-item" data-bs-interval="4000">
+                                        <img src="{{ url_for('static', filename='images/demos/interactive.png') }}" class="d-block w-100" alt="...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+            <div class="position-absolute start-0 end-0 bottom-0 hero-shape-svg">
+                <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
+                    <g mask="url(&quot;#SvgjsMask1003&quot;)" fill="none">
+                        <path d="M 0,118 C 288,98.6 1152,40.4 1440,21L1440 140L0 140z">
+                        </path>
+                    </g>
+                </svg>
+            </div>
+            <!-- end shape -->
+        </section>
+        <!-- end hero section -->
+
+        <!-- start client section -->
+        <div class="pt-5 mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+
+                        <div class="text-center mt-5">
+                            <h5 class="fs-20">Trusted by <span class="text-primary">200+</span> Customers</h5>
+
+                            <!-- Swiper -->
+                            <!-- <div class="swiper trusted-client-slider mt-sm-5 mt-4 mb-sm-5 mb-4" dir="ltr">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <div class="client-images">
+                                            <img src="{{ url_for('static', filename='images/clients/amazon.svg') }}" alt="client-img" class="mx-auto img-fluid d-block">
+                                        </div>
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <div class="client-images">
+                                            <img src="{{ url_for('static', filename='images/clients/walmart.svg') }}" alt="client-img" class="mx-auto img-fluid d-block">
+                                        </div>
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <div class="client-images">
+                                            <img src="{{ url_for('static', filename='images/clients/lenovo.svg') }}" alt="client-img" class="mx-auto img-fluid d-block">
+                                        </div>
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <div class="client-images">
+                                            <img src="{{ url_for('static', filename='images/clients/paypal.svg') }}" alt="client-img" class="mx-auto img-fluid d-block">
+                                        </div>
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <div class="client-images">
+                                            <img src="{{ url_for('static', filename='images/clients/shopify.svg') }}" alt="client-img" class="mx-auto img-fluid d-block">
+                                        </div>
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <div class="client-images">
+                                            <img src="{{ url_for('static', filename='images/clients/verizon.svg') }}" alt="client-img" class="mx-auto img-fluid d-block">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </div>
+        <!-- end client section -->
+
+        <!-- start services -->
+        <section class="section" id="services">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <h1 class="mb-3 ff-secondary fw-semibold lh-base">Transform your trade operations with comprehensive AI-powered automation</h1>
+                            <p class="text-muted">By combining process automation with intelligent analytics and compliance monitoring, our solution transforms traditional business processes into a future-ready digital workflow system.</p>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-qr-code-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Automate CHA Documentation</h5>
+                                <p class="text-muted my-3 ff-secondary">Digitalize and automate workflows including BL/AWB handling, HS code mapping, and customs clearance.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-dashboard-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Enhance PO Lifecycle Management</h5>
+                                <p class="text-muted my-3 ff-secondary">Ensure end-to-end PO traceability with real-time exception alerts and milestone visibility.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-gift-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Enable Smart Decisioning</h5>
+                                <p class="text-muted my-3 ff-secondary">Integrate AI-driven analytics and anomaly detection to support operational decisions.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <!-- <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-customer-service-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Awesome Support</h5>
+                                <p class="text-muted my-3 ff-secondary">Awesome Support is the most versatile and feature-rich support plugin for all version.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- end col -->
+                    <!-- <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-stack-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Truly Multipurpose</h5>
+                                <p class="text-muted my-3 ff-secondary">You usually get a broad range of options to play with. This enables you to use a single theme across multiple.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- end col -->
+                    <!-- <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-settings-2-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Easy to customize</h5>
+                                <p class="text-muted my-3 ff-secondary">Personalise your own website, no matter what theme and what customization options.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- end col -->
+
+                    <!-- <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-slideshow-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Responsive & Clean Design</h5>
+                                <p class="text-muted my-3 ff-secondary">Responsive design is a graphic user interface (GUI) design approach used to create content.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- end col -->
+                    <!-- <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-google-fill fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Google Font Collection</h5>
+                                <p class="text-muted my-3 ff-secondary">Google Fonts is a collection of 915 fonts, all available to use for free on your website.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- end col -->
+                    <!-- <div class="col-lg-4">
+                        <div class="d-flex p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm icon-effect">
+                                    <div class="avatar-title bg-transparent text-success rounded-circle">
+                                        <i class="ri-briefcase-5-line fs-36"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="fs-18">Top Industry Specialists</h5>
+                                <p class="text-muted my-3 ff-secondary">An industrial specialist works with industrial operations to ensure that manufacturing facilities work.</p>
+                                <div>
+                                    <a href="#" class="fs-13 fw-medium">Learn More <i class="ri-arrow-right-s-line align-bottom"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end services -->
+
+        <!-- start features -->
+        <section class="section bg-light py-5" id="features">
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-lg-6 col-sm-7 mx-auto">
+                        <div>
+                            <img src="{{ url_for('static', filename='images/landing/features/img-1.png') }}" alt="" class="img-fluid mx-auto">                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="text-muted">
+                            <div class="avatar-sm icon-effect mb-4">
+                                <div class="avatar-title bg-transparent rounded-circle text-success h1">
+                                    <i class="ri-store-line fs-36"></i>
+                                </div>
+                            </div>
+                            <h3 class="mb-3 fs-20">AI-Powered Customs Processing</h3>
+                            <p class="mb-4 ff-secondary fs-16">Streamline end-to-end customs processing with AI-powered automation. From BL/AWB capture to HS Code assignment and digital clearance submissions, reduce manual work and errors.</p>
+                        
+                            <div class="row pt-3">
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <h4>AI</h4>
+                                        <p>OCR Validation</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <h4>Real-time</h4>
+                                        <p>Tracking</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <h4>100%</h4>
+                                        <p>Compliance</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end features -->
+
+        <!-- start cta -->
+        <section class="py-5 bg-primary position-relative">
+            <div class="bg-overlay bg-overlay-pattern opacity-50"></div>
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-sm">
+                        <div>
+                            <h4 class="text-white mb-0 fw-semibold">Transform Your Trade Operations with Navitrax</h4>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-sm-auto">
+                        <div>
+                            <a href="{{ url_for('auth.register') }}" target="_blank" class="btn bg-gradient btn-danger"><i class="ri-register-line align-middle me-1"></i> Sign Up</a>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end cta -->
+
+        <!-- start features -->
+        <section class="section bg-light">
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-lg-6 order-2 order-lg-1">
+                        <div class="text-muted">
+                            <h5 class="fs-12 text-uppercase text-success">Tracking</h5>
+                            <h4 class="mb-3">End-to-End Shipment Visibility</h4>
+                            <p class="mb-4 ff-secondary">Track the post-PO journey from port arrival to final delivery. Unify customs status, container milestones, and delivery events against each PO line with real-time ETAs and alerts.</p>
+                        
+                            <div class="row">
+                                <div class="col-sm-5">
+                                    <div class="vstack gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Container Tracking</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Customs Visibility</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Demurrage Alerts</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="vstack gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Delivery Tracking</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">ERP Integration</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-6 col-sm-7 col-10 ms-auto order-1 order-lg-2">
+                        <div>
+                            <img src="{{ url_for('static', filename='images/landing/features/img-2.png') }}" alt="" class="img-fluid">
+                        </div>
+                    </div>
+                    </div>
+                    <!-- end row -->
+                    
+                    <div class="row align-items-center mt-5 pt-lg-5 gy-4">
+                        <div class="col-lg-6 col-sm-7 col-10 mx-auto">
+                            <div>
+                                <img src="{{ url_for('static', filename='images/landing/features/img-3.png') }}" alt="" class="img-fluid">
+                            </div>
+                        </div>
+                    <div class="col-lg-6">
+                        <div class="text-muted ps-lg-5">
+                            <h5 class="fs-12 text-uppercase text-success">Compliance</h5>
+                            <h4 class="mb-3">Centralized Document Management</h4>
+                            <p class="mb-4">Centralize permits, licenses, and certificates across trade and logistics. AI verifies documents, tracks expiries, and prevents compliance gaps in real time with automated reminders.</p>
+                            <div class="vstack gap-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <div class="avatar-xs icon-effect">
+                                            <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                <i class="ri-check-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">AI Document Verification</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <div class="avatar-xs icon-effect">
+                                            <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                <i class="ri-check-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Expiry Monitoring</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <div class="avatar-xs icon-effect">
+                                            <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                <i class="ri-check-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Automated Escalations</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        {#
+        <!-- start fourth feature - Communications -->
+        <section class="section bg-light py-5">
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-lg-6 order-2 order-lg-1">
+                        <div class="text-muted">
+                            <h5 class="fs-12 text-uppercase text-success">Communications</h5>
+                            <h4 class="mb-3">AI-Driven Communication Hub</h4>
+                            <p class="mb-4 ff-secondary">Bring chat, email, SMS, and system alerts into a single, AI-driven hub—no third-party tools required. Automatically route, summarize, and escalate messages to the right stakeholders.</p>
+                        
+                            <div class="row">
+                                <div class="col-sm-5">
+                                    <div class="vstack gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Unified Messaging</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Smart Routing</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Auto Escalation</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="vstack gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">SLA Tracking</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Case Management</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-6 col-sm-7 col-10 ms-auto order-1 order-lg-2">
+                        <div>
+                            <img src="{{ url_for('static', filename='images/landing/features/img-2.png') }}" alt="" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end fourth feature -->
+
+        <!-- start fifth feature - Cost Management -->
+        <section class="section">
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-lg-6 col-sm-7 col-10 mx-auto">
+                        <div>
+                            <img src="{{ url_for('static', filename='images/landing/features/img-3.png') }}" alt="" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="text-muted ps-lg-5">
+                            <h5 class="fs-12 text-uppercase text-success">Cost Management</h5>
+                            <h4 class="mb-3">Complete Cost Visibility</h4>
+                            <p class="mb-4">Track and reconcile every cost from port arrival to final delivery. Allocate freight, customs, terminal, and last-mile charges to BL/AWB, containers, and PO lines with proof attached.</p>
+                        
+                            <div class="vstack gap-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <div class="avatar-xs icon-effect">
+                                            <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                <i class="ri-check-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Landed Cost Capture & Auto-Invoice Processing</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <div class="avatar-xs icon-effect">
+                                            <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                <i class="ri-check-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Demurrage & Detention Counters with Alerts</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-2">
+                                        <div class="avatar-xs icon-effect">
+                                            <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                <i class="ri-check-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Smart Allocation & Variance Management</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end fifth feature -->
+
+        <!-- start sixth feature - HS Code Management -->
+        <section class="section bg-light py-5">
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-lg-6 order-2 order-lg-1">
+                        <div class="text-muted">
+                            <h5 class="fs-12 text-uppercase text-success">Classification</h5>
+                            <h4 class="mb-3">Smart HS Code Management</h4>
+                            <p class="mb-4 ff-secondary">Classify once, ship everywhere—safely and compliantly. Link HS codes to SKUs with approvals and a full audit trail. AI monitors document expiries against shipment ETAs to prevent holds and demurrage.</p>
+                        
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="vstack gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">SKU-Level Registry</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Approval Workflows</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Pre-clearance Checks</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="vstack gap-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Expiry Tracking</h5>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-xs icon-effect">
+                                                    <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                        <i class="ri-check-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h5 class="fs-14 mb-0">Audit Trails</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-6 col-sm-7 col-10 ms-auto order-1 order-lg-2">
+                        <div>
+                            <img src="{{ url_for('static', filename='images/landing/features/img-1.png') }}" alt="" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end sixth feature -->
+        #}
+        <!-- end features -->
+
+
+        <!-- start detailed features -->
+<section class="section" id="detailed-features">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <h3 class="mb-3 fw-semibold">Comprehensive Feature Set</h3>
+                    <p class="text-muted mb-4 ff-secondary">Every feature you need to streamline your trade operations and ensure compliance</p>
+                </div>
+            </div>
+        </div>
+        <!-- end row -->
+
+        <div class="row g-4">
+            <!-- Customs Processing Details -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-title bg-success bg-gradient rounded text-white">
+                                    <i class="ri-article-line" fs-18"></i>
+                                </div>
+                            </div>
+                            <h5 class="mb-0">Customs Processing Features</h5>
+                        </div>
+                        <ul class="list-unstyled mb-0">
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Auto-capture BL/AWB, invoice & packing list data (OCR + validation)</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>HS Code recommendation with rule engine & justification trail</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>One-click customs declarations with duty/tax calculation</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Live milestone tracking across carriers, brokers & customs portals</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Compliance checks against tariff changes, sanctions & documentation rules</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Native integrations with ERP/WMS and shipping lines via secure APIs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipment Tracking Details -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-title bg-primary bg-gradient rounded text-white">
+                                    <i class="ri-ship-line fs-18"></i>
+                                </div>
+                            </div>
+                            <h5 class="mb-0">Shipment Tracking Features</h5>
+                        </div>
+                        <ul class="list-unstyled mb-0">
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Live container/BL/AWB tracking with vessel/flight, ETD/ETA updates</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Customs visibility: manifest → assessment → duty payment → release</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Clearance milestones & alerts: document check, inspection holds, gate-in/out</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Demurrage & detention counters with configurable thresholds</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Delivery Order (DO) status, trucking assignment, last-mile GPS, POD capture</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Exception dashboard with SLA timers, delay reasons, exportable audit trail</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Management Details -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-title bg-warning bg-gradient rounded text-white">
+                                    <i class="ri-file-shield-line fs-18"></i>
+                                </div>
+                            </div>
+                            <h5 class="mb-0">Document & Compliance</h5>
+                        </div>
+                        <ul class="list-unstyled mb-0">
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>AI-driven document verification (OCR, field validation, tamper checks)</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Continuous expiry monitoring with rolling calendars & alerts</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Smart notifications via email/SMS/in-app with follow-up rules</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Escalation matrix with SLA timers for compliance teams</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Renewal workflows: prefilled forms, e-signature, authority portals</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Audit-ready trails & dashboards with PDF/Excel export</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Hub Details -->
+            <div class="col-lg-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-sm me-3">
+                                <div class="avatar-title bg-info bg-gradient rounded text-white">
+                                    <i class="ri-message-3-line fs-18"></i>
+                                </div>
+                            </div>
+                            <h5 class="mb-0">Communication Hub</h5>
+                        </div>
+                        <ul class="list-unstyled mb-0">
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Unified in-app chat with @mentions, file sharing, threads</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Built-in email & SMS with templates and scheduling</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Rules-based alerts on milestones, exceptions, expiries</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Automated escalation matrix with SLA timers</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>Case/ticketing from alerts with AI summaries</li>
+                            <li class="py-1"><i class="ri-check-line text-success me-2"></i>End-to-end visibility with unified inbox & webhooks</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end row -->
+    </div>
+    <!-- end container -->
+</section>
+<!-- end detailed features -->
+
+        <!-- start core capabilities -->
+<section class="section bg-light" id="core-capabilities">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <h3 class="mb-3 fw-semibold">Core Platform Capabilities</h3>
+                    <p class="text-muted mb-4 ff-secondary">Essential features that make Navitrax the complete solution for modern trade operations</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-primary bg-gradient rounded-circle">
+                                <i class="ri-link fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">ERP Integration</h5>
+                        <p class="text-muted mb-0">Robust APIs and middleware for seamless SAP ERP integration with real-time data sync</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-success bg-gradient rounded-circle">
+                                <i class="ri-shield-user-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">Role-Based Access</h5>
+                        <p class="text-muted mb-0">Granular access control with detailed audit logs for all activities and compliance</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-warning bg-gradient rounded-circle">
+                                <i class="ri-plug-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">Third-Party Integration</h5>
+                        <p class="text-muted mb-0">Connectors for port authorities, customs portals, and freight service providers</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-danger bg-gradient rounded-circle">
+                                <i class="ri-alarm-warning-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">Demurrage Prevention</h5>
+                        <p class="text-muted mb-0">Early warning systems and milestone tracking to minimize cycle time and costs</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-info bg-gradient rounded-circle">
+                                <i class="ri-file-text-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">Document Digitization</h5>
+                        <p class="text-muted mb-0">Automated classification and processing of trade documents with AI validation</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-secondary bg-gradient rounded-circle">
+                                <i class="ri-money-dollar-circle-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">Expense Management</h5>
+                        <p class="text-muted mb-0">Complete tracking of landed costs and related expenses with automated reconciliation</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-primary bg-gradient rounded-circle">
+                                <i class="ri-robot-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">AI Analytics</h5>
+                        <p class="text-muted mb-0">Intelligent automation and anomaly detection to support operational decisions</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-sm-6">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <div class="avatar-title bg-success bg-gradient rounded-circle">
+                                <i class="ri-time-line fs-20"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-3">Real-Time Alerts</h5>
+                        <p class="text-muted mb-0">Exception alerts and milestone visibility for end-to-end PO traceability</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end core capabilities -->
+
+
+
+
+        {#
+        <!-- start plan -->
+        <section class="section bg-light" id="plans">
+            <div class="bg-overlay bg-overlay-pattern"></div>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <h3 class="mb-3 fw-semibold">Pricing Plans That Grow With You</h3>
+                            <p class="text-muted mb-4">Simple pricing. No hidden fees. Advanced features for your business.</p>
+
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div>
+                                    <h5 class="fs-14 mb-0">Month</h5>
+                                </div>
+                                <div class="form-check form-switch fs-20 ms-3 " onclick="check()">
+                                    <input class="form-check-input" type="checkbox" id="plan-switch">
+                                    <label class="form-check-label" for="plan-switch"></label>
+                                </div>
+                                <div>
+                                    <h5 class="fs-14 mb-0">Annual <span class="badge bg-success-subtle text-success">Save 20%</span></h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+
+                <div class="row gy-4">
+                    <div class="col-lg-4">
+                        <div class="card plan-box mb-0">
+                            <div class="card-body p-4 m-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1 fw-semibold">Basic Plan</h5>
+                                        <p class="text-muted mb-0">For Startup</p>
+                                    </div>
+                                    <div class="avatar-sm">
+                                        <div class="avatar-title bg-light rounded-circle text-primary">
+                                            <i class="ri-book-mark-line fs-20"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="py-4 text-center">
+                                    <h1 class="month"><sup><small>$</small></sup><span class="ff-secondary fw-bold">19</span> <span class="fs-13 text-muted">/Month</span></h1>
+                                    <h1 class="annual"><sup><small>$</small></sup><span class="ff-secondary fw-bold">171</span> <span class="fs-13 text-muted">/Year</span></h1>
+                                </div>
+
+                                <div>
+                                    <ul class="list-unstyled text-muted vstack gap-3 ff-secondary">
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>100</b> Coupons/Month
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    Basic Raffle Features
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    QR Code Generation
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    Basic Analytics
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    Email Support
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div class="mt-4">
+                                        <a href="javascript:void(0);" class="btn btn-soft-success w-100">Get Started</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end col-->
+                    <div class="col-lg-4">
+                        <div class="card plan-box mb-0 ribbon-box right">
+                            <div class="card-body p-4 m-2">
+                                <div class="ribbon-two ribbon-two-danger"><span>Popular</span></div>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1 fw-semibold">Pro Business</h5>
+                                        <p class="text-muted mb-0">Professional plans</p>
+                                    </div>
+                                    <div class="avatar-sm">
+                                        <div class="avatar-title bg-light rounded-circle text-primary">
+                                            <i class="ri-medal-fill fs-20"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="py-4 text-center">
+                                    <h1 class="month"><sup><small>$</small></sup><span class="ff-secondary fw-bold">29</span> <span class="fs-13 text-muted">/Month</span></h1>
+                                    <h1 class="annual"><sup><small>$</small></sup><span class="ff-secondary fw-bold">261</span> <span class="fs-13 text-muted">/Year</span></h1>
+                                </div>
+
+                                <div>
+                                    <ul class="list-unstyled text-muted vstack gap-3 ff-secondary">
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>Unlimited</b> Coupons
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    Advanced Raffle System
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    Advanced Analytics
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>Priority</b> Support
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    Multi-channel Notifications
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div class="mt-4">
+                                        <a href="javascript:void(0);" class="btn btn-soft-success w-100">Get Started</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end col-->
+                    <div class="col-lg-4">
+                        <div class="card plan-box mb-0">
+                            <div class="card-body p-4 m-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1 fw-semibold">Platinum Plan</h5>
+                                        <p class="text-muted mb-0">Enterprise Businesses</p>
+                                    </div>
+                                    <div class="avatar-sm">
+                                        <div class="avatar-title bg-light rounded-circle text-primary">
+                                            <i class="ri-stack-fill fs-20"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="py-4 text-center">
+                                    <h1 class="month"><sup><small>$</small></sup><span class="ff-secondary fw-bold">39</span> <span class="fs-13 text-muted">/Month</span></h1>
+                                    <h1 class="annual"><sup><small>$</small></sup><span class="ff-secondary fw-bold">351</span> <span class="fs-13 text-muted">/Year</span></h1>
+                                </div>
+                                
+                                <div>
+                                    <ul class="list-unstyled text-muted vstack gap-3 ff-secondary">
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>Unlimited</b> Coupons & Raffles
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>Custom</b> Integration Solutions
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    AI-Powered Fraud Prevention
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>Dedicated</b> Account Manager
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>24/7</b> Priority Support
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <b>Advanced</b> Analytics & Reporting
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 text-success me-1">
+                                                    <i class="ri-checkbox-circle-fill fs-15 align-middle"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    White-Labeling Options
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div class="mt-4">
+                                        <a href="javascript:void(0);" class="btn btn-soft-success w-100">Contact Sales</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end col-->
+                </div>
+                <!--end row-->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end plan -->
+         #}
+
+        <!-- start faqs -->
+        <section class="section">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <h3 class="mb-3 fw-semibold">Frequently Asked Questions</h3>
+                            <p class="text-muted mb-4 ff-secondary">Find answers to common questions about our AI-powered supply chain and customs management platform. Contact us for more specific inquiries!</p>
+                            <div class="hstack gap-2 justify-content-center">
+                                <button type="button" class="btn btn-primary btn-label rounded-pill"><i class="ri-mail-line label-icon align-middle rounded-pill fs-16 me-2"></i> Email Us</button>
+                                <button type="button" class="btn btn-info btn-label rounded-pill"><i class="ri-twitter-line label-icon align-middle rounded-pill fs-16 me-2"></i> Send Us Tweet</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+
+                <div class="row g-lg-5 g-4">
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0 me-1">
+                                <i class="ri-question-line fs-24 align-middle text-success me-1"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0 fw-semibold">General Questions</h5>
+                            </div>
+                        </div>
+                        <div class="accordion custom-accordionwithicon custom-accordion-border accordion-border-box" id="genques-accordion">
+                            <div class="accordion-item">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#genques-collapseOne" aria-expanded="true" aria-controls="genques-collapseOne">
+                                    How does the AI customs processing work?
+                                </button>
+                                </h2>
+                                <div id="genques-collapseOne" class="accordion-collapse collapse show" aria-labelledby="genques-headingOne" data-bs-parent="#genques-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        Our AI automatically captures BL/AWB and invoice data using OCR technology, recommends HS codes with justification trails, and generates customs declarations with duty calculations. The system learns from your patterns to improve accuracy over time.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#genques-collapseTwo" aria-expanded="false" aria-controls="genques-collapseTwo">
+                                    Can this integrate with our existing ERP system?
+                                </button>
+                                </h2>
+                                <div id="genques-collapseTwo" class="accordion-collapse collapse" aria-labelledby="genques-headingTwo" data-bs-parent="#genques-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        Yes! We provide robust APIs and middleware for seamless integration with SAP ERP systems and other major platforms. Our integration team works with you to ensure smooth data flow between systems without disrupting your current operations.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="genques-headingThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#genques-collapseThree" aria-expanded="false" aria-controls="genques-collapseThree">
+                                        How does the system handle regulatory compliance?
+                                    </button>
+                                </h2>
+                                <div id="genques-collapseThree" class="accordion-collapse collapse" aria-labelledby="genques-headingThree" data-bs-parent="#genques-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        Our platform continuously monitors regulatory changes, sanctions updates, and documentation requirements. The AI system automatically validates compliance against current rules and provides early warnings for any potential issues, ensuring your shipments clear customs without delays.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="genques-headingFour">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#genques-collapseFour" aria-expanded="false" aria-controls="genques-collapseFour">
+                                        Can the platform prevent demurrage charges?
+                                    </button>
+                                </h2>
+                                <div id="genques-collapseFour" class="accordion-collapse collapse" aria-labelledby="genques-headingFour" data-bs-parent="#genques-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        Yes! Our early warning system tracks container free time, detention periods, and document expiry dates. You'll receive automated alerts well before deadlines, with escalation workflows to ensure timely action and minimize demurrage and detention costs.
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- <div class="accordion-item">
+                                <h2 class="accordion-header" id="genques-headingThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#genques-collapseThree" aria-expanded="false" aria-controls="genques-collapseThree">
+                                        What are theme features?
+                                    </button>
+                                </h2>
+                                <div id="genques-collapseThree" class="accordion-collapse collapse" aria-labelledby="genques-headingThree" data-bs-parent="#genques-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        Theme features is a set of specific functionality that may be enabled by theme authors. Themes must register each
+                                        individual Theme Feature that the author wishes to support. Theme support functions should be called in the theme's functions.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="genques-headingFour">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#genques-collapseFour" aria-expanded="false" aria-controls="genques-collapseFour">
+                                        What is simple theme?
+                                    </button>
+                                </h2>
+                                <div id="genques-collapseFour" class="accordion-collapse collapse" aria-labelledby="genques-headingFour" data-bs-parent="#genques-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        Simple is a free WordPress theme, by Themify, built exactly what it is named for: simplicity. Immediately upgrade the
+                                        quality of your WordPress site with the simple theme To use the built-in Chrome theme editor.
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                        <!--end accordion-->
+
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0 me-1">
+                                <i class="ri-shield-keyhole-line fs-24 align-middle text-success me-1"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0 fw-semibold">Privacy &amp; Security</h5>
+                            </div>
+                        </div>
+
+                        <div class="accordion custom-accordionwithicon custom-accordion-border accordion-border-box" id="privacy-accordion">
+                            <div class="accordion-item">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#privacy-collapseOne" aria-expanded="false" aria-controls="privacy-collapseOne">
+                                    How do you ensure trade document security?
+                                </button>
+                                </h2>
+                                <div id="privacy-collapseOne" class="accordion-collapse collapse" aria-labelledby="privacy-headingOne" data-bs-parent="#privacy-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        We employ bank-grade encryption for all trade documents and maintain detailed audit logs for compliance. Our platform is hosted on Amazon AWS with enterprise-level security protocols, ensuring your sensitive shipping and customs data is protected at all times.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#privacy-collapseTwo" aria-expanded="true" aria-controls="privacy-collapseTwo">
+                                    What support do you provide for implementation?
+                                </button>
+                                </h2>
+                                <div id="privacy-collapseTwo" class="accordion-collapse collapse show" aria-labelledby="privacy-headingTwo" data-bs-parent="#privacy-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        We provide comprehensive implementation support including system setup, ERP integration assistance, staff training, and ongoing technical support. Our team of trade logistics experts ensures smooth deployment and helps optimize your workflows.
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- <div class="accordion-item">
+                                <h2 class="accordion-header" id="privacy-headingThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#privacy-collapseThree" aria-expanded="false" aria-controls="privacy-collapseThree">
+                                        How do you develop a theme?
+                                    </button>
+                                </h2>
+                                <div id="privacy-collapseThree" class="accordion-collapse collapse" aria-labelledby="privacy-headingThree" data-bs-parent="#privacy-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        A short story, novella, or novel presents a narrative to its reader. Perhaps that narrative involves mystery, terror,
+                                        romance, comedy, or all of the above. These works of fiction may also contain memorable characters, vivid
+                                        world-building, literary devices.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="privacy-headingFour">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#privacy-collapseFour" aria-expanded="false" aria-controls="privacy-collapseFour">
+                                        Do stories need themes?
+                                    </button>
+                                </h2>
+                                <div id="privacy-collapseFour" class="accordion-collapse collapse" aria-labelledby="privacy-headingFour" data-bs-parent="#privacy-accordion">
+                                    <div class="accordion-body ff-secondary">
+                                        A story can have as many themes as the reader can identify based on recurring patterns and parallels within the story
+                                        itself. In looking at ways to separate themes into a hierarchy, we might find it useful to follow the example of a
+                                        single book.
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                        <!--end accordion-->
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section> 
+        <!-- end faqs -->
+
+        <!-- start review -->
+        <section class="section bg-primary" id="reviews">
+            <div class="bg-overlay bg-overlay-pattern"></div>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="text-center">
+                            <div>
+                                <i class="ri-double-quotes-l text-success display-3"></i>
+                            </div>
+                            <h4 class="text-white mb-5"><span class="text-success">100</span>+ Satisfied clients</h4>
+
+                            <!-- Swiper -->
+                            <div class="swiper client-review-swiper rounded" dir="ltr">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <div class="row justify-content-center">
+                                            <div class="col-10">
+                                                <div class="text-white-50">
+                                                    <p class="fs-20 ff-secondary mb-4">"Navitrax has transformed our customs clearance process. What used to take days now happens in hours with their AI automation. The real-time tracking gives us complete visibility into our shipments from port to delivery."</p>
+
+                                                    <div>
+                                                        <h5 class="text-white">- Import Operations Manager</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- end slide -->
+                                    <div class="swiper-slide">
+                                        <div class="row justify-content-center">
+                                            <div class="col-10">
+                                                <div class="text-white-50">
+                                                    <p class="fs-20 ff-secondary mb-4">"The compliance management features have saved us from countless delays and penalties. The AI document verification catches issues before they become problems, and the automated alerts keep our team on top of all deadlines."</p>
+
+                                                    <div>
+                                                        <h5 class="text-white">- Customs Broker</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- end slide -->
+                                    <div class="swiper-slide">
+                                        <div class="row justify-content-center">
+                                            <div class="col-10">
+                                                <div class="text-white-50">
+                                                    <p class="fs-20 ff-secondary mb-4">"The cost tracking and reconciliation features give us complete visibility into landed costs. We can now allocate expenses accurately and identify cost-saving opportunities. The ROI has been tremendous."</p>
+
+                                                    <div>
+                                                        <h5 class="text-white">- Supply Chain Director</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- end slide -->
+                                    <div class="swiper-slide">
+                                        <div class="row justify-content-center">
+                                            <div class="col-10">
+                                                <div class="text-white-50">
+                                                    <p class="fs-20 ff-secondary mb-4">"The ERP integration was seamless, and the unified communication hub has eliminated the chaos of managing multiple channels. Everything flows smoothly from PO creation to final delivery confirmation."</p>
+
+                                                    <div>
+                                                        <h5 class="text-white">- Logistics Coordinator</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="swiper-button-next bg-white rounded-circle"></div>
+                                <div class="swiper-button-prev bg-white rounded-circle"></div>
+                                <div class="swiper-pagination position-relative mt-2"></div>
+                            </div>
+                            <!-- end slider -->
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end review -->
+
+        <!-- start counter -->
+        <section class="py-5 position-relative bg-light">
+            <div class="container">
+                <div class="row text-center gy-4">
+                    <div class="col-lg-3 col-6">
+                        <div>
+                            <h2 class="mb-2"><span class="counter-value" data-target="500">0</span>+</h2>
+                            <div class="text-muted">Shipments Processed</div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    
+                    <div class="col-lg-3 col-6">
+                        <div>
+                            <h2 class="mb-2"><span class="counter-value" data-target="10">0</span>+</h2>
+                            <div class="text-muted">Countries Supported</div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    
+                    <div class="col-lg-3 col-6">
+                        <div>
+                            <h2 class="mb-2"><span class="counter-value" data-target="200">0</span>+</h2>
+                            <div class="text-muted">Trade Partners</div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-3 col-6">
+                        <div>
+                            <h2 class="mb-2"><span class="counter-value" data-target="99">0</span>%</h2>
+                            <div class="text-muted">Compliance Rate</div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end counter -->
+        {#
+        <!-- start Work Process -->
+        <section class="section">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <h3 class="mb-3 fw-semibold">Our Work Process</h3>
+                            <p class="text-muted mb-4 ff-secondary">In an ideal world this website wouldn’t exist, a client would acknowledge the importance of having web copy before the Proin vitae ipsum vel ex finibus semper design starts.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+
+                <div class="row text-center">
+                    <div class="col-lg-4">
+                        <div class="process-card mt-4">
+                            <div class="process-arrow-img d-none d-lg-block">
+                                <img src="{{ url_for('static', filename='images/landing/process-arrow-img.png') }}" alt="" class="img-fluid">
+                            </div>
+                            <div class="avatar-sm icon-effect mx-auto mb-4">
+                                <div class="avatar-title bg-transparent text-success rounded-circle h1">
+                                    <i class="ri-quill-pen-line"></i>
+                                </div>
+                            </div>
+                            
+                            <h5>Tell us what you need</h5>
+                            <p class="text-muted ff-secondary">The profession and the employer and your desire to make your mark.</p>
+                            </div>
+                            </div>
+                            <!-- end col -->
+                            <div class="col-lg-4">
+                            <div class="process-card mt-4">
+                                <div class="process-arrow-img d-none d-lg-block">
+                                    <img src="{{ url_for('static', filename='images/landing/process-arrow-img.png') }}" alt="" class="img-fluid">
+                                </div>
+                            <div class="avatar-sm icon-effect mx-auto mb-4">
+                                <div class="avatar-title bg-transparent text-success rounded-circle h1">
+                                    <i class="ri-user-follow-line"></i>
+                                </div>
+                            </div>
+
+                            <h5>Get free quotes</h5>
+                            <p class="text-muted ff-secondary">The most important aspect of beauty was, therefore, an inherent part.</p>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-4">
+                        <div class="process-card mt-4">
+                            <div class="avatar-sm icon-effect mx-auto mb-4">
+                                <div class="avatar-title bg-transparent text-success rounded-circle h1">
+                                    <i class="ri-book-mark-line"></i>
+                                </div>
+                            </div>
+
+                            <h5>Deliver high quality product</h5>
+                            <p class="text-muted ff-secondary">We quickly learn to fear and thus automatically avoid potentially.</p>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end Work Process -->
+        #}
+    {#    
+        <!-- start team -->
+        <section class="section bg-light" id="team">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <h3 class="mb-3 fw-semibold">Our <span class="text-danger">Team</span></h3>
+                            <p class="text-muted mb-4 ff-secondary">To achieve this, it would be necessary to have uniform grammar, pronunciation and more common words. If several languages coalesce the grammar.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-2.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Nancy Martino</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">Team Leader</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-10.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Henry Baird</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">Full Stack Developer</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-3.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Frank Hook</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">Project Manager</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-8.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Donald Palmer</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">UI/UX Designer</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                </div>
+                <div class="row">
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-5.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Erica Kernan</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">Web Designer</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-4.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Alexis Clarke</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">Backend Developer</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-6.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Marie Ward</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">Full Stack Developer</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-xl mx-auto mb-4 position-relative">
+                                    <img src="{{ url_for('static', filename='images/users/avatar-7.jpg') }}" alt="" class="img-fluid rounded-circle">
+                                    <a href="apps-mailbox.html" class="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
+                                        <div class="avatar-title bg-transparent">
+                                            <i class="ri-mail-fill align-bottom"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- end card body -->
+                                <h5 class="mb-1"><a href="pages-profile.html" class="text-body">Jack Gough</a></h5>
+                                <p class="text-muted mb-0 ff-secondary">React Js Developer</p>
+                            </div>
+                        </div>
+                        <!-- end card -->
+                    </div>
+                    <!-- end col -->
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="text-center mt-2">
+                            <a href="pages-team.html" class="btn btn-primary">View All Members <i class="ri-arrow-right-line ms-1 align-bottom"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end team -->
+    #}
+    {#
+        <!-- start contact -->
+        <section class="section" id="contact">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <h3 class="mb-3 fw-semibold">Get In Touch</h3>
+                            <p class="text-muted mb-4 ff-secondary">Our team is ready to answer your questions about Navitrax's coupon and raffle management solutions. Whether you need assistance with setup or want to explore custom features, we're here to help you boost customer engagement and drive business growth.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+
+                <div class="row gy-4">
+                    <div class="col-lg-4">
+                        <div>
+                            <div class="mt-4">
+                                <h5 class="fs-13 text-muted text-uppercase">Office Address 1:</h5>
+                                <div class="ff-secondary fw-semibold">4461 Cedar Street Moro, <br />AR 72368</div>
+                            </div>
+                            <div class="mt-4">
+                                <h5 class="fs-13 text-muted text-uppercase">Office Address 2:</h5>
+                                <div class="ff-secondary fw-semibold">2467 Swick Hill Street <br />New Orleans, LA</div>
+                            </div>
+                            <div class="mt-4">
+                                <h5 class="fs-13 text-muted text-uppercase">Working Hours:</h5>
+                                <div class="ff-secondary fw-semibold">9:00am to 6:00pm</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end col -->
+                    <div class="col-lg-8">
+                        <div>
+                            <form>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="mb-4">
+                                            <label for="name" class="form-label fs-13">Name</label>
+                                            <input name="name" id="name" type="text" class="form-control bg-light border-light" placeholder="Your name*">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-4">
+                                            <label for="email" class="form-label fs-13">Email</label>
+                                            <input name="email" id="email" type="email" class="form-control bg-light border-light" placeholder="Your email*">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-4">
+                                            <label for="subject" class="form-label fs-13">Subject</label>
+                                            <input type="text" class="form-control bg-light border-light" id="subject" name="subject" placeholder="Your Subject.." />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label for="comments" class="form-label fs-13">Message</label>
+                                            <textarea name="comments" id="comments" rows="3" class="form-control bg-light border-light" placeholder="Your message..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12 text-end">
+                                        <input type="submit" id="submit" name="send" class="submitBnt btn btn-primary" value="Send Message">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end contact -->
+    #}
+        {#
+        <!-- start cta -->
+        <section class="py-5 bg-primary position-relative">
+            <div class="bg-overlay bg-overlay-pattern opacity-50"></div>
+            <div class="container">
+                <div class="row align-items-center gy-4">
+                    <div class="col-sm">
+                        <div>
+                            <h4 class="text-white mb-0 fw-semibold">Transform your customer engagement with Navitrax</h4>
+                        </div>
+                    </div>
+                    <div class="col-sm-auto">
+                        <div>
+                            <a href="#" class="btn bg-gradient btn-danger"><i class="ri-rocket-line align-middle me-1"></i> Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </section>
+        <!-- end cta -->
+        #}
+        <!-- start app-useful-features -->
+        <section class="section bg-primary position-relative" id="key-features">
+            <div class="bg-overlay bg-overlay-pattern opacity-50"></div>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="text-center mb-5">
+                            <span class="badge bg-warning text-dark fs-14 mb-2">Navitrax - AI Powered Supply Chain Platform</span>
+                            <h2 class="text-white mb-3 fw-semibold">That Will Transform Your Trade Operations</h2>
+                            <p class="text-white-50 mb-4 ff-secondary">Comprehensive supply chain and customs management to streamline your import/export operations</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/futureproof.png') }}" alt="Cloud-Based System" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">Cloud-Based System</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Future-proof your business with a secure cloud-based CHA system</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/customerportal.png') }}" alt="AI Operations" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">AI-Powered Operations</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Transform traditional trade operations with intelligent automation and predictive analytics</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/rich.png') }}" alt="Rich Reports" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">Rich Reports</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Rich, customizable, and automatically generated reports for all your campaigns</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/automated.png') }}" alt="Automation" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">Automation</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Advanced and automated AI powered document validation</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/inttra.png') }}" alt="Integration" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">Integration</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Integrate with other applications and platforms for seamless operation</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/accounting.png') }}" alt="Accounting" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">Accounting</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Integrates with accounting systems like SAP, QuickBooks, Xero, Zoho, and others</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/einvoicing.png') }}" alt="E-Invoicing" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">E-Invoicing</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Integrates with e-invoicing platforms for seamless financial management</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="card h-100 border-0" style="background-color: rgba(0, 0, 0, 0.6); color: white;">
+                            <div class="card-body text-center p-4">
+                                <div class="avatar-sm mx-auto mb-3">
+                                    <img src="{{ url_for('static', filename='images/icons/aws.png') }}" alt="Secure Hosting" class="img-fluid" style="max-height: 50px;">
+                                </div>
+                                <h5 class="fs-16 mb-3 text-white">Secure Hosting</h5>
+                                <p class="text-muted mb-0 ff-secondary" style="color: rgba(255, 255, 255, 0.85) !important;">Highly secure hosting, managed by Amazon AWS with bank-grade encryption</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        <!-- end app-useful-features -->
+
+        <!-- Start footer -->
+        <footer class="custom-footer bg-dark py-5 position-relative">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 mt-4">
+                        <div>
+                            <div>
+                                <img src="{{ url_for('static', filename='images/logo-white.png') }}" alt="logo light" height="45">                            </div>
+                                <div class="mt-4 fs-13">
+                                    <p>The Ultimate AI-Powered Supply Chain & Shipping Management Platform</p>
+                                    <p class="ff-secondary">Navitrax empowers importers, exporters, and customs brokers to streamline trade operations with intelligent automation, real-time tracking, and comprehensive compliance management.</p>
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-7 ms-lg-auto">
+                        <div class="row">
+                            <div class="col-sm-4 mt-4">
+                                <h5 class="text-white mb-0">Company</h5>
+                                <div class="text-muted mt-3">
+                                    <ul class="list-unstyled ff-secondary footer-list">
+                                        <li><a href="#">About Us</a></li>
+                                        <li><a href="#">Testimonials</a></li>
+                                        <li><a href="#">Careers</a></li>
+                                        <li><a href="#">Partners</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 mt-4">
+                                <h5 class="text-white mb-0">Features</h5>
+                                <div class="text-muted mt-3">
+                                    <ul class="list-unstyled ff-secondary footer-list">
+                                        <li><a href="#">Customs Processing</a></li>
+                                        <li><a href="#">Shipment Tracking</a></li>
+                                        <li><a href="#">Compliance Management</a></li>
+                                        <li><a href="#">Cost Management</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 mt-4">
+                                <h5 class="text-white mb-0">Support</h5>
+                                <div class="text-muted mt-3">
+                                    <ul class="list-unstyled ff-secondary footer-list">
+                                        <li><a href="#">Help Center</a></li>
+                                        <li><a href="#">Contact Us</a></li>
+                                        <li><a href="#">Privacy Policy</a></li>
+                                        <li><a href="#">Terms of Service</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row text-center text-sm-start align-items-center mt-5">
+                    <div class="col-sm-6">
+
+                        <div>
+                            <p class="copy-rights mb-0">
+                                <script> document.write(new Date().getFullYear()) </script> © Navitrax - All Rights Reserved
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end mt-3 mt-sm-0">
+                            <ul class="list-inline mb-0 footer-social-link">
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-facebook-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-github-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-linkedin-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-google-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+                                    <a href="javascript: void(0);" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-dribbble-line"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- end footer -->
+
+
+        <!--start back-to-top-->
+        <button onclick="topFunction()" class="btn btn-danger btn-icon landing-back-top" id="back-to-top">
+            <i class="ri-arrow-up-line"></i>
+        </button>
+        <!--end back-to-top-->
+
+    </div>
+    <!-- end layout wrapper -->
+
+
+    <!-- JAVASCRIPT -->
+<script src="{{ url_for('static', filename='libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/simplebar/dist/simplebar.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/node-waves/dist/waves.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/feather-icons/dist/feather.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/plugins/lord-icon-2.1.0.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugins.js') }}"></script>
+
+<!--Swiper slider js-->
+<script src="{{ url_for('static', filename='libs/swiper/swiper-bundle.min.js') }}"></script>
+
+<!-- landing init -->
+<script src="{{ url_for('static', filename='js/pages/landing.init.js') }}"></script>
+
+</body>
+
+
+<!-- Mirrored from themesbrand.com/velzon/html/master/landing.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 12 Aug 2024 07:47:10 GMT -->
+</html>

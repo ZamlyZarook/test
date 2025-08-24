@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">Modules</h3>
+                        <a href="{{ url_for('admin.add_module') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Module
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="modulesTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Module Name</th>
+                                    <th>Module Code</th>
+                                    <th>Description</th>
+                                    <th>Icon</th>
+                                    <th>Route</th>
+                                    <th>Parent Module</th>
+                                    <th>Order</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for module in modules %}
+                                <tr>
+                                    <td>{{ module.module_name }}</td>
+                                    <td>{{ module.module_code }}</td>
+                                    <td>{{ module.description }}</td>
+                                    <td><i class="{{ module.icon }}"></i></td>
+                                    <td>{{ module.route }}</td>
+                                    <td>{{ module.parent_module.module_name if module.parent_module else '-' }}</td>
+                                    <td>{{ module.order }}</td>
+                                    <td>
+                                        {% if module.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('admin.edit_module', module_id=module.id) }}"
+                                                class="btn btn-sm btn-info" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger" title="Delete"
+                                                onclick="confirmDelete('{{ url_for('admin.delete_module', module_id=module.id) }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this module? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="deleteButton" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#modulesTable').DataTable({
+            "order": [[6, "asc"]], // Sort by order by default
+            "pageLength": 25,
+            "language": {
+                "search": "Search modules:",
+                "lengthMenu": "Show _MENU_ modules per page",
+                "zeroRecords": "No modules found",
+                "info": "Showing _START_ to _END_ of _TOTAL_ modules",
+                "infoEmpty": "Showing 0 to 0 of 0 modules",
+                "infoFiltered": "(filtered from _MAX_ total modules)"
+            }
+        });
+    });
+
+    function confirmDelete(url) {
+        $('#deleteButton').attr('href', url);
+        $('#deleteModal').modal('show');
+    }
+</script>
+{% endblock %}
